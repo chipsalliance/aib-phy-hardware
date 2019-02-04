@@ -1,0 +1,203 @@
+USERGUIDE.txt
+Jan 4, 2019
+
+
+===========================================================
+Revision history:
+Version 1.0: Initial release
+============================================================
+
+============================================================
+Test bench(top.sv) description
+============================================================
+c3aib and CHIP AIB(aib) model are instantiated in the test bench. c3aib as master, CHIP AIB model as slave.
+AS is illustrated below:
+
+                 ------------                           -----------
+    random       |          |                           |         |rx-->|
+    data  tx---->| c3aib    |<=========================>|  aib    |     V (data loopback)
+                 |          |                           |         |tx<--|
+    data  rx<----|          |                           |         |          
+    checker      |          |                           |         |<---ms_nsl
+                 -----------                            -----------    (1'b0, slave)      
+                   master                                 slave
+
+Random data will be sent out from the master to slave. The data will be looped back in the slave after it is received, then sent back to master.
+The received data from the master will be compared with the data sent out. Test is pass when all the data match.
+
+This test bench is just an example for data transfer and checking. User can change the test bench, break the loop back on the slave, for independent simplex data transfer.
+
+c3aib and the CHIP AIB model in the test bench includes one channel.
+
+
+============================================================
+Model top level(aib.v)  ports description
+============================================================
+
+//All the signals start with iopad are the IO signals of AIB, 
+//please refer to Table 46 of the AIB spec Version 1.0
+
+//AIB channel
+inout  [19:0]    iopad_tx,
+inout  [19:0]    iopad_rx,
+inout      iopad_ns_rcv_clkb, 
+inout      iopad_ns_rcv_clk,
+inout      iopad_ns_fwd_clk, 
+inout      iopad_ns_fwd_clkb,
+inout      iopad_ns_sr_clk, 
+inout      iopad_ns_sr_clkb,
+inout      iopad_ns_sr_load, 
+inout      iopad_ns_sr_data,
+inout      iopad_ns_mac_rdy, 
+inout      iopad_ns_adapter_rstn,
+inout      iopad_spare1,  //iopad_spareo
+inout      iopad_spare0,
+inout      iopad_fs_rcv_clkb, 
+inout      iopad_fs_rcv_clk,
+inout      iopad_fs_fwd_clkb, 
+inout      iopad_fs_fwd_clk,
+inout      iopad_fs_sr_clkb, 
+inout      iopad_fs_sr_clk,
+inout      iopad_fs_sr_load, 
+inout      iopad_fs_sr_data,
+inout      iopad_fs_mac_rdy, 
+inout      iopad_fs_adapter_rstn,
+
+//AIB aux channel
+inout      iopad_device_detect,
+inout      iopad_device_detect_copy,
+inout      iopad_por,
+inout      iopad_por_copy,
+
+//MAC interface
+input  [39:0]  data_in,      //output data to pad
+output [39:0]  data_out,     //input data from pad
+input          m_ns_fwd_clk, //near side forward clock from MAC
+output         m_fs_rvc_clk, //far side receive clcok to MAC
+output         m_fs_fwd_clk, //far side forward clock to MAC
+input          m_ns_rvc_clk, //near side receive clock from MAC
+
+input          ms_ns_adapter_rstn, //master adapter reset from MAC
+input          sl_ns_adapter_rstn, //slave adapter reset from MAC
+input          ms_ns_mac_rdy,      //master MAC ready from MAC
+input          sl_ns_mac_rdy,      //slave MAC ready from MAC
+output         fs_mac_rdy,         //far side MAC ready to MAC
+
+input          ms_config_done,         //master configuration done from MAC
+input          ms_rx_dcc_dll_lock_req, //master rx calibration request from MAC
+input          ms_tx_dcc_dll_lock_req, //master tx calibration request from MAC
+input          sl_config_done,         //slave configuration done from MAC
+input          sl_tx_dcc_dll_lock_req, //slave tx calibration request from MAC
+input          sl_rx_dcc_dll_lock_req, //slave rx calibration request from MAC
+output         ms_tx_transfer_en,      //master tx transfer enable to MAC
+output         ms_rx_transfer_en,      //master rx transfer enable to MAC
+output         sl_tx_transfer_en,      //slave tx transfer enable to MAC
+output         sl_rx_transfer_en,      //slave rx transfer enable to MAC
+output  [80:0] sr_ms_tomac,            //master serial control signals to MAC
+output  [72:0] sr_sl_tomac,            //slave serial control signals to MAC
+input          ms_nsl,                 // master or slave selection for the model
+                                       //"1":the model is master. "0":the model  is slave
+input          iddren,                 //io buffer control, ddr enable. "1" enable ddr, "0" ddr not enable
+input          idataselb,              //output async data selection, "1" async data to bump, "0" sync. data to bump.
+input          itxen,                  //output enable. "1" output path enable, "0" output path disable
+input [2:0]    irxen,                  //input enable, "1" input path enable, "0" input path disable.
+
+//Aux channel control from MAC
+input          ms_device_detect,       //master device detect input from user logic
+input          sl_por,                 //slave power on reset input from user logic
+
+//JTAG signals 
+//For detail about the JTAG, please refer to chapter 5 of the AIB spec
+input          jtag_clkdr_in,          //JTAG clock
+output         scan_out,               //JTAG scan output
+input          jtag_intest,            //JTAG test input selection
+input          jtag_mode_in,           //JTAG mode selection
+input          jtag_rstb,              //JTAG reset
+input          jtag_rstb_en,           //JTAG reset enable
+input          jtag_weakpdn,           //IO weak pull up/down driver enable. "1" enable. "0" disable
+input          jtag_weakpu,            //"1" IO weak pull up, "0" IO weak pull down
+input          jtag_tx_scanen_in,      //JTAG scan in enable
+input          scan_in,                //JTAG scan in
+
+
+
+
+
+
+//MAC data interface
+
+input          tx_launch_clk,      //output data clock.
+input  [19:0]   data_in0,           //bit 19:0 of output data from core to pad.
+input  [19:0]   data_in1,           //bit 39:20 of output data from core to pad for DDR output.
+output [19:0]  data_out0,          //bit 19:0 of input data from pad to core.
+output [19:0]  data_out1,          //bit 39:20 of input data from pad to core for DDR input.
+
+input          ms_config_done,         //master configuration done from user logic
+input          ms_rx_dcc_dll_lock_req, //master rx calibration request from user logic
+input          ms_tx_dcc_dll_lock_req, //master tx calibration request from user logic
+input          sl_config_done,         //slave configuration done from user logic
+input          sl_tx_dcc_dll_lock_req, //slave tx calibration request from user logic
+input          sl_rx_dcc_dll_lock_req, //slave rx calibration request from user logic
+
+input          ms_adapter_rstn,    //master adapter reset from user logic
+input          sl_adapter_rstn,    //slave adapter reset from user logic
+input          ms_rstn,            //master mac ready from user logic
+input          sl_rstn,            //slave mac ready from user logic
+
+
+
+
+//Configuration/control signals from/to user logic, refer to test bench for example connection value
+input          iddren,             //io buffer control, ddr enable. "1" enable ddr. 
+                                   //"0" ddr not enable. 
+input          idataselb,          //output async data selection, "1" async data to bump.
+                                   //"0" sync. data to bump.
+input          itxen,              //output enable. "1" output path enable. "0" output path disable.
+input [2:0]    irxen,              //input enable, "1" input path enable. "0" input path disable.
+
+
+input [19:0]   tx_shift_en,        //tx data io redundancy control. "1" the io is bad, it is shifted 
+                                   //to the next io. "0" the io is good, no shifting is needed.
+input [19:0]   rx_shift_en,        //rx data io redundancy control. "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed.
+input          shift_en_rxclkb,    //rxclkb io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_rxfckb,    //rxfckb io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_srckb,     //srckb io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_srl,       //srl io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_arstni,    //arstni io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_rstno,     //rstno io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_std,       //std io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_stck,      //stck io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_txfck,     //txfck io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_txclk,     //txclk io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_rxclk,     //rxclk io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_rxfck,     //rxfck io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_srck,      //srck io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_srd,       //srd io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_rstni,     //rstni io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_arstno,    //arstno io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_stl,       //stl io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_stckb,     //stckb io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_txfckb,    //txfckb io redundancy control, "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+input          shift_en_txclkb,    //txclkb io redundancy control. "1" the io is bad, it is shifted
+                                   //to the next io. "0" the io is good, no shifting is needed. 
+
