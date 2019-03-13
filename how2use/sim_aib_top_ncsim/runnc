@@ -1,0 +1,3 @@
+rm -rf INCA_libs
+
+irun -sv -timescale 1ps/1ps -f ./c3aibadapt_wrap.f ./top.sv ./dut_io.sv ./test.sv -vlog_ext +.vh +define+TIMESCALE_EN -access rwc -input sim_input.tcl

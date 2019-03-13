@@ -9,7 +9,6 @@ sim_aib_top: 24 channel loopback simulation. vcs supported
 How to run:
 1) cd sim_aib_top
 2) make
-3) ./simv
 
 This example shows:
 1) How to configurate 24 channels registers through avmm interface.
@@ -30,3 +29,11 @@ This example shows:
    aib[61] -- adapter_tx_pld_rst_n
 
 *///////////////////////////////////////////////////////////////////////////
+
+sim_aib_top_ncsim: 24 channel loopback simulation with ncsim. 
+How to run:
+1) cd sim_aib_top_ncsim
+2) ./runnc 
+This example is similar with sim_aib_top except:
+1) ncsim command script provided.  To run the simulation,
+2) This loopback test does not bypass DCC/DLL.

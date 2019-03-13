@@ -41,6 +41,7 @@ ndsimslv: simulation test bench and file list
 how2use:  example design and testbench
  |-README.txt
  |-sim_aib_top            - Test bench show 24 channel external loopback test.
+ |-sim_aib_top_ncsim      - Test bench show 24 channel external loopback test with ncsim.
 
 ============================================================
 How to compile and run simulation (VCS)
