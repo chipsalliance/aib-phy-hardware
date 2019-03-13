@@ -1,0 +1,32 @@
+README.txt
+March 13, 2019
+
+==================================================================
+This directory contains examples of how to use AIB opensource core.
+===================================================================
+
+sim_aib_top: 24 channel loopback simulation. vcs supported 
+How to run:
+1) cd sim_aib_top
+2) make
+3) ./simv
+
+This example shows:
+1) How to configurate 24 channels registers through avmm interface.
+2) How to do externally loopback test. See detail connection described below.
+3) DLL/DCC was bypassed. A minimum static delay is programmed
+4) Traffic are generated and tested independently for all 24 channels.
+
+
+/*///////////////////////////////////////////////////////////////////////////
+   aib[19:0]  loopback to aib[39:20]  --transfer data    -> receiving data
+   aib[41:40] loopback to aib[43:42]  --transfer clk     -> receiving clk
+   aib[85:84] loopback to aib[83:82]  --transfer sr_clk  -> receiving sr_clk
+   aib[94]    loopback to aib[92]     --ssr_load_out     -> ssr_load_in
+
+   The following pins are tied to high so that the loopback test will work:
+   aib[93] -- ssr_data_in
+   aib[65] -- adapter_rx_pld_rst_n
+   aib[61] -- adapter_tx_pld_rst_n
+
+*///////////////////////////////////////////////////////////////////////////

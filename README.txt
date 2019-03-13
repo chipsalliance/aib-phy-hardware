@@ -38,6 +38,9 @@ aib_lib: c3aib files
 ndsimslv: simulation test bench and file list
  |-top.sv                 - Test bench file.
  |-multidie.f             - Simulation file list, include test bench and all AIB model files.
+how2use:  example design and testbench
+ |-README.txt
+ |-sim_aib_top            - Test bench show 24 channel external loopback test.
 
 ============================================================
 How to compile and run simulation (VCS)
