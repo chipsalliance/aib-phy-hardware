@@ -1,5 +1,5 @@
 README.txt
-March 13, 2019
+March 25, 2019
 
 ==================================================================
 This directory contains examples of how to use AIB opensource core.
@@ -37,3 +37,11 @@ How to run:
 This example is similar with sim_aib_top except:
 1) ncsim command script provided.  To run the simulation,
 2) This loopback test does not bypass DCC/DLL.
+
+sim_phasecom: one channel loopback simulation of enabling phase compensation fifo.
+c3aibadapt_wrap.v is modified to pull the 78 bit input/output data along with the 500MHz clock.
+This file is stored in sim_phasecom directory.
+How to run:
+1) cd sim_phasecom
+2) make
+3) ./simv
