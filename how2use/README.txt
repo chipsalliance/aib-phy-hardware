@@ -44,4 +44,14 @@ This file is stored in sim_phasecom directory.
 How to run:
 1) cd sim_phasecom
 2) make
-3) ./simv
+
+sim_dcc: Take sim_phasecom as base. Make tx_pam_clk/rx_pma_clk to 40/60 duty cycle distortion.
+This test show how DCC works and can correct the duty cycle to almost 50/50.
+aibcr3_dcc_helper.v has some delay added to show the little pulse at rising and falling edge for the last 
+DFF that generates the dcc clock. Without the change, the function still works but on DVE waveform, the pulse 
+disappear. This file is stored in sim_dcc directory.
+How to run:
+1) cd sim_dcc
+2) make
+
+
