@@ -3,7 +3,7 @@
 // Library - aibcr3_lib, Cell - aibcr3_dlycell_dcc, View - schematic
 // LAST TIME SAVED: Aug  6 23:29:22 2016
 // NETLIST TIME: Aug 17 15:46:58 2016
-//`timescale 1ns / 1ns 
+`timescale 1ps / 1ps 
 
 module aibcr3_dlycell_dcc ( co_p, out_p, bk, ci_p, in_p );
 

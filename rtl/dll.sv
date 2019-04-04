@@ -6,6 +6,7 @@
 // Description    : Behavioral model of dll
 // Revision       : 1.0
 // ============================================================================
+`timescale 1ps/1ps
 module dll 
    (
    input       clkp, clkn,

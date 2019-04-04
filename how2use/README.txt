@@ -54,4 +54,8 @@ How to run:
 1) cd sim_dcc
 2) make
 
-
+sim_modelsim: 1 channel connects with AIB model simulated with modelsim simulator 
+The modelsim simulator is the most restricted. Modified design files that adding timescale. 
+How to run:
+1) cd sim_modelsim
+2) ./run.sh

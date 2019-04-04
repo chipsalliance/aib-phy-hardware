@@ -3,7 +3,7 @@
 // Library - aibcr3_lib, Cell - aibcr3_dll_8ph_intp, View - schematic
 // LAST TIME SAVED: Aug 17 15:37:14 2016
 // NETLIST TIME: Aug 17 15:46:58 2016
-//`timescale 1ns / 1ns 
+`timescale 1ps/1ps 
 
 module aibcr3_dll_8ph_intp ( SOOUT, intout, CLKIN, PDb,
      fanout, gray, iSE, iSI );

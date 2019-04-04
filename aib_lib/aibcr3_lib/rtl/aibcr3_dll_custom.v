@@ -21,7 +21,7 @@ input  clk_dcd, dll_lock, dll_reset_n, launch, measure, nfrzdrv, nrst,
 input [2:0]  i_gray;
 input [7:0]  f_gray;
 input [10:0]  pvt_ref_half_gry;
-reg [10:0]  lpvt_ref_half_gry;
+wire [10:0]  lpvt_ref_half_gry;
 
 // Buses in the design
 

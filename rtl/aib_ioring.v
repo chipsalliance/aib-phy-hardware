@@ -171,6 +171,14 @@ wire [DATAWIDTH-1:0] pcs_data_out0_pinp, pcs_data_out1_pinp;
 wire [DATAWIDTH-1:0] jtag_rx_scan_out_rxdat;
 wire [DATAWIDTH:0] jtag_rx_scan_out_poutp;
 
+wire [DATAWIDTH-1:0] nc_async_dat_poutp;
+wire [DATAWIDTH-1:0] jtag_clkdr_outn_poutp;
+wire [DATAWIDTH-1:0] nc_async_dat_pinp;
+wire [DATAWIDTH-1:0] nc_odat_async_out0_pinp;
+wire [DATAWIDTH-1:0] nc_oclk_out0_pinp;
+wire [DATAWIDTH-1:0] nc_oclkb_out0_pinp;
+wire [DATAWIDTH-1:0] nc_oclkn_out0_pinp;
+
 assign jtag_rx_scan_out_poutp[DATAWIDTH]= jtag_tx_scanen_in;
 
 if (DATAWIDTH >20) 

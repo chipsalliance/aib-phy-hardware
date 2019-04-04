@@ -15,6 +15,7 @@
 // Description: self-timed lock assertion logics
 //------------------------------------------------------------------------
 
+`timescale 1ps/1ps
 module aibcr3pnr_self_lock_assertion 
 #(
 parameter FF_DELAY     = 200
