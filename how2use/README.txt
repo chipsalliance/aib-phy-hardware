@@ -13,7 +13,7 @@ How to run:
 This example shows:
 1) How to configurate 24 channels registers through avmm interface.
 2) How to do externally loopback test. See detail connection described below.
-3) DLL/DCC was bypassed. A minimum static delay is programmed
+3) DLL/DCC was bypassed (static). A minimum static delay is programmed
 4) Traffic are generated and tested independently for all 24 channels.
 
 
@@ -36,7 +36,7 @@ How to run:
 2) ./runnc 
 This example is similar with sim_aib_top except:
 1) ncsim command script provided.  To run the simulation,
-2) This loopback test does not bypass DCC/DLL.
+2) This loopback test does not bypass DCC/DLL (Dynamic).
 
 sim_phasecom: one channel loopback simulation of enabling phase compensation fifo.
 c3aibadapt_wrap.v is modified to pull the 78 bit input/output data along with the 500MHz clock.
@@ -59,3 +59,9 @@ The modelsim simulator is the most restricted. Modified design files that adding
 How to run:
 1) cd sim_modelsim
 2) ./run.sh
+
+sim_mod2mod: This test show how master model works with slave model.
+How to run:
+1) cd sim_mod2mod
+2) ./runsim
+3) ./simv

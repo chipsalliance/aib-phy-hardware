@@ -6,6 +6,7 @@
 // Description    : Behavioral model of AIB io buffer
 // Revision       : 1.0
 // ============================================================================
+`timescale 1ps/1ps
 module aib_io_buffer 
   (
    // Tx Path
@@ -106,11 +107,14 @@ module aib_io_buffer
 	odat0_i = iopad_nreg;
      end
 
+wire odat0_i_tmp;
+assign #1  odat0_i_tmp = odat0_i;
    // Data to MAC
    always @(posedge inclk_dist)
     if(rxen)
      begin
-	odat0_r <= odat0_i;
+//	odat0_r <= odat0_i;
+  	odat0_r <= odat0_i_tmp;
 	odat1_r <= odat1_i;
      end	
    
