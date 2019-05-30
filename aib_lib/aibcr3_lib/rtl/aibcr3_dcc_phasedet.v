@@ -2,12 +2,13 @@
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 // Library - aibcr3_lib, Cell - aibcri3_dcc_phasedet, View - schematic
 
+`timescale 1ps/1ps
 module aibcr3_dcc_phasedet
 #(
 parameter FF_DELAY     = 200
 )
 ( 
-output reg 	  t_down, 
+output wire 	  t_down, 
 output reg 	  t_up, 
 input  wire 	  CLKA, 
 input  wire	  CLKB,

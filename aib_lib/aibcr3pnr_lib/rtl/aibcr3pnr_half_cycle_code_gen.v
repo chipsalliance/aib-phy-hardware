@@ -19,6 +19,8 @@
 // To be considered :
 // 1. any potential glitch between code switching?
 //------------------------------------------------------------------------
+
+`timescale 1ps/1ps
 module aibcr3pnr_half_cycle_code_gen 
 #(
 parameter FF_DELAY     = 200

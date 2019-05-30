@@ -3,6 +3,7 @@
 
 `timescale 1ps/1fs
 `define NDADAPT_RTB ndut.hdpldadapt
+`include "c3dfx.vh"
 
 module top;
 
@@ -16,7 +17,7 @@ module top;
     // Clock generation
     
     parameter CFG_AVMM_CLK_PERIOD = 4000;
-    parameter OSC_CLK_PERIOD      = 10000;
+    parameter OSC_CLK_PERIOD      = 1000;
     parameter PMA_CLK_PERIOD      = 1000;
         
     reg   i_cfg_avmm_clk = 1'b0;
@@ -271,6 +272,8 @@ module top;
     wire                o_tx_xcvrif_rst_n;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain1;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
+    wire                HI;
+    wire                LO;
     // End of automatics
 
     //-----------------------------------------------------------------------------------------
@@ -376,7 +379,8 @@ module top;
                          .io_aib42              (aib40),
                          .io_aib43              (aib41),
                          .io_aib44              (aib44),
-                         .io_aib45              (aib45),
+                         //.io_aib45              (aib45),
+                         .io_aib45              (HI), //From Tim's 3/26 aib_bump_map
                          .io_aib46              (aib46),
                          .io_aib47              (aib47),
                          .io_aib48              (aib48),
@@ -390,41 +394,55 @@ module top;
                          .io_aib55              (aib55),
                          .io_aib56              (aib56),
                          .io_aib57              (aib57),
-                         .io_aib58              (aib58),
+                         //.io_aib58              (aib58),
+                         .io_aib58              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib59              (aib59),
                          .io_aib6               (aib6 ),
                          .io_aib60              (aib60),
-                         .io_aib61              (aib61),
+                         //.io_aib61              (aib61),
+                         .io_aib61              (HI), //From Tim's 3/26 aib_bump_map
                          .io_aib62              (aib62),
-                         .io_aib63              (aib63),
-                         .io_aib64              (aib64),
+                         //.io_aib63              (aib63),
+                         .io_aib63              (LO), //From Tim's 3/26 aib_bump_map
+                         //.io_aib64              (aib64),
+                         .io_aib64              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib65              (aib65),
                          .io_aib66              (aib66),
-                         .io_aib67              (aib67),
+                         //.io_aib67              (aib67),
+                         .io_aib67              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib68              (aib68),
                          .io_aib69              (aib69),
                          .io_aib7               (aib7 ),
                          .io_aib70              (aib70),
                          .io_aib71              (aib71),
-                         .io_aib72              (aib72),
-                         .io_aib73              (aib73),
-                         .io_aib74              (aib74),
+                         //.io_aib72              (aib72),
+                         //.io_aib73              (aib73),
+                         //.io_aib74              (aib74),
+                         .io_aib72              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib73              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib74              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib75              (aib75),
                          .io_aib76              (aib76),
                          .io_aib77              (aib77),
-                         .io_aib78              (aib78),
-                         .io_aib79              (aib79),
+                         //.io_aib78              (aib78),
+                         //.io_aib79              (aib79),
+                         //.io_aib80              (aib80),
+                         //.io_aib81              (aib81),
+                         .io_aib78              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib79              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib8               (aib8 ),
-                         .io_aib80              (aib80),
-                         .io_aib81              (aib81),
+                         .io_aib80              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib81              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib82              (aib82),
                          .io_aib83              (aib83),
                          .io_aib84              (aib84),
                          .io_aib85              (aib85),
                          .io_aib86              (aib86),
                          .io_aib87              (aib87),
-                         .io_aib88              (aib88),
-                         .io_aib89              (aib89),
+                         //.io_aib88              (aib88),
+                         //.io_aib89              (aib89),
+                         .io_aib88              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib89              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib9               (aib9 ),
                          .io_aib90              (aib90),
                          .io_aib91              (aib91),
@@ -433,24 +451,24 @@ module top;
                          .io_aib94              (aib94),
                          .io_aib95              (aib95),
                          // Inputs
-                         .i_adpt_hard_rst_n     (dut_io.i_adpt_hard_rst_n),
-                         .i_channel_id          (dut_io.i_channel_id[5:0]),
+                         .i_adpt_hard_rst_n     (top_io.i_adpt_hard_rst_n),
+                         .i_channel_id          (top_io.i_channel_id[5:0]),
                          .i_cfg_avmm_clk        (i_cfg_avmm_clk),
-                         .i_cfg_avmm_rst_n      (dut_io.i_cfg_avmm_rst_n),
-                         .i_cfg_avmm_addr       (dut_io.i_cfg_avmm_addr[16:0]),
-                         .i_cfg_avmm_byte_en    (dut_io.i_cfg_avmm_byte_en[3:0]),
-                         .i_cfg_avmm_read       (dut_io.i_cfg_avmm_read),
-                         .i_cfg_avmm_write      (dut_io.i_cfg_avmm_write),
-                         .i_cfg_avmm_wdata      (dut_io.i_cfg_avmm_wdata[31:0]),
-                         .i_adpt_cfg_rdatavld   (dut_io.i_adpt_cfg_rdatavld),
-                         .i_adpt_cfg_rdata      (dut_io.i_adpt_cfg_rdata[31:0]),
-//                       .i_adpt_cfg_waitreq    (dut_io.i_adpt_cfg_waitreq),
-                         .i_adpt_cfg_waitreq    (1'b1),
+                         .i_cfg_avmm_rst_n      (top_io.i_cfg_avmm_rst_n),
+                         .i_cfg_avmm_addr       (top_io.i_cfg_avmm_addr[16:0]),
+                         .i_cfg_avmm_byte_en    (top_io.i_cfg_avmm_byte_en[3:0]),
+                         .i_cfg_avmm_read       (top_io.i_cfg_avmm_read),
+                         .i_cfg_avmm_write      (top_io.i_cfg_avmm_write),
+                         .i_cfg_avmm_wdata      (top_io.i_cfg_avmm_wdata[31:0]),
+                         .i_adpt_cfg_rdatavld   (top_io.i_adpt_cfg_rdatavld),
+                         .i_adpt_cfg_rdata      (top_io.i_adpt_cfg_rdata[31:0]),
+//                       .i_adpt_cfg_waitreq    (top_io.i_adpt_cfg_waitreq),
+                         .i_adpt_cfg_waitreq    (HI),
                          .i_rx_pma_clk          (i_rx_pma_clk),
                          .i_rx_pma_div2_clk     (i_rx_pma_div2_clk),
                          .i_osc_clk             (i_osc_clk),
-                         .i_chnl_ssr            (dut_io.i_chnl_ssr[64:0]),
-                         .i_rx_pma_data         (dut_io.i_rx_pma_data[39:0]),
+                         .i_chnl_ssr            (top_io.i_chnl_ssr[64:0]),
+                         .i_rx_pma_data         (top_io.i_rx_pma_data[39:0]),
                          .i_tx_pma_clk          (i_tx_pma_clk),
                          .i_scan_clk            (i_scan_clk),
                          .i_test_clk_1g         (i_test_clk_1g),

@@ -18,7 +18,7 @@ input [2:0]  gray;
 
 reg  [6:0]  sp_int;
 reg  [6:0]  sp;
-reg  [6:0]  sn;
+wire [6:0]  sn;
 
 wire CK;
 wire RSTb;

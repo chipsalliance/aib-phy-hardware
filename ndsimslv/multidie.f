@@ -1,5 +1,6 @@
 +incdir+../aib_lib/aibcr3_lib/rtl/
 +incdir+../aib_lib/aibcr3pnr_lib/rtl/
++incdir+../aib_lib/c3dfx/rtl/defines/
 ../aib_lib/c3lib/rtl/defines/c3lib_dv_defines.sv
 ../aib_lib/c3dfx/rtl/defines/c3dfx.vh
 

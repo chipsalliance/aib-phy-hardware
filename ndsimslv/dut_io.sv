@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 
+`timescale 1ps/1ps
 interface dut_io (input bit i_osc_clk, 
 		  input bit i_rx_pma_clk,
                   input bit i_tx_pma_clk,

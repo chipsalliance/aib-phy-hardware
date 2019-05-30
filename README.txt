@@ -38,19 +38,34 @@ aib_lib: c3aib files
 ndsimslv: simulation test bench and file list
  |-top.sv                 - Test bench file.
  |-multidie.f             - Simulation file list, include test bench and all AIB model files.
+how2use:  example design and testbench
+ |-README.txt
+ |-sim_aib_top            - Test bench show 24 channel external loopback test.
+ |-sim_aib_top_ncsim      - Test bench show 24 channel external loopback test with ncsim.
+ |-sim_phasecom           - Test one channel loopback simulation of enabling phase compensation fifo
+ |-sim_dcc                - This test show how DCC works and can correct the duty cycle to almost 50/50 from 40/60
+ |-sim_modelsim           - 1 channel connects with AIB model simulated with modelsim simulator
+ |-sim_mod2mod            - Model to Model test. This test show how master model works with slave model
 
 ============================================================
 How to compile and run simulation (VCS)
 ============================================================
-To compile, use the file in:
-
 cd ndsimslv
-./runsim
-
-To run simulation:
+./runsim 
 ./simv
 
 To view waveform: (the waveform dump file is vcdplus.vpd)
 dve -full64
 
 VCS version used: M-2017.03-SP2/linux64
+
+============================================================
+How to compile and run simulation (Cadence ncsim)
+============================================================
+./runnc
+
+============================================================
+How to compile and run simulation (Mentor Questasim)
+============================================================
+./runvsim
+

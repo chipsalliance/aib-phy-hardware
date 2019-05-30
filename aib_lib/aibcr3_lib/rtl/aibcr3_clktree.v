@@ -15,6 +15,7 @@
 // Description: skew-matched clock distribution network
 //------------------------------------------------------------------------
 
+`timescale 1ps/1ps
 module aibcr3_clktree 
 #(
 parameter SKEW_DELAY     = 60   //min:20ps; typ :60ps; max:100ps

@@ -15,18 +15,18 @@
   
     logic [2:0] csr_config;
     logic [2:0] csr_in;
-    logic [2:0] csr_pipe_in;
-    logic       nfrzdrv_in;
+//    logic [2:0] csr_pipe_in;
+//    logic       nfrzdrv_in;
     logic       csr_rdy_in;
     logic       csr_rdy_dly_in;
     logic       usermode_in;
 
     reg   csr_clk_in = 1'b0;
-    reg   pld_avmm1_clk_rowclk = 1'b0;
-    reg   pld_avmm2_clk_rowclk = 1'b0;
-    reg   pld_pma_coreclkin_rowclk = 1'b0;
-    reg   pld_sclk1_rowclk = 1'b0;
-    reg   pld_sclk2_rowclk = 1'b0;
+//    reg   pld_avmm1_clk_rowclk = 1'b0;
+//    reg   pld_avmm2_clk_rowclk = 1'b0;
+//    reg   pld_pma_coreclkin_rowclk = 1'b0;
+//    reg   pld_sclk1_rowclk = 1'b0;
+//    reg   pld_sclk2_rowclk = 1'b0;
     reg   pld_rx_clk1_rowclk = 1'b0;
     reg   pld_rx_clk2_rowclk = 1'b0;
     reg   pld_tx_clk1_rowclk = 1'b0;
@@ -37,9 +37,9 @@
     reg   pld_tx_clk2_dcm = 1'b0;
 
 
-    logic [2:0] csr_config,
-                csr_in,
-                csr_pipe_in;
+//    logic [2:0] csr_config,
+//                csr_in,
+//                csr_pipe_in;
     logic       nfrzdrv_in;
 
     //clock gen

@@ -4,7 +4,7 @@
 //schematic
 // LAST TIME SAVED: Aug 16 11:20:05 2016
 // NETLIST TIME: Aug 17 15:46:58 2016
-//`timescale 1ns / 1ns 
+`timescale 1ps / 1ps 
 
 module aibcr3_dcc_interpolator ( intout, a_in, sn, sp );
 
