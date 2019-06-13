@@ -150,7 +150,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel
      .ms_tx_transfer_en(ms_tx_transfer_en),
      .ms_rx_transfer_en(ms_rx_transfer_en),
      .sl_tx_transfer_en(sl_tx_transfer_en),
-     .sl_rx_transfer_en(s_lrx_transfer_en),
+     .sl_rx_transfer_en(sl_rx_transfer_en),
      .sr_ms_tomac(sr_ms_tomac[80:0]),
      .sr_sl_tomac(sr_sl_tomac[72:0]),
 
