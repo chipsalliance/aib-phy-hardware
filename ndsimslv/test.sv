@@ -233,8 +233,8 @@ program automatic test (dut_io.TB dut);
     // Wait for transfer ready before start pumping data
     //***************************************************
     task wait_xfer_ready();
-///Wei        wait (top.dut.c3aibadapt.adapt_rxchnl.rxrst_ctl.sr_fabric_rx_transfer_en);
-        wait (top.ndut.slave.aib_channel.aib_sm.sl_tx_transfer_en);
+        wait (top.dut.o_ehip_init_status[2:0] == 3'b111);
+
         
     endtask
     //************************************************

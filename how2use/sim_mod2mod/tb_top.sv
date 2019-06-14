@@ -233,6 +233,13 @@ master
 `include "redundancy_ctrl_sim.vh"
 //`include "redundancy_ctrl_simt.vh"
 
+    .sl_external_cntl_26_0(27'b0),
+    .sl_external_cntl_30_28(3'b0),
+    .sl_external_cntl_57_32(26'b0),
+
+    .ms_external_cntl_4_0(5'b0),
+    .ms_external_cntl_65_8(58'hf),
+
     .vccl_aib(1'b1),
     .vssl_aib(1'b0) );
 
@@ -322,6 +329,13 @@ slave
 //Redundancy control signals
 `include "./redundancy_ctrl_sim.vh"
 //`include "./redundancy_ctrl_simr.vh"
+
+    .sl_external_cntl_26_0({1'b1,26'b0}),
+    .sl_external_cntl_30_28(3'b0),
+    .sl_external_cntl_57_32(26'b0),
+
+    .ms_external_cntl_4_0(5'b0),
+    .ms_external_cntl_65_8(58'b0),
 
     .vccl_aib(1'b1),
     .vssl_aib(1'b0) );

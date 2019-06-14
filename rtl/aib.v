@@ -5,6 +5,7 @@
 // Module name    : aib
 // Description    : Behavioral model of AIB top level
 // Revision       : 1.0
+// Revision       : 1.1 Added ports for user define bits in shift register
 // ============================================================================
 module aib #(
     parameter DATAWIDTH = 20
@@ -88,6 +89,13 @@ input          scan_in,
 //Redundancy control signals for IO buffers
 `include "redundancy_ctrl.vh"
 
+input [26:0]   sl_external_cntl_26_0,  //user defined bits 26:0 for slave shift register
+input [2:0]    sl_external_cntl_30_28, //user defined bits 30:28 for slave shift register
+input [25:0]   sl_external_cntl_57_32, //user defined bits 57:32 for slave shift register
+
+input [4:0]    ms_external_cntl_4_0,   //user defined bits 4:0 for master shift register
+input [57:0]   ms_external_cntl_65_8,  //user defined bits 65:8 for master shift register
+
 input         vccl_aib,
 input         vssl_aib );
 
@@ -142,7 +150,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel
      .ms_tx_transfer_en(ms_tx_transfer_en),
      .ms_rx_transfer_en(ms_rx_transfer_en),
      .sl_tx_transfer_en(sl_tx_transfer_en),
-     .sl_rx_transfer_en(s_lrx_transfer_en),
+     .sl_rx_transfer_en(sl_rx_transfer_en),
      .sr_ms_tomac(sr_ms_tomac[80:0]),
      .sr_sl_tomac(sr_sl_tomac[72:0]),
 
@@ -189,6 +197,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel
      .shift_en_srck(shift_en_srck),
      .shift_en_srd(shift_en_srd),
      .shift_en_rstni(shift_en_rstni),
+
+     .sl_external_cntl_26_0(sl_external_cntl_26_0[26:0]),
+     .sl_external_cntl_30_28(sl_external_cntl_30_28[2:0]),
+     .sl_external_cntl_57_32(sl_external_cntl_57_32[25:0]),
+
+     .ms_external_cntl_4_0(ms_external_cntl_4_0[4:0]),
+     .ms_external_cntl_65_8(ms_external_cntl_65_8[57:0]),
 
      .vccl_aib(vccl_aib),
      .vssl_aib(vssl_aib) );
