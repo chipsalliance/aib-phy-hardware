@@ -88,6 +88,11 @@ module c3aibadapt_wrap
     output [39:0]                              o_tx_pma_data, // Directed bump tx data sync path
 
  //=================================================================================================
+ //AIB open source IP enhancement. The following ports are added to b compliance with AIB specification 1.1
+    input                                      ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive data. use aibio49
+    output [80:0]                              ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
+    output [72:0]                              sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.                                                      
+ //=================================================================================================
  //// EMIB, AIB IO bumps
  
     inout                                      io_aib0, 
@@ -279,6 +284,20 @@ module c3aibadapt_wrap
     input [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
     output [12:0]                              o_aibdftdll2adjch  // DCC/DLL observability Go to next channel 
  );
+
+    //List the detail bit assignment corresponding to the AIB spec 1.1
+    wire ms_osc_transfer_en = ms_sideband[80];
+    wire ms_tx_transfer_en = ms_sideband[78];
+    wire ms_rx_transfer_en = ms_sideband[75];
+    wire ms_rx_dll_lock = ms_sideband[74];
+    wire ms_tx_dcc_cal_done = ms_sideband[68];
+    wire sl_osc_transfer_en = sl_sideband[72]; 
+    wire sl_rx_transfer_en = sl_sideband[70];
+    wire sl_rx_dll_dcc_lock_req = sl_sideband[69];
+    wire sl_rx_dll_lock = sl_sideband[69];
+    wire sl_tx_transfer_en = sl_sideband[64];
+    wire sl_tx_dll_dcc_lock_req = sl_sideband[63];
+    wire sl_tx_dcc_cal_done = sl_sideband[31];
  
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -589,7 +608,8 @@ module c3aibadapt_wrap
 
     .i_rx_elane_clk                         (1'b1),
     .i_tx_elane_clk                         (1'b1),
-    .i_rx_pma_div66_clk                     (1'b1),
+ // .i_rx_pma_div66_clk                     (1'b1),
+    .i_rx_pma_div66_clk                     (ns_mac_rdy),    //Added for AIB spec 1.1 enhancement. 6/12/19
     .i_tx_pma_div66_clk                     (1'b1),
     .i_rx_ehip_clk                          (1'b1),
      
@@ -752,6 +772,8 @@ module c3aibadapt_wrap
                            .o_tx_elane_rst_n    (),              // Templated
                            .o_chnl_ssr          (o_chnl_ssr[60:0]),
                            .o_chnl_fsr          (),              // Templated
+                           .ms_sideband         (ms_sideband[80:0]),
+                           .sl_sideband         (sl_sideband[72:0]),
                            .o_xcvrif_core_clk   (),              // Templated
                            .o_rx_xcvrif_rst_n   (o_rx_xcvrif_rst_n), // Templated
                            .o_rsvd_direct_async (),              // Templated
@@ -760,7 +782,7 @@ module c3aibadapt_wrap
                            .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk),
                            // Inputs
                            .i_aib_rx_adpt_rst_n (aib_rx_adpt_rst_n), // Templated
-                           .i_aib_tx_adpt_rst_n (aib_tx_adpt_rst_n), // Templated
+                           .i_aib_tx_adpt_rst_n (aib_rx_adpt_rst_n), // Edit 6/16/19 Enhancement request: use only 1 AIB signal for resetting AIB adapter  
                            .i_aib_avmm1_data    (aib_adpt_avmm1_data[1:0]), // Templated
                            .i_aib_avmm2_data    (aib_adpt_avmm2_data[1:0]), // Templated
                            .i_aib_shared_direct_async(shared_direct_async_out[2:0]), // Templated

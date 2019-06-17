@@ -11,11 +11,6 @@
 
 module top;
 
-    //------------------------------------------------------------------------------------------
-    // Dump control
-    initial begin
-    end
-
 
     //------------------------------------------------------------------------------------------
     // Clock generation
@@ -276,6 +271,10 @@ module top;
     wire                o_tx_xcvrif_rst_n;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain1;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
+    wire                HI;
+    wire                LO;
+    wire  [81*24-1:0]   ms_sideband;
+    wire  [73*24-1:0]   sl_sideband;              
     // End of automatics
    // EMIB Side
 // wire [95:0] AIB_CHAN0;
@@ -1561,6 +1560,9 @@ module top;
                     .o_tx_transfer_clk           (o_tx_transfer_clk), 
                     .o_tx_transfer_div2_clk      (o_tx_transfer_div2_clk),        // Not used 
                     .o_tx_pma_data               (o_tx_pma_data_24ch), 
+		    .ns_mac_rdy                  ({24{top_io.ns_mac_rdy}}),
+                    .ms_sideband                 (ms_sideband),
+		    .sl_sideband                 (sl_sideband),
                     .io_aib_ch0                  ({aib95_ch0_x0y0, aib94_ch0_x0y0, 1'b1,          aib94_ch0_x0y0,
                                                    aib91_ch0_x0y0, aib90_ch0_x0y0, aib89_ch0_x0y0,aib88_ch0_x0y0,
                                                    aib87_ch0_x0y0, aib86_ch0_x0y0, aib85_ch0_x0y0,aib84_ch0_x0y0,

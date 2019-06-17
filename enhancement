@@ -28,3 +28,11 @@ grep of  i_cfg_avmm_wdata in c3aibadapt_wrap_top.v:
                                     .i_cfg_avmm_wdata   (aib_cfg_avmm_wdata_ch22[31:0]), // Templated
 
 User can get optimized routing by modifying i_cfg_avmm_wdata connection, so that aib_cfg_avmm_wdata_ch0, 1, 2 ... to ch22.
+
+06/17/2019
+1) Use only 1 AIB signal for resetting AIB adapter
+2) Expose ns_mac_rdy as an input at each module port up through aib_top and individual channel.
+3) For all channels [23:0] expose the slave to master incoming shift register at aib_top, PHY-->MAC
+4) For all channels [23:0] expose the master to slave bits corresponding to the outgoing shift registe
+
+
