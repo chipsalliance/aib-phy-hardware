@@ -11,11 +11,6 @@
 
 module top;
 
-    //------------------------------------------------------------------------------------------
-    // Dump control
-    initial begin
-    end
-
 
     //------------------------------------------------------------------------------------------
     // Clock generation
@@ -276,6 +271,10 @@ module top;
     wire                o_tx_xcvrif_rst_n;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain1;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
+    wire                HI;
+    wire                LO;
+    wire  [81*24-1:0]   ms_sideband;
+    wire  [73*24-1:0]   sl_sideband;              
     // End of automatics
    // EMIB Side
 // wire [95:0] AIB_CHAN0;
@@ -1540,27 +1539,30 @@ module top;
 
     aib_top u_aib_top
              (
-                    .i_adpt_hard_rst_n           (dut_io.i_adpt_hard_rst_n), 
+                    .i_adpt_hard_rst_n           (top_io.i_adpt_hard_rst_n), 
                     .o_rx_xcvrif_rst_n           (),   // FIXME
                     .i_cfg_avmm_clk              (i_cfg_avmm_clk), 
-                    .i_cfg_avmm_rst_n            (dut_io.i_cfg_avmm_rst_n), 
-                    .i_cfg_avmm_addr             (dut_io.i_cfg_avmm_addr[16:0]), 
-                    .i_cfg_avmm_byte_en          (dut_io.i_cfg_avmm_byte_en[3:0]), 
-                    .i_cfg_avmm_read             (dut_io.i_cfg_avmm_read), 
-                    .i_cfg_avmm_write            (dut_io.i_cfg_avmm_write), 
-                    .i_cfg_avmm_wdata            (dut_io.i_cfg_avmm_wdata[31:0]), 
+                    .i_cfg_avmm_rst_n            (top_io.i_cfg_avmm_rst_n), 
+                    .i_cfg_avmm_addr             (top_io.i_cfg_avmm_addr[16:0]), 
+                    .i_cfg_avmm_byte_en          (top_io.i_cfg_avmm_byte_en[3:0]), 
+                    .i_cfg_avmm_read             (top_io.i_cfg_avmm_read), 
+                    .i_cfg_avmm_write            (top_io.i_cfg_avmm_write), 
+                    .i_cfg_avmm_wdata            (top_io.i_cfg_avmm_wdata[31:0]), 
                     .o_cfg_avmm_rdatavld         (o_cfg_avmm_rdatavld),
                     .o_cfg_avmm_rdata            (o_cfg_avmm_rdata), 
                     .o_cfg_avmm_waitreq          (o_cfg_avmm_waitreq), 
                     .i_rx_pma_clk                ({24{i_rx_pma_clk}}), 
                     .i_rx_pma_div2_clk           ({24{i_rx_pma_div2_clk}}), 
                     .i_chnl_ssr                  ({65*24{1'b0}}),   // FIXME
-                    .i_rx_pma_data               ({24{dut_io.i_rx_pma_data[39:0]}}), 
+                    .i_rx_pma_data               ({24{top_io.i_rx_pma_data[39:0]}}), 
                     .i_tx_pma_clk                ({24{i_tx_pma_clk}}), 
                     .o_chnl_ssr                  (),        // FIXME 
                     .o_tx_transfer_clk           (o_tx_transfer_clk), 
                     .o_tx_transfer_div2_clk      (o_tx_transfer_div2_clk),        // Not used 
                     .o_tx_pma_data               (o_tx_pma_data_24ch), 
+		    .ns_mac_rdy                  ({24{top_io.ns_mac_rdy}}),
+                    .ms_sideband                 (ms_sideband),
+		    .sl_sideband                 (sl_sideband),
                     .io_aib_ch0                  ({aib95_ch0_x0y0, aib94_ch0_x0y0, 1'b1,          aib94_ch0_x0y0,
                                                    aib91_ch0_x0y0, aib90_ch0_x0y0, aib89_ch0_x0y0,aib88_ch0_x0y0,
                                                    aib87_ch0_x0y0, aib86_ch0_x0y0, aib85_ch0_x0y0,aib84_ch0_x0y0,
@@ -2140,7 +2142,7 @@ module top;
                     .io_aib_aux                  (AIB_AUX),
 //                  .io_aib_aux                  (),
                     .io_aux_bg_ext_2k            (io_aux_bg_ext_2k),
-	            .i_iocsr_rdy_aibaux          (dut_io.i_adpt_hard_rst_n),
+	            .i_iocsr_rdy_aibaux          (top_io.i_adpt_hard_rst_n),
 	            .i_aibaux_por_vccl_ovrd      (1'b1),      
                     .i_aibaux_ctrl_bus0          (32'b0), 
 //                  .i_aibaux_ctrl_bus1          (32'h805001e0),  //observe oosc dft[12:0] 

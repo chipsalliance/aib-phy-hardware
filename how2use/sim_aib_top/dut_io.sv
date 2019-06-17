@@ -2,6 +2,7 @@
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 // ==========================================================================
 
+`timescale 1ps/1ps
 interface dut_io (input bit i_osc_clk, 
 		  input bit i_rx_pma_clk,
                   input bit i_tx_pma_clk,
@@ -9,6 +10,7 @@ interface dut_io (input bit i_osc_clk,
 
   
     logic                        i_adpt_hard_rst_n;
+    logic                        ns_mac_rdy;
     logic [6-1:0]                i_channel_id;
     logic                        i_cfg_avmm_rst_n;
     logic [16:0]                 i_cfg_avmm_addr;
@@ -73,6 +75,7 @@ interface dut_io (input bit i_osc_clk,
 		clocking cb_rx_pma,
                 clocking cb_cfg_avmm,
 		output i_adpt_hard_rst_n,
+                output ns_mac_rdy,
                 output i_cfg_avmm_rst_n);
     
 endinterface // dut_io

@@ -300,6 +300,8 @@ module c3aibadapt (
   output wire                       o_xcvrif_core_clk,
   input  wire [2:0]                 i_chnl_fsr,
   input  wire [64:0]                i_chnl_ssr,
+  output wire [80:0]                ms_sideband,
+  output wire [72:0]                sl_sideband,
 
 // EHIP FSR/SSR
   input  wire                       i_rx_ehip_clk,
@@ -861,6 +863,8 @@ assign fpll_shared_direct_async[3] = tb_direct_async[1];
 assign fpll_shared_direct_async[2] = tb_direct_async[1];
 assign fpll_shared_direct_async[1] = tb_direct_async[0];
 assign fpll_shared_direct_async[0] = tb_direct_async[0];
+
+assign sl_sideband = {rx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[30],tx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[31], rx_ssr_parity_checker_in[29:0], tx_ssr_parity_checker_in[31:0]};
 
 c3aibadapt_txchnl adapt_txchnl   (/*AUTOINST*/
        // Outputs
@@ -1666,6 +1670,7 @@ c3aibadapt_avmm adapt_avmm   (/*AUTOINST*/
 
 c3aibadapt_sr adapt_sr (
        // Outputs
+       .ms_sideband                                   (ms_sideband[80:0]), 
        .sr_testbus                                    (sr_testbus),
        .aib_hssi_tx_sr_clk_out                        (o_aib_tx_sr_clk),
        .aib_hssi_fsr_data_out                         (o_aib_fsr_data),

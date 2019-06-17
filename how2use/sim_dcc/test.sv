@@ -44,6 +44,7 @@ program automatic test (dut_io.TB dut);
 	begin
 	    dut.i_adpt_hard_rst_n <= 1'b0;
             dut.i_cfg_avmm_rst_n  <= 1'b0;
+            dut.ns_mac_rdy <= 1'b0;
             
             err_count <= 0;
 
@@ -73,7 +74,8 @@ program automatic test (dut_io.TB dut);
             dut.i_cfg_avmm_rst_n  <= 1'b1;
             configuration_setup();
             $display ("[%t] Done configuration", $time);
-            
+            dut.ns_mac_rdy <= 1'b1; 
+            $display ("[%t] ns_mac_rdy is up. Clock should be stable prior to this", $time);
 	    repeat (random_dly_cycle) @ (posedge top.i_osc_clk);            
 	    dut.i_adpt_hard_rst_n <= 1'b1;
 	    $display("%0t: %m: de-asserting adapter hard reset", $time);

@@ -10,6 +10,7 @@ interface dut_io (input bit i_osc_clk,
 
   
     logic                        i_adpt_hard_rst_n;
+    logic                        ns_mac_rdy;
     logic [6-1:0]                i_channel_id;
     logic                        i_cfg_avmm_rst_n;
     logic [16:0]                 i_cfg_avmm_addr;
@@ -82,6 +83,7 @@ interface dut_io (input bit i_osc_clk,
                 clocking cb_cfg_avmm,
                 clocking cb_rx_elane,
 		output i_adpt_hard_rst_n,
+                output ns_mac_rdy,
                 output i_cfg_avmm_rst_n);
     
 endinterface // dut_io

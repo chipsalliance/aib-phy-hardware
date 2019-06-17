@@ -68,7 +68,12 @@ module aib_top
    output [TOTAL_CHNL_NUM-1:0]                                    o_tx_transfer_clk, // clock used for tx data transmission
    output [TOTAL_CHNL_NUM-1:0]                                    o_tx_transfer_div2_clk, // half rate of tx data transmission clock
    output [TOTAL_CHNL_NUM*40-1:0]                                 o_tx_pma_data, // Directed bump tx data sync path
-
+ //=================================================================================================
+ // AIB open source IP enhancement. The following ports are added to
+ // be compliance with AIB specification 1.1
+   input  [TOTAL_CHNL_NUM-1:0]                                    ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive //     data. use aibio49
+   output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
+   output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
    //=================================================================================================
    // Inout signals for AIB ubump
    inout [95:0]                                                   io_aib_ch0, 
@@ -216,6 +221,9 @@ module aib_top
        .o_tx_transfer_clk               (o_tx_transfer_clk[TOTAL_CHNL_NUM-1:0]),
        .o_tx_transfer_div2_clk          (o_tx_transfer_div2_clk[TOTAL_CHNL_NUM-1:0]),
        .o_tx_pma_data                   (o_tx_pma_data[TOTAL_CHNL_NUM*40-1:0]),
+       .ns_mac_rdy                      (ns_mac_rdy[TOTAL_CHNL_NUM-1:0]),
+       .ms_sideband                     (ms_sideband[TOTAL_CHNL_NUM*81-1:0]),
+       .sl_sideband                     (sl_sideband[TOTAL_CHNL_NUM*73-1:0]),
        .o_test_c3adapt_scan_out         (o_test_c3adapt_scan_out/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
        .o_test_c3adapttcb_jtag          (),                      // Templated
        .o_jtag_last_bs_chain_out        (aibaux_last_bs_in),     // Templated

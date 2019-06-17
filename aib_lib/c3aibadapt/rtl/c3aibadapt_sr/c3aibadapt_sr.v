@@ -110,6 +110,7 @@ module c3aibadapt_sr (
   output wire           rx_async_hssi_fabric_fsr_load,  // For capture logic
   output wire           rx_async_hssi_fabric_ssr_load,  // For capture logic
   output wire   [5:0]   sr_parity_error_flag,
+  output wire  [80:0]   ms_sideband,
   
   // TX_ASYNC
   output wire		tx_async_fabric_hssi_fsr_data,
@@ -142,6 +143,8 @@ localparam NUM_OF_PARITY_BIT_FSROUT = 7'd1;
 wire [(NUM_OF_PCS_CHAIN_SSRIN  + NUM_OF_HIP_CHAIN_SSRIN  + NUM_OF_RESERVED_CHAIN_SSRIN  - 1):0]   ssrin_parallel_in;
 wire [(NUM_OF_PCS_CHAIN_SSRIN  + NUM_OF_HIP_CHAIN_SSRIN  + NUM_OF_RESERVED_CHAIN_SSRIN  - 1):0]   ssrin_parallel_in_temp;
 wire [NUM_OF_PARITY_BIT_SSRIN-1:0] ssrin_parity_out;
+
+assign ms_sideband = ssrin_parallel_in[80:0];
 
 wire [(NUM_OF_PCS_CHAIN_SSROUT + NUM_OF_HIP_CHAIN_SSROUT + NUM_OF_RESERVED_CHAIN_SSROUT - 1):0] ssrout_parallel_out;
 wire [(NUM_OF_PCS_CHAIN_SSROUT + NUM_OF_RESERVED_CHAIN_SSROUT - 1):0] ssrout_parity_checker;

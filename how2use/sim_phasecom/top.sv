@@ -10,11 +10,6 @@
 
 module top;
 
-    //------------------------------------------------------------------------------------------
-    // Dump control
-    initial begin
-    end
-
 
     //------------------------------------------------------------------------------------------
     // Clock generation
@@ -279,6 +274,10 @@ module top;
     wire                o_tx_xcvrif_rst_n;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain1;      // From dut of c3aibadapt_wrap.v
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
+    wire                HI;
+    wire                LO;
+    wire  [80:0]        ms_sideband;
+    wire  [72:0]        sl_sideband;              
     // End of automatics
 
     //-----------------------------------------------------------------------------------------
@@ -301,60 +300,6 @@ module top;
 
     //-----------------------------------------------------------------------------------------
     // DUT instantiation
-    // logic               rx_we = 1'b1;
-    // logic               tx_we = 1'b0;
-        
-    // assign aib20  = aib20_o;
-    // assign aib21  = aib21_o;
-    // assign aib22  = aib22_o;
-    // assign aib23  = aib23_o;
-    // assign aib24  = aib24_o;
-    // assign aib25  = aib25_o;
-    // assign aib26  = aib26_o;
-    // assign aib27  = aib27_o;
-    // assign aib28  = aib28_o;
-    // assign aib29  = aib29_o;
-    // assign aib30  = aib30_o;
-    // assign aib31  = aib31_o;
-    // assign aib32  = aib32_o;
-    // assign aib33  = aib33_o;
-    // assign aib34  = aib34_o;
-    // assign aib35  = aib35_o;
-    // assign aib36  = aib36_o;
-    // assign aib37  = aib37_o;
-    // assign aib38  = aib38_o;
-    // assign aib39  = aib39_o;
-
-    // assign aib43  = aib41_o;
-    // assign aib42  = aib40_o;
-    // assign aib84  = aib82_o;
-    // assign aib85  = aib83_o;
-    
-    // assign aib40_o = aib40;
-    // assign aib41_o = aib41;
-    // assign aib82_o = aib82;
-    // assign aib83_o = aib83;
-    
-    // assign aib20_o = aib0;
-    // assign aib21_o = aib1;
-    // assign aib22_o = aib2;
-    // assign aib23_o = aib3;
-    // assign aib24_o = aib4;
-    // assign aib25_o = aib5;
-    // assign aib26_o = aib6;
-    // assign aib27_o = aib7;
-    // assign aib28_o = aib8;
-    // assign aib29_o = aib9;
-    // assign aib30_o = aib10;
-    // assign aib31_o = aib11;
-    // assign aib32_o = aib12;
-    // assign aib33_o = aib13;
-    // assign aib34_o = aib14;
-    // assign aib35_o = aib15;
-    // assign aib36_o = aib16;
-    // assign aib37_o = aib17;
-    // assign aib38_o = aib18;
-    // assign aib39_o = aib19;
     
     c3aibadapt_wrap dut (/*AUTOINST*/
                          // Outputs
@@ -378,6 +323,9 @@ module top;
                          .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk),
                          .o_tx_pma_data         (o_tx_pma_data[39:0]),
                          .o_tx_elane_data       (o_tx_elane_data[77:0]),
+                         .ns_mac_rdy            (top_io.ns_mac_rdy),
+                         .ms_sideband           (ms_sideband),
+                         .sl_sideband           (sl_sideband),
                          .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]),
                          .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[`AIBADAPTWRAPTCB_JTAG_OUT_RNG]),
                          .o_jtag_clkdr_out      (o_jtag_clkdr_out),

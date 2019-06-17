@@ -7,11 +7,6 @@
 
 module top;
 
-    //------------------------------------------------------------------------------------------
-    // Dump control
-    initial begin
-    end
-
 
     //------------------------------------------------------------------------------------------
     // Clock generation
@@ -274,6 +269,8 @@ module top;
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
     wire                HI;
     wire                LO;
+    wire  [80:0]        ms_sideband;
+    wire  [72:0]        sl_sideband;              
     // End of automatics
 
     //-----------------------------------------------------------------------------------------
@@ -314,6 +311,9 @@ module top;
                          .o_tx_transfer_clk     (o_tx_transfer_clk),
                          .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk),
                          .o_tx_pma_data         (o_tx_pma_data[39:0]),
+                         .ns_mac_rdy            (top_io.ns_mac_rdy),
+                         .ms_sideband           (ms_sideband),
+                         .sl_sideband           (sl_sideband),
                          .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]),
                          .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[`AIBADAPTWRAPTCB_JTAG_OUT_RNG]),
                          .o_jtag_clkdr_out      (o_jtag_clkdr_out),
