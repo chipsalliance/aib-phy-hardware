@@ -376,8 +376,8 @@ module top;
                          .io_aib4               (aib4 ),
                          .io_aib40              (aib40),
                          .io_aib41              (aib41),
-                         .io_aib42              (aib40),
-                         .io_aib43              (aib41),
+                         .io_aib42              (aib42),
+                         .io_aib43              (aib43),
                          .io_aib44              (aib44),
                          //.io_aib45              (aib45),
                          .io_aib45              (HI), //From Tim's 3/26 aib_bump_map
