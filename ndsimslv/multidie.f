@@ -352,7 +352,7 @@
 
 ../aib_lib/c3dfx/rtl/tcb/c3dfx_aibadaptwrap_tcb.sv
 ../aib_lib/c3aibadapt_wrap/rtl/c3aibadapt_wrap.v
-
+../aib_lib/c3aibadapt_wrap/rtl/c3aib_master.sv
 +incdir+../rtl/
 +incdir+../ndsimslv/
 ./ndaibadapt_wrap.v

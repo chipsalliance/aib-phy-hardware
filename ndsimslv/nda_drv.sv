@@ -15,8 +15,7 @@
   
     logic [2:0] csr_config;
     logic [2:0] csr_in;
-//    logic [2:0] csr_pipe_in;
-//    logic       nfrzdrv_in;
+    logic       nfrzdrv_in;
     logic       csr_rdy_in;
     logic       csr_rdy_dly_in;
     logic       usermode_in;
@@ -37,10 +36,6 @@
     reg   pld_tx_clk2_dcm = 1'b0;
 
 
-//    logic [2:0] csr_config,
-//                csr_in,
-//                csr_pipe_in;
-    logic       nfrzdrv_in;
 
     //clock gen
     always #(CFG_CSR_CLK_PERIOD/2)        csr_clk_in               = ~csr_clk_in;
@@ -62,7 +57,6 @@
       begin
         csr_config = 3'h1;
         csr_in = 3'h0;
-        csr_pipe_in = 3'h0;
         csr_rdy_in     = 1'b0;
         csr_rdy_dly_in = 1'b0;
 

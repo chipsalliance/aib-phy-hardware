@@ -198,31 +198,7 @@ module top;
     wire      aib94;
     wire      aib95;
 
-    wire      aib20_o;
-    wire      aib21_o;
-    wire      aib22_o;
-    wire      aib23_o;
-    wire      aib24_o;
-    wire      aib25_o;
-    wire      aib26_o;
-    wire      aib27_o;
-    wire      aib28_o;
-    wire      aib29_o;
-    wire      aib30_o;
-    wire      aib31_o;
-    wire      aib32_o;
-    wire      aib33_o;
-    wire      aib34_o;
-    wire      aib35_o;
-    wire      aib36_o;
-    wire      aib37_o;
-    wire      aib38_o;
-    wire      aib39_o;
 
-    wire      aib40_o;
-    wire      aib41_o;
-    wire      aib82_o;
-    wire      aib83_o;
     
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -290,12 +266,14 @@ module top;
     //-----------------------------------------------------------------------------------------
     // DUT instantiation
     
-    c3aibadapt_wrap dut (/*AUTOINST*/
+    c3aib_master dut (/*AUTOINST*/
                          // Outputs
                          .o_adpt_hard_rst_n     (o_adpt_hard_rst_n),
-                         .o_rx_xcvrif_rst_n     (o_rx_xcvrif_rst_n),
+                         .fs_mac_rdy            (o_rx_xcvrif_rst_n),
                          .o_tx_xcvrif_rst_n     (o_tx_xcvrif_rst_n),
-                         .o_ehip_init_status    (o_ehip_init_status[2:0]),
+                         .sl_tx_transfer_en     (o_ehip_init_status[0]),
+                         .ms_tx_transfer_en     (o_ehip_init_status[1]),
+                         .ms_osc_transfer_alive (o_ehip_init_status[2]),
                          .o_cfg_avmm_rdatavld   (o_cfg_avmm_rdatavld),
                          .o_cfg_avmm_rdata      (o_cfg_avmm_rdata[31:0]),
                          .o_cfg_avmm_waitreq    (o_cfg_avmm_waitreq),
@@ -308,9 +286,9 @@ module top;
                          .o_adpt_cfg_wdata      (o_adpt_cfg_wdata[31:0]),
                          .o_osc_clk             (o_osc_clk),
                          .o_chnl_ssr            (o_chnl_ssr[60:0]),
-                         .o_tx_transfer_clk     (o_tx_transfer_clk),
-                         .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk),
-                         .o_tx_pma_data         (o_tx_pma_data[39:0]),
+                         .m_fs_fwd_clk          (o_tx_transfer_clk),
+                         .m_fs_fwd_div2_clk     (o_tx_transfer_div2_clk),
+                         .data_out              (o_tx_pma_data[39:0]),
                          .ns_mac_rdy            (top_io.ns_mac_rdy),
                          .ms_sideband           (ms_sideband),
                          .sl_sideband           (sl_sideband),
@@ -339,117 +317,31 @@ module top;
                          .o_directout_data_chain2_out(o_directout_data_chain2_out),
                          .o_aibdftdll2adjch     (o_aibdftdll2adjch[12:0]),
                          // Inouts
-                         .io_aib0               (aib0 ),
-                         .io_aib1               (aib1 ),
-                         .io_aib10              (aib10),
-                         .io_aib11              (aib11),
-                         .io_aib12              (aib12),
-                         .io_aib13              (aib13),
-                         .io_aib14              (aib14),
-                         .io_aib15              (aib15),
-                         .io_aib16              (aib16),
-                         .io_aib17              (aib17),
-                         .io_aib18              (aib18),
-                         .io_aib19              (aib19),
-                         .io_aib2               (aib2 ),
-                         .io_aib20              (aib20 ),
-                         .io_aib21              (aib21 ),
-                         .io_aib22              (aib22 ),
-                         .io_aib23              (aib23 ),
-                         .io_aib24              (aib24 ),
-                         .io_aib25              (aib25 ),
-                         .io_aib26              (aib26 ),
-                         .io_aib27              (aib27 ),
-                         .io_aib28              (aib28 ),
-                         .io_aib29              (aib29 ),
-                         .io_aib3               (aib3 ),
-                         .io_aib30              (aib30),
-                         .io_aib31              (aib31),
-                         .io_aib32              (aib32),
-                         .io_aib33              (aib33),
-                         .io_aib34              (aib34),
-                         .io_aib35              (aib35),
-                         .io_aib36              (aib36),
-                         .io_aib37              (aib37),
-                         .io_aib38              (aib38),
-                         .io_aib39              (aib39),
-                         .io_aib4               (aib4 ),
-                         .io_aib40              (aib40),
-                         .io_aib41              (aib41),
-                         .io_aib42              (aib40),
-                         .io_aib43              (aib41),
-                         .io_aib44              (aib44),
-                         //.io_aib45              (aib45),
-                         .io_aib45              (HI), //From Tim's 3/26 aib_bump_map
-                         .io_aib46              (aib46),
-                         .io_aib47              (aib47),
-                         .io_aib48              (aib48),
-                         .io_aib49              (aib49),
-                         .io_aib5               (aib5 ),
-                         .io_aib50              (aib50),
-                         .io_aib51              (aib51),
-                         .io_aib52              (aib52),
-                         .io_aib53              (aib53),
-                         .io_aib54              (aib54),
-                         .io_aib55              (aib55),
-                         .io_aib56              (aib56),
-                         .io_aib57              (aib57),
-                         //.io_aib58              (aib58),
-                         .io_aib58              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib59              (aib59),
-                         .io_aib6               (aib6 ),
-                         .io_aib60              (aib60),
-                         //.io_aib61              (aib61),
-                         .io_aib61              (HI), //From Tim's 3/26 aib_bump_map
-                         .io_aib62              (aib62),
-                         //.io_aib63              (aib63),
-                         .io_aib63              (LO), //From Tim's 3/26 aib_bump_map
-                         //.io_aib64              (aib64),
-                         .io_aib64              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib65              (aib65),
-                         .io_aib66              (aib66),
-                         //.io_aib67              (aib67),
-                         .io_aib67              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib68              (aib68),
-                         .io_aib69              (aib69),
-                         .io_aib7               (aib7 ),
-                         .io_aib70              (aib70),
-                         .io_aib71              (aib71),
-                         //.io_aib72              (aib72),
-                         //.io_aib73              (aib73),
-                         //.io_aib74              (aib74),
-                         .io_aib72              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib73              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib74              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib75              (aib75),
-                         .io_aib76              (aib76),
-                         .io_aib77              (aib77),
-                         //.io_aib78              (aib78),
-                         //.io_aib79              (aib79),
-                         //.io_aib80              (aib80),
-                         //.io_aib81              (aib81),
-                         .io_aib78              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib79              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib8               (aib8 ),
-                         .io_aib80              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib81              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib82              (aib82),
-                         .io_aib83              (aib83),
-                         .io_aib84              (aib84),
-                         .io_aib85              (aib85),
-                         .io_aib86              (aib86),
-                         .io_aib87              (aib87),
-                         //.io_aib88              (aib88),
-                         //.io_aib89              (aib89),
-                         .io_aib88              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib89              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib9               (aib9 ),
-                         .io_aib90              (aib90),
-                         .io_aib91              (aib91),
-                         .io_aib92              (aib92),
-                         .io_aib93              (aib93),
-                         .io_aib94              (aib94),
-                         .io_aib95              (aib95),
+                         .iopad_tx              ({aib19,aib18,aib17,aib16,aib15,aib14,aib13,aib12,aib11,aib10,
+                                                  aib9, aib8, aib7, aib6, aib5, aib4, aib3, aib2, aib1, aib0}),
+                         .iopad_rx              ({aib39,aib38,aib37,aib36,aib35,aib34,aib33,aib32,aib31,aib30,
+                                                  aib29,aib28,aib27,aib26,aib25,aib24,aib23,aib22,aib21,aib20}),
+                         .iopad_ns_fwd_clkb     (aib40),
+                         .iopad_ns_fwd_clk      (aib41),
+                         .iopad_fs_fwd_clkb     (aib42),
+                         .iopad_fs_fwd_clk      (aib43),
+                         .iopad_fs_mac_rdy      (aib44),
+                         .iopad_ns_mac_rdy      (aib49),
+                         .iopad_ns_adapt_rstn   (aib56),
+                         .iopad_fs_rcv_clk      (aib57),
+                         .iopad_fs_rcv_clkb     (aib59),
+                         .iopad_fs_adapt_rstn   (aib65),
+                         .iopad_fs_sr_clkb      (aib82),
+                         .iopad_fs_sr_clk       (aib83),
+                         .iopad_ns_sr_clk       (aib84),
+                         .iopad_ns_sr_clkb      (aib85),
+                         .iopad_ns_rcv_clkb     (aib86),
+                         .iopad_ns_rcv_clk      (aib87),
+                         .iopad_fs_sr_load      (aib92),
+                         .iopad_fs_sr_data      (aib93),
+                         .iopad_ns_sr_load      (aib94),
+                         .iopad_ns_sr_data      (aib95),
+
                          // Inputs
                          .i_adpt_hard_rst_n     (top_io.i_adpt_hard_rst_n),
                          .i_channel_id          (top_io.i_channel_id[5:0]),
@@ -463,13 +355,13 @@ module top;
                          .i_adpt_cfg_rdatavld   (top_io.i_adpt_cfg_rdatavld),
                          .i_adpt_cfg_rdata      (top_io.i_adpt_cfg_rdata[31:0]),
 //                       .i_adpt_cfg_waitreq    (top_io.i_adpt_cfg_waitreq),
-                         .i_adpt_cfg_waitreq    (HI),
-                         .i_rx_pma_clk          (i_rx_pma_clk),
-                         .i_rx_pma_div2_clk     (i_rx_pma_div2_clk),
+                         .i_adpt_cfg_waitreq    (1'b1),
+                         .m_ns_fwd_clk          (i_rx_pma_clk),
+                         .m_ns_fwd_div2_clk     (i_rx_pma_div2_clk),
                          .i_osc_clk             (i_osc_clk),
                          .i_chnl_ssr            (top_io.i_chnl_ssr[64:0]),
-                         .i_rx_pma_data         (top_io.i_rx_pma_data[39:0]),
-                         .i_tx_pma_clk          (i_tx_pma_clk),
+                         .data_in               (top_io.i_rx_pma_data[39:0]),
+                         .m_ns_rcv_clk          (i_tx_pma_clk),
                          .i_scan_clk            (i_scan_clk),
                          .i_test_clk_1g         (i_test_clk_1g),
                          .i_test_clk_500m       (i_test_clk_500m),
