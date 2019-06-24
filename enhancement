@@ -35,4 +35,8 @@ User can get optimized routing by modifying i_cfg_avmm_wdata connection, so that
 3) For all channels [23:0] expose the slave to master incoming shift register at aib_top, PHY-->MAC
 4) For all channels [23:0] expose the master to slave bits corresponding to the outgoing shift registe
 
-
+06/23/2019
+Created following mapping file to map open source IP to AIB spec 1.1 port definition:
+1) Added single channel mapping file c3aib_master.sv under aib_lib/c3aibadapt_wrap/rtl
+2) Added 24 channel mapping file aib_top_master.sv under aib_lib/c3aibadapt_wrap/rtl
+All the testbenchs have been updated.

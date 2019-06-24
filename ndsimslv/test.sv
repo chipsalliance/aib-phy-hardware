@@ -34,13 +34,8 @@ program automatic test (dut_io.TB dut);
       end
 
     //******************************************************************************
-    //  Reset Tasks which Resets Signal Interfaces on both AXI/PCIe side
+    //  Reset Tasks
     //******************************************************************************
-    task reset_ndut ();
-        begin
-          
-        end
-    endtask // Reset_ndut
     task reset_sequence ();
         int random_dly_cycle;
         
@@ -235,7 +230,7 @@ program automatic test (dut_io.TB dut);
     // Wait for transfer ready before start pumping data
     //***************************************************
     task wait_xfer_ready();
-        wait (top.dut.o_ehip_init_status[2:0] == 3'b111);
+        wait (top.o_ehip_init_status[2:0] == 3'b111);
 
         
     endtask

@@ -355,6 +355,7 @@
 ../../aib_lib/c3dfx/rtl/tcb/c3dfx_aibadaptwrap_tcb.sv
 //../../aib_lib/c3aibadapt_wrap/rtl/c3aibadapt_wrap.v
 ./c3aibadapt_wrap.v
+./c3aib_master.sv
 ../../aib_lib/c3aibadapt_wrap/rtl/c3routing_chnl_aib.sv
 ../../aib_lib/c3aibadapt_wrap/rtl/c3routing_chnl_edge.sv
 ../../aib_lib/c3aibadapt_wrap/rtl/c3aibadapt_wrap_top.v

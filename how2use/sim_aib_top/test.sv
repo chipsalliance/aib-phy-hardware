@@ -209,7 +209,7 @@ program automatic test (dut_io.TB dut);
     //***************************************************
     task wait_xfer_ready();
     //  wait (top.dut.c3aibadapt.adapt_rxchnl.rxrst_ctl.sr_fabric_rx_transfer_en);
-        wait (top.u_aib_top.u_c3aibadapt_wrap_top.u_c3aibadapt_0.c3aibadapt.adapt_txchnl.txrst_ctl.sync_aib_hssi_tx_dll_lock);
+        wait (top.u_aib_top_master.u_aib_top.u_c3aibadapt_wrap_top.u_c3aibadapt_0.c3aibadapt.adapt_txchnl.txrst_ctl.sync_aib_hssi_tx_dll_lock);
         
     endtask
     //************************************************
@@ -239,7 +239,7 @@ program automatic test (dut_io.TB dut);
         static int pkts_rcvd = 0;
         begin
             while(pkts_rcvd < run_for_n_pkts) begin
-                @ (posedge top.i_tx_pma_clk);
+                @ (posedge top.o_tx_transfer_clk[0]);
                 if (top.o_tx_pma_data_24ch != 0) begin
                     $display ("[%t] Receiving data[%d] = %x \n", $time, pkts_rcvd, top.o_tx_pma_data_24ch);
                     data_exp = xmit_q.pop_front();

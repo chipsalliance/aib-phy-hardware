@@ -389,3 +389,4 @@
 ../../aib_lib/aibcr3aux_lib/rtl/aibcr3aux_osc_dly.v
 ../../aib_lib/aibcr3aux_lib/rtl/aibcr3aux_osc_dly_unit.v
 ../../aib_lib/c3aibadapt_wrap/rtl/aib_top.v
+../../aib_lib/c3aibadapt_wrap/rtl/aib_top_master.sv

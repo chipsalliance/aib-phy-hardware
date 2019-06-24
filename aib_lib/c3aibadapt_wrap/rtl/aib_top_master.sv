@@ -1,0 +1,674 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2019 Intel Corporation. All rights reserved
+// ==========================================================================
+
+// This module maps aib_top port to AIB specification 1.1 in master mode 
+// 06/22/2019
+
+
+`timescale 1ps/1ps
+
+module aib_top_master
+  # (
+     parameter TOTAL_CHNL_NUM = 24
+     )
+  (
+     //================================================================================================
+   // Reset Inteface
+   input                                                          i_adpt_hard_rst_n, // AIB adaptor hard reset
+
+   // reset for XCVRIF
+   output [TOTAL_CHNL_NUM-1:0]                                    fs_mac_rdy, //o_rx_xcvrif_rst_n,  receiving path reset
+   
+   //===============================================================================================
+   // Configuration Interface which includes two paths
+ 
+   // Path directly from chip programming controller
+   input                                                          i_cfg_avmm_clk, 
+   input                                                          i_cfg_avmm_rst_n, 
+   input [16:0]                                                   i_cfg_avmm_addr, // address to be programmed
+   input [3:0]                                                    i_cfg_avmm_byte_en, // byte enable
+   input                                                          i_cfg_avmm_read, // Asserted to indicate the Cfg read access
+   input                                                          i_cfg_avmm_write, // Asserted to indicate the Cfg write access
+   input [31:0]                                                   i_cfg_avmm_wdata, // data to be programmed
+ 
+   output                                                         o_cfg_avmm_rdatavld,// Assert to indicate data available for Cfg read access 
+   output [31:0]                                                  o_cfg_avmm_rdata, // data returned for Cfg read access
+   output                                                         o_cfg_avmm_waitreq, // asserted to indicate not ready for Cfg access
+
+ //===============================================================================================
+ // Data Path
+ // Rx Path clocks/data, from master (current chiplet) to slave (FPGA)
+   input [TOTAL_CHNL_NUM-1:0]                                     m_ns_fwd_clk, // i_rx_pma_clk.Rx path clk for data receiving,
+   input [TOTAL_CHNL_NUM-1:0]                                     m_ns_fwd_div2_clk, // i_rx_pma_div2_clk, Divided by 2 clock on Rx pathinput
+    
+   input [TOTAL_CHNL_NUM*65-1:0]                                  i_chnl_ssr, // Slow shift chain path, tie to 0s if not used
+   input [TOTAL_CHNL_NUM*40-1:0]                                  data_in ,   // i_rx_pma_data, Directed bump rx data sync path
+ 
+ // Tx Path clocks/data, from slave (FPGA) to master (current chiplet)
+   input [TOTAL_CHNL_NUM-1:0]                                     m_ns_rcv_clk, //i_tx_pma_clk, sent over to the other chiplet to be used for the clock 
+   output [TOTAL_CHNL_NUM*61-1:0]                                 o_chnl_ssr, // Slow shift chain path, left unconnected if not used
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_clk, //o_tx_transfer_clk, clock used for tx data transmission
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_div2_clk, // o_tx_transfer_div2_clk, half rate of tx data transmission clock
+   output [TOTAL_CHNL_NUM*40-1:0]                                 data_out, //o_tx_pma_data, Directed bump tx data sync path
+ //=================================================================================================
+ // AIB open source IP enhancement. The following ports are added to
+ // be compliance with AIB specification 1.1
+   input  [TOTAL_CHNL_NUM-1:0]                                    ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive //     data. use aibio49
+   output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
+   output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
+   //=================================================================================================
+   // Inout signals for AIB ubump
+   inout  [TOTAL_CHNL_NUM*20-1:0]                                 iopad_tx,
+   inout  [TOTAL_CHNL_NUM*20-1:0]                                 iopad_rx,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_fwd_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_fwd_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_fwd_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_fwd_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_mac_rdy,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_mac_rdy,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_adapt_rstn,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_rcv_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_rcv_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_adapt_rstn,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_sr_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_sr_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_sr_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_sr_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_rcv_clkb,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_rcv_clk,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_sr_load,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_fs_sr_data,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_sr_load,
+   inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_ns_sr_data,
+
+   inout [95:0]                                                   io_aib_aux,
+   
+   inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
+
+   //======================================================================================
+   // Interface with AIB control block
+   // reset for AIB AUX
+   input                                                          i_iocsr_rdy_aibaux, //same hard reset as in the channel, tie to chiplet config_done signal
+
+   input                                                          i_aibaux_por_vccl_ovrd, //test por override through c4 bump
+   
+   // from control block register file
+   input [31:0]                                                   i_aibaux_ctrl_bus0, //1st set of register bits from register file
+   input [31:0]                                                   i_aibaux_ctrl_bus1, //2nd set of register bits from register file
+   input [31:0]                                                   i_aibaux_ctrl_bus2, //3rd set of register bits from register file
+   input [9:0]                                                    i_aibaux_osc_fuse_trim, //control by Fuse/OTP from Jariet
+
+   //
+   input                                                          i_osc_bypclk,     // test clock from c4 bump, may tie low for Jariet if not used
+   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, Jariet may use this clock to connect with i_test_clk_1g
+    //======================================================================================
+   // DFT signals
+   input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
+   input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
+   input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
+   input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
+   input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
+   input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
+                                                                                  //The divided down clock is for different clock domain at
+                                                                                  //speed test.
+   //Channel ATPG signals from/to CODEC
+   input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
+   input [`AIBADAPTWRAPTCB_STATIC_COMMON_RNG]                     i_test_c3adapt_tcb_static_common, //TCM Controls for ATPG scan test. 
+                                                                                                    //Scan enable/reset dll/dcc control 
+   output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
+  
+   //Inputs from TCB (JTAG signals)
+   input                                                          i_jtag_clkdr, // (from dbg_test_bscan block)Enable AIB IO boundary scan clock (clock gate control)
+   input                                                          i_jtag_clksel, // (from dbg_test_bscan block)Select between i_jtag_clkdr_in and functional clk
+   input                                                          i_jtag_intest, // (from dbg_test_bscan block)Enable in test operation
+   input                                                          i_jtag_mode, // (from dbg_test_bscan block)Selects between AIB BSR register or functional path
+   input                                                          i_jtag_rstb, // (from dbg_test_bscan block)JTAG controlleable reset the AIB IO circuitry
+   input                                                          i_jtag_rstb_en, // (from dbg_test_bscan block)JTAG controlleable override to reset the AIB IO circuitry
+   input                                                          i_jtag_tx_scan, // (from dbg_test_bscan block)TDI
+   input                                                          i_jtag_tx_scanen,// (from dbg_test_bscan block)Drives AIB IO jtag_tx_scanen_in or BSR shift control  
+   input                                                          i_jtag_weakpdn,  //(from dbg_test_bscan block)Enable AIB global pull down test. 
+   input                                                          i_jtag_weakpu,  //(from dbg_test_bscan block)Enable AIB global pull up test. 
+
+   input [2:0]                                                    i_aibdft2osc,  //To AIB osc.[2] force reset [1] force enable [0] 33 MHz JTAG
+   output [12:0]                                                  o_aibdft2osc,  //Observability of osc and DLL/DCC status 
+                                                                                 //this signal go through C4 bump, Jariet may muxed it out with their test signals
+   
+   //output TCB 
+   output                                                         o_last_bs_out, //last boundary scan chain output, TDO 
+
+   output                                                         o_por, // S10 POR to Jariet, can be left unconnected for Jariet
+   output                                                         o_osc_monitor, //Output from oscillator, go to pinmux block before go to C4 test bump
+
+
+   //AUX channel ATPG signals                                     //AUX has seperate scan chain. The TCM is outside of the aib_top.
+   input                                                          i_aux_atpg_mode_n,   //ATPG scan mode 
+   input                                                          i_aux_atpg_pipeline_global_en,  //scan_loes_mode
+   input                                                          i_aux_atpg_rst_n,               //~scan_reset
+   input                                                          i_aux_atpg_scan_clk,            //This is the output of TCM outside of aib_top.
+   input                                                          i_aux_atpg_scan_in,             //scan chain in  
+   input                                                          i_aux_atpg_scan_shift_n,        //~scan_enable
+   output                                                         o_aux_atpg_scan_out             //scan chain out 
+  
+   );
+
+wire [TOTAL_CHNL_NUM-1:0]       i_rx_pma_clk;
+wire [TOTAL_CHNL_NUM-1:0]       i_rx_pma_div2_clk;
+wire [TOTAL_CHNL_NUM*40-1:0]    i_rx_pma_data;
+wire [TOTAL_CHNL_NUM-1:0]       i_tx_pma_clk;
+wire [TOTAL_CHNL_NUM-1:0]       o_tx_transfer_clk;
+wire [TOTAL_CHNL_NUM-1:0]       o_tx_transfer_div2_clk;
+wire [TOTAL_CHNL_NUM*40-1:0]    o_tx_pma_data;
+wire [TOTAL_CHNL_NUM-1:0]       o_rx_xcvrif_rst_n;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib46;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib47;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib48;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib49;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib50;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib51;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib52;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib53;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib54;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib55;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib60;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib62;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib66;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib68;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib69;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib70;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib71;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib75;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib76;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib77;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib84;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib90;
+wire [TOTAL_CHNL_NUM-1:0]       iopad_unused_aib91;
+wire                            HI, LO;
+assign                          HI = 1'b1;
+assign                          LO = 1'b0;
+
+assign  i_rx_pma_clk = m_ns_fwd_clk;
+assign  i_rx_pma_div2_clk = m_ns_fwd_div2_clk;
+assign  i_rx_pma_data = data_in;
+assign  i_tx_pma_clk = m_ns_rcv_clk;
+assign  m_fs_fwd_clk = o_tx_transfer_clk;
+assign  m_fs_fwd_div2_clk = o_tx_transfer_div2_clk;
+assign  data_out =  o_tx_pma_data;
+assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
+
+
+    aib_top u_aib_top
+             (
+                    .i_adpt_hard_rst_n           (i_adpt_hard_rst_n), 
+                    .o_rx_xcvrif_rst_n           (o_rx_xcvrif_rst_n),   
+                    .i_cfg_avmm_clk              (i_cfg_avmm_clk), 
+                    .i_cfg_avmm_rst_n            (i_cfg_avmm_rst_n), 
+                    .i_cfg_avmm_addr             (i_cfg_avmm_addr[16:0]), 
+                    .i_cfg_avmm_byte_en          (i_cfg_avmm_byte_en[3:0]), 
+                    .i_cfg_avmm_read             (i_cfg_avmm_read), 
+                    .i_cfg_avmm_write            (i_cfg_avmm_write), 
+                    .i_cfg_avmm_wdata            (i_cfg_avmm_wdata[31:0]), 
+                    .o_cfg_avmm_rdatavld         (o_cfg_avmm_rdatavld),
+                    .o_cfg_avmm_rdata            (o_cfg_avmm_rdata), 
+                    .o_cfg_avmm_waitreq          (o_cfg_avmm_waitreq), 
+                    .i_rx_pma_clk                (i_rx_pma_clk), 
+                    .i_rx_pma_div2_clk           (i_rx_pma_div2_clk), 
+                    .i_chnl_ssr                  (i_chnl_ssr),   
+                    .i_rx_pma_data               (i_rx_pma_data), 
+                    .i_tx_pma_clk                (i_tx_pma_clk), 
+                    .o_chnl_ssr                  (o_chnl_ssr),  
+                    .o_tx_transfer_clk           (o_tx_transfer_clk), 
+                    .o_tx_transfer_div2_clk      (o_tx_transfer_div2_clk),        // Not used 
+                    .o_tx_pma_data               (o_tx_pma_data), 
+		    .ns_mac_rdy                  (ns_mac_rdy),
+                    .ms_sideband                 (ms_sideband),
+		    .sl_sideband                 (sl_sideband),
+
+                    .io_aib_ch0                  ({  iopad_ns_sr_data[0],    iopad_ns_sr_load[0],    iopad_fs_sr_data[0],     iopad_fs_sr_load[0],
+                                                   iopad_unused_aib91[0],  iopad_unused_aib90[0],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[0],   iopad_ns_rcv_clkb[0],    iopad_ns_sr_clkb[0],      iopad_ns_sr_clk[0], 
+                                                      iopad_fs_sr_clk[0],    iopad_fs_sr_clkb[0],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[0],   iopad_unused_aib76[0],
+                                                   iopad_unused_aib75[0],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[0],  iopad_unused_aib70[0],  iopad_unused_aib69[0],   iopad_unused_aib68[0],
+                                                                      LO,  iopad_unused_aib66[0], iopad_fs_adapt_rstn[0],                      LO,
+                                                                      LO,  iopad_unused_aib62[0],                     HI,   iopad_unused_aib60[0],
+                                                    iopad_fs_rcv_clkb[0],                     LO,    iopad_fs_rcv_clk[0],  iopad_ns_adapt_rstn[0],
+                                                   iopad_unused_aib55[0],  iopad_unused_aib54[0],  iopad_unused_aib53[0],   iopad_unused_aib52[0],
+                                                   iopad_unused_aib51[0],  iopad_unused_aib50[0],    iopad_fs_mac_rdy[0],   iopad_unused_aib48[0],
+                                                   iopad_unused_aib47[0],  iopad_unused_aib46[0],                     HI,     iopad_fs_mac_rdy[0],
+                                                     iopad_fs_fwd_clk[0],   iopad_fs_fwd_clkb[0],    iopad_ns_fwd_clk[0],    iopad_ns_fwd_clkb[0],
+                                                      iopad_rx[19:0],     iopad_tx[19:0]}),
+    
+                    .io_aib_ch1                  ({  iopad_ns_sr_data[1],    iopad_ns_sr_load[1],    iopad_fs_sr_data[1],     iopad_fs_sr_load[1],
+                                                   iopad_unused_aib91[1],  iopad_unused_aib90[1],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[1],   iopad_ns_rcv_clkb[1],    iopad_ns_sr_clkb[1],      iopad_ns_sr_clk[1], 
+                                                      iopad_fs_sr_clk[1],    iopad_fs_sr_clkb[1],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[1],   iopad_unused_aib76[1],
+                                                   iopad_unused_aib75[1],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[1],  iopad_unused_aib70[1],  iopad_unused_aib69[1],   iopad_unused_aib68[1],
+                                                                      LO,  iopad_unused_aib66[1], iopad_fs_adapt_rstn[1],                      LO,
+                                                                      LO,  iopad_unused_aib62[1],                     HI,   iopad_unused_aib60[1],
+                                                    iopad_fs_rcv_clkb[1],                     LO,    iopad_fs_rcv_clk[1],  iopad_ns_adapt_rstn[1],
+                                                   iopad_unused_aib55[1],  iopad_unused_aib54[1],  iopad_unused_aib53[1],   iopad_unused_aib52[1],
+                                                   iopad_unused_aib51[1],  iopad_unused_aib50[1],    iopad_fs_mac_rdy[1],   iopad_unused_aib48[1],
+                                                   iopad_unused_aib47[1],  iopad_unused_aib46[1],                     HI,     iopad_fs_mac_rdy[1],
+                                                     iopad_fs_fwd_clk[1],   iopad_fs_fwd_clkb[1],    iopad_ns_fwd_clk[1],    iopad_ns_fwd_clkb[1],
+                                                      iopad_rx[39:20],     iopad_tx[39:20]}),
+
+    
+                    .io_aib_ch2                  ({  iopad_ns_sr_data[2],    iopad_ns_sr_load[2],    iopad_fs_sr_data[2],     iopad_fs_sr_load[2],
+                                                   iopad_unused_aib91[2],  iopad_unused_aib90[2],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[2],   iopad_ns_rcv_clkb[2],    iopad_ns_sr_clkb[2],      iopad_ns_sr_clk[2], 
+                                                      iopad_fs_sr_clk[2],    iopad_fs_sr_clkb[2],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[2],   iopad_unused_aib76[2],
+                                                   iopad_unused_aib75[2],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[2],  iopad_unused_aib70[2],  iopad_unused_aib69[2],   iopad_unused_aib68[2],
+                                                                      LO,  iopad_unused_aib66[2], iopad_fs_adapt_rstn[2],                      LO,
+                                                                      LO,  iopad_unused_aib62[2],                     HI,   iopad_unused_aib60[2],
+                                                    iopad_fs_rcv_clkb[2],                     LO,    iopad_fs_rcv_clk[2],  iopad_ns_adapt_rstn[2],
+                                                   iopad_unused_aib55[2],  iopad_unused_aib54[2],  iopad_unused_aib53[2],   iopad_unused_aib52[2],
+                                                   iopad_unused_aib51[2],  iopad_unused_aib50[2],    iopad_fs_mac_rdy[2],   iopad_unused_aib48[2],
+                                                   iopad_unused_aib47[2],  iopad_unused_aib46[2],                     HI,     iopad_fs_mac_rdy[2],
+                                                     iopad_fs_fwd_clk[2],   iopad_fs_fwd_clkb[2],    iopad_ns_fwd_clk[2],    iopad_ns_fwd_clkb[2],
+                                                      iopad_rx[59:40],     iopad_tx[59:40]}),
+
+                    .io_aib_ch3                  ({  iopad_ns_sr_data[3],    iopad_ns_sr_load[3],    iopad_fs_sr_data[3],     iopad_fs_sr_load[3],
+                                                   iopad_unused_aib91[3],  iopad_unused_aib90[3],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[3],   iopad_ns_rcv_clkb[3],    iopad_ns_sr_clkb[3],      iopad_ns_sr_clk[3], 
+                                                      iopad_fs_sr_clk[3],    iopad_fs_sr_clkb[3],                     LO,                      LO,
+                                                                      LO,                     LO,   iopad_unused_aib77[3],  iopad_unused_aib76[3],
+                                                   iopad_unused_aib75[3],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[3],  iopad_unused_aib70[3],  iopad_unused_aib69[3],   iopad_unused_aib68[3],
+                                                                     LO,   iopad_unused_aib66[3], iopad_fs_adapt_rstn[3],                      LO,
+                                                                     LO,   iopad_unused_aib62[3],                     HI,   iopad_unused_aib60[3],
+                                                    iopad_fs_rcv_clkb[3],                    LO,     iopad_fs_rcv_clk[3],  iopad_ns_adapt_rstn[3],
+                                                   iopad_unused_aib55[3],  iopad_unused_aib54[3],  iopad_unused_aib53[3],   iopad_unused_aib52[3],
+                                                   iopad_unused_aib51[3],  iopad_unused_aib50[3],    iopad_fs_mac_rdy[3],   iopad_unused_aib48[3],
+                                                   iopad_unused_aib47[3],  iopad_unused_aib46[3],                     HI,     iopad_fs_mac_rdy[3],
+                                                     iopad_fs_fwd_clk[3],   iopad_fs_fwd_clkb[3],    iopad_ns_fwd_clk[3],    iopad_ns_fwd_clkb[3],
+                                                      iopad_rx[79:60],     iopad_tx[79:60]}),
+
+                    .io_aib_ch4                  ({  iopad_ns_sr_data[4],    iopad_ns_sr_load[4],    iopad_fs_sr_data[4],     iopad_fs_sr_load[4],
+                                                   iopad_unused_aib91[4],  iopad_unused_aib90[4],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[4],   iopad_ns_rcv_clkb[4],    iopad_ns_sr_clkb[4],      iopad_ns_sr_clk[4], 
+                                                      iopad_fs_sr_clk[4],    iopad_fs_sr_clkb[4],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[4],   iopad_unused_aib76[4],
+                                                   iopad_unused_aib75[4],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[4],  iopad_unused_aib70[4],  iopad_unused_aib69[4],   iopad_unused_aib68[4],
+                                                                      LO,  iopad_unused_aib66[4], iopad_fs_adapt_rstn[4],                      LO,
+                                                                      LO,  iopad_unused_aib62[4],                     HI,   iopad_unused_aib60[4],
+                                                    iopad_fs_rcv_clkb[4],                     LO,    iopad_fs_rcv_clk[4],  iopad_ns_adapt_rstn[4],
+                                                   iopad_unused_aib55[4],  iopad_unused_aib54[4],  iopad_unused_aib53[4],   iopad_unused_aib52[4],
+                                                   iopad_unused_aib51[4],  iopad_unused_aib50[4],    iopad_fs_mac_rdy[4],   iopad_unused_aib48[4],
+                                                   iopad_unused_aib47[4],  iopad_unused_aib46[4],                     HI,     iopad_fs_mac_rdy[4],
+                                                     iopad_fs_fwd_clk[4],   iopad_fs_fwd_clkb[4],    iopad_ns_fwd_clk[4],    iopad_ns_fwd_clkb[4],
+                                                      iopad_rx[99:80],     iopad_tx[99:80]}),
+
+    
+                    .io_aib_ch5                  ({  iopad_ns_sr_data[5],    iopad_ns_sr_load[5],    iopad_fs_sr_data[5],     iopad_fs_sr_load[5],
+                                                   iopad_unused_aib91[5],  iopad_unused_aib90[5],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[5],   iopad_ns_rcv_clkb[5],    iopad_ns_sr_clkb[5],      iopad_ns_sr_clk[5], 
+                                                      iopad_fs_sr_clk[5],    iopad_fs_sr_clkb[5],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[5],   iopad_unused_aib76[5],
+                                                   iopad_unused_aib75[5],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[5],  iopad_unused_aib70[5],  iopad_unused_aib69[5],   iopad_unused_aib68[5],
+                                                                      LO,  iopad_unused_aib66[5], iopad_fs_adapt_rstn[5],                      LO,
+                                                                      LO,  iopad_unused_aib62[5],                     HI,   iopad_unused_aib60[5],
+                                                    iopad_fs_rcv_clkb[5],                     LO,    iopad_fs_rcv_clk[5],  iopad_ns_adapt_rstn[5],
+                                                   iopad_unused_aib55[5],  iopad_unused_aib54[5],  iopad_unused_aib53[5],   iopad_unused_aib52[5],
+                                                   iopad_unused_aib51[5],  iopad_unused_aib50[5],    iopad_fs_mac_rdy[5],   iopad_unused_aib48[5],
+                                                   iopad_unused_aib47[5],  iopad_unused_aib46[5],                     HI,     iopad_fs_mac_rdy[5],
+                                                     iopad_fs_fwd_clk[5],   iopad_fs_fwd_clkb[5],    iopad_ns_fwd_clk[5],    iopad_ns_fwd_clkb[5],
+                                                      iopad_rx[119:100],     iopad_tx[119:100]}),
+
+    
+                    .io_aib_ch6                  ({  iopad_ns_sr_data[6],    iopad_ns_sr_load[6],    iopad_fs_sr_data[6],     iopad_fs_sr_load[6],
+                                                   iopad_unused_aib91[6],  iopad_unused_aib90[6],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[6],   iopad_ns_rcv_clkb[6],    iopad_ns_sr_clkb[6],      iopad_ns_sr_clk[6], 
+                                                      iopad_fs_sr_clk[6],    iopad_fs_sr_clkb[6],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[6],   iopad_unused_aib76[6],
+                                                   iopad_unused_aib75[6],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[6],  iopad_unused_aib70[6],  iopad_unused_aib69[6],   iopad_unused_aib68[6],
+                                                                      LO,  iopad_unused_aib66[6], iopad_fs_adapt_rstn[6],                      LO,
+                                                                      LO,  iopad_unused_aib62[6],                     HI,   iopad_unused_aib60[6],
+                                                    iopad_fs_rcv_clkb[6],                    LO,     iopad_fs_rcv_clk[6],  iopad_ns_adapt_rstn[6],
+                                                   iopad_unused_aib55[6],  iopad_unused_aib54[6],  iopad_unused_aib53[6],   iopad_unused_aib52[6],
+                                                   iopad_unused_aib51[6],  iopad_unused_aib50[6],    iopad_fs_mac_rdy[6],   iopad_unused_aib48[6],
+                                                   iopad_unused_aib47[6],  iopad_unused_aib46[6],                     HI,     iopad_fs_mac_rdy[6],
+                                                     iopad_fs_fwd_clk[6],   iopad_fs_fwd_clkb[6],    iopad_ns_fwd_clk[6],    iopad_ns_fwd_clkb[6],
+                                                      iopad_rx[139:120],     iopad_tx[139:120]}),
+
+    
+                    .io_aib_ch7                  ({  iopad_ns_sr_data[7],    iopad_ns_sr_load[7],    iopad_fs_sr_data[7],     iopad_fs_sr_load[7],
+                                                   iopad_unused_aib91[7],  iopad_unused_aib90[7],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[7],   iopad_ns_rcv_clkb[7],    iopad_ns_sr_clkb[7],      iopad_ns_sr_clk[7], 
+                                                      iopad_fs_sr_clk[7],    iopad_fs_sr_clkb[7],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[7],   iopad_unused_aib76[7],
+                                                   iopad_unused_aib75[7],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[7],  iopad_unused_aib70[7],  iopad_unused_aib69[7],   iopad_unused_aib68[7],
+                                                                      LO,  iopad_unused_aib66[7], iopad_fs_adapt_rstn[7],                      LO,
+                                                                      LO,  iopad_unused_aib62[7],                     HI,   iopad_unused_aib60[7],
+                                                    iopad_fs_rcv_clkb[7],                    LO,     iopad_fs_rcv_clk[7],  iopad_ns_adapt_rstn[7],
+                                                   iopad_unused_aib55[7],  iopad_unused_aib54[7],  iopad_unused_aib53[7],   iopad_unused_aib52[7],
+                                                   iopad_unused_aib51[7],  iopad_unused_aib50[7],    iopad_fs_mac_rdy[7],   iopad_unused_aib48[7],
+                                                   iopad_unused_aib47[7],  iopad_unused_aib46[7],                     HI,     iopad_fs_mac_rdy[7],
+                                                     iopad_fs_fwd_clk[7],   iopad_fs_fwd_clkb[7],    iopad_ns_fwd_clk[7],    iopad_ns_fwd_clkb[7],
+                                                      iopad_rx[159:140],     iopad_tx[159:140]}),
+
+    
+                    .io_aib_ch8                  ({  iopad_ns_sr_data[8],    iopad_ns_sr_load[8],    iopad_fs_sr_data[8],     iopad_fs_sr_load[8],
+                                                   iopad_unused_aib91[8],  iopad_unused_aib90[8],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[8],   iopad_ns_rcv_clkb[8],    iopad_ns_sr_clkb[8],      iopad_ns_sr_clk[8], 
+                                                      iopad_fs_sr_clk[8],    iopad_fs_sr_clkb[8],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[8],   iopad_unused_aib76[8],
+                                                   iopad_unused_aib75[8],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[8],  iopad_unused_aib70[8],  iopad_unused_aib69[8],   iopad_unused_aib68[8],
+                                                                      LO,  iopad_unused_aib66[8], iopad_fs_adapt_rstn[8],                      LO,
+                                                                      LO,  iopad_unused_aib62[8],                     HI,   iopad_unused_aib60[8],
+                                                    iopad_fs_rcv_clkb[8],                    LO,     iopad_fs_rcv_clk[8],  iopad_ns_adapt_rstn[8],
+                                                   iopad_unused_aib55[8],  iopad_unused_aib54[8],  iopad_unused_aib53[8],   iopad_unused_aib52[8],
+                                                   iopad_unused_aib51[8],  iopad_unused_aib50[8],    iopad_fs_mac_rdy[8],   iopad_unused_aib48[8],
+                                                   iopad_unused_aib47[8],  iopad_unused_aib46[8],                     HI,     iopad_fs_mac_rdy[8],
+                                                     iopad_fs_fwd_clk[8],   iopad_fs_fwd_clkb[8],    iopad_ns_fwd_clk[8],    iopad_ns_fwd_clkb[8],
+                                                      iopad_rx[179:160],     iopad_tx[179:160]}),
+
+                    .io_aib_ch9                  ({  iopad_ns_sr_data[9],    iopad_ns_sr_load[9],    iopad_fs_sr_data[9],     iopad_fs_sr_load[9],
+                                                   iopad_unused_aib91[9],  iopad_unused_aib90[9],                     LO,                      LO,
+                                                     iopad_ns_rcv_clk[9],   iopad_ns_rcv_clkb[9],    iopad_ns_sr_clkb[9],      iopad_ns_sr_clk[9], 
+                                                      iopad_fs_sr_clk[9],    iopad_fs_sr_clkb[9],                     LO,                      LO,
+                                                                      LO,                     LO,  iopad_unused_aib77[9],   iopad_unused_aib76[9],
+                                                   iopad_unused_aib75[9],                     LO,                     LO,                      LO,
+                                                   iopad_unused_aib71[9],  iopad_unused_aib70[9],  iopad_unused_aib69[9],   iopad_unused_aib68[9],
+                                                                      LO,  iopad_unused_aib66[9], iopad_fs_adapt_rstn[9],                      LO,
+                                                                      LO,  iopad_unused_aib62[9],                     HI,   iopad_unused_aib60[9],
+                                                    iopad_fs_rcv_clkb[9],                     LO,    iopad_fs_rcv_clk[9],  iopad_ns_adapt_rstn[9],
+                                                   iopad_unused_aib55[9],  iopad_unused_aib54[9],  iopad_unused_aib53[9],   iopad_unused_aib52[9],
+                                                   iopad_unused_aib51[9],  iopad_unused_aib50[9],    iopad_fs_mac_rdy[9],   iopad_unused_aib48[9],
+                                                   iopad_unused_aib47[9],  iopad_unused_aib46[9],                     HI,     iopad_fs_mac_rdy[9],
+                                                     iopad_fs_fwd_clk[9],   iopad_fs_fwd_clkb[9],    iopad_ns_fwd_clk[9],    iopad_ns_fwd_clkb[9],
+                                                      iopad_rx[199:180],     iopad_tx[199:180]}),
+
+
+                    .io_aib_ch10                  ({ iopad_ns_sr_data[10],    iopad_ns_sr_load[10],    iopad_fs_sr_data[10],     iopad_fs_sr_load[10],
+                                                   iopad_unused_aib91[10],  iopad_unused_aib90[10],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[10],   iopad_ns_rcv_clkb[10],    iopad_ns_sr_clkb[10],      iopad_ns_sr_clk[10], 
+                                                      iopad_fs_sr_clk[10],    iopad_fs_sr_clkb[10],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[10],   iopad_unused_aib76[10],
+                                                   iopad_unused_aib75[10],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[10],  iopad_unused_aib70[10],  iopad_unused_aib69[10],   iopad_unused_aib68[10],
+                                                                      LO,   iopad_unused_aib66[10], iopad_fs_adapt_rstn[10],                      LO,
+                                                                      LO,   iopad_unused_aib62[10],                      HI,   iopad_unused_aib60[10],
+                                                    iopad_fs_rcv_clkb[10],                     LO,     iopad_fs_rcv_clk[10],  iopad_ns_adapt_rstn[10],
+                                                   iopad_unused_aib55[10],  iopad_unused_aib54[10],  iopad_unused_aib53[10],   iopad_unused_aib52[10],
+                                                   iopad_unused_aib51[10],  iopad_unused_aib50[10],    iopad_fs_mac_rdy[10],   iopad_unused_aib48[10],
+                                                   iopad_unused_aib47[10],  iopad_unused_aib46[10],                      HI,     iopad_fs_mac_rdy[10],
+                                                     iopad_fs_fwd_clk[10],   iopad_fs_fwd_clkb[10],    iopad_ns_fwd_clk[10],    iopad_ns_fwd_clkb[10],
+                                                        iopad_rx[219:200],       iopad_tx[219:200]}),
+
+    
+                    .io_aib_ch11                  ({ iopad_ns_sr_data[11],    iopad_ns_sr_load[11],    iopad_fs_sr_data[11],     iopad_fs_sr_load[11],
+                                                   iopad_unused_aib91[11],  iopad_unused_aib90[11],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[11],   iopad_ns_rcv_clkb[11],    iopad_ns_sr_clkb[11],      iopad_ns_sr_clk[11], 
+                                                      iopad_fs_sr_clk[11],    iopad_fs_sr_clkb[11],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[11],   iopad_unused_aib76[11],
+                                                   iopad_unused_aib75[11],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[11],  iopad_unused_aib70[11],  iopad_unused_aib69[11],   iopad_unused_aib68[11],
+                                                                      LO,   iopad_unused_aib66[11], iopad_fs_adapt_rstn[11],                      LO,
+                                                                      LO,   iopad_unused_aib62[11],                      HI,   iopad_unused_aib60[11],
+                                                    iopad_fs_rcv_clkb[11],                     LO,     iopad_fs_rcv_clk[11],  iopad_ns_adapt_rstn[11],
+                                                   iopad_unused_aib55[11],  iopad_unused_aib54[11],  iopad_unused_aib53[11],   iopad_unused_aib52[11],
+                                                   iopad_unused_aib51[11],  iopad_unused_aib50[11],    iopad_fs_mac_rdy[11],   iopad_unused_aib48[11],
+                                                   iopad_unused_aib47[11],  iopad_unused_aib46[11],                      HI,     iopad_fs_mac_rdy[11],
+                                                     iopad_fs_fwd_clk[11],   iopad_fs_fwd_clkb[11],    iopad_ns_fwd_clk[11],    iopad_ns_fwd_clkb[11],
+                                                        iopad_rx[239:220],       iopad_tx[239:220]}),
+
+    
+                    .io_aib_ch12                  ({ iopad_ns_sr_data[12],    iopad_ns_sr_load[12],    iopad_fs_sr_data[12],     iopad_fs_sr_load[12],
+                                                   iopad_unused_aib91[12],  iopad_unused_aib90[12],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[12],   iopad_ns_rcv_clkb[12],    iopad_ns_sr_clkb[12],      iopad_ns_sr_clk[12], 
+                                                      iopad_fs_sr_clk[12],    iopad_fs_sr_clkb[12],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[12],   iopad_unused_aib76[12],
+                                                   iopad_unused_aib75[12],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[12],  iopad_unused_aib70[12],  iopad_unused_aib69[12],   iopad_unused_aib68[12],
+                                                                      LO,   iopad_unused_aib66[12], iopad_fs_adapt_rstn[12],                      LO,
+                                                                      LO,   iopad_unused_aib62[12],                      HI,   iopad_unused_aib60[12],
+                                                    iopad_fs_rcv_clkb[12],                     LO,     iopad_fs_rcv_clk[12],  iopad_ns_adapt_rstn[12],
+                                                   iopad_unused_aib55[12],  iopad_unused_aib54[12],  iopad_unused_aib53[12],   iopad_unused_aib52[12],
+                                                   iopad_unused_aib51[12],  iopad_unused_aib50[12],    iopad_fs_mac_rdy[12],   iopad_unused_aib48[12],
+                                                   iopad_unused_aib47[12],  iopad_unused_aib46[12],                      HI,     iopad_fs_mac_rdy[12],
+                                                     iopad_fs_fwd_clk[12],   iopad_fs_fwd_clkb[12],    iopad_ns_fwd_clk[12],    iopad_ns_fwd_clkb[12],
+                                                        iopad_rx[259:240],       iopad_tx[259:240]}),
+
+    
+                    .io_aib_ch13                  ({ iopad_ns_sr_data[13],    iopad_ns_sr_load[13],    iopad_fs_sr_data[13],     iopad_fs_sr_load[13],
+                                                   iopad_unused_aib91[13],  iopad_unused_aib90[13],                      LO,                       LO,
+                                                     iopad_ns_rcv_clk[13],   iopad_ns_rcv_clkb[13],    iopad_ns_sr_clkb[13],      iopad_ns_sr_clk[13], 
+                                                      iopad_fs_sr_clk[13],    iopad_fs_sr_clkb[13],                      LO,                       LO,
+                                                                       LO,                      LO,  iopad_unused_aib77[13],   iopad_unused_aib76[13],
+                                                   iopad_unused_aib75[13],                      LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[13],  iopad_unused_aib70[13],  iopad_unused_aib69[13],   iopad_unused_aib68[13],
+                                                                      LO,   iopad_unused_aib66[13], iopad_fs_adapt_rstn[13],                       LO,
+                                                                      LO,   iopad_unused_aib62[13],                      HI,   iopad_unused_aib60[13],
+                                                    iopad_fs_rcv_clkb[13],                      LO,    iopad_fs_rcv_clk[13],  iopad_ns_adapt_rstn[13],
+                                                   iopad_unused_aib55[13],  iopad_unused_aib54[13],  iopad_unused_aib53[13],   iopad_unused_aib52[13],
+                                                   iopad_unused_aib51[13],  iopad_unused_aib50[13],    iopad_fs_mac_rdy[13],   iopad_unused_aib48[13],
+                                                   iopad_unused_aib47[13],  iopad_unused_aib46[13],                      HI,     iopad_fs_mac_rdy[13],
+                                                     iopad_fs_fwd_clk[13],   iopad_fs_fwd_clkb[13],    iopad_ns_fwd_clk[13],    iopad_ns_fwd_clkb[13],
+                                                        iopad_rx[279:260],  iopad_tx[279:260]}),
+
+    
+                    .io_aib_ch14                  ({ iopad_ns_sr_data[14],    iopad_ns_sr_load[14],    iopad_fs_sr_data[14],     iopad_fs_sr_load[14],
+                                                   iopad_unused_aib91[14],  iopad_unused_aib90[14],                      LO,                       LO,
+                                                     iopad_ns_rcv_clk[14],   iopad_ns_rcv_clkb[14],    iopad_ns_sr_clkb[14],      iopad_ns_sr_clk[14], 
+                                                      iopad_fs_sr_clk[14],    iopad_fs_sr_clkb[14],                      LO,                       LO,
+                                                                      LO,                       LO,  iopad_unused_aib77[14],   iopad_unused_aib76[14],
+                                                   iopad_unused_aib75[14],                      LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[14],  iopad_unused_aib70[14],  iopad_unused_aib69[14],   iopad_unused_aib68[14],
+                                                                      LO,   iopad_unused_aib66[14], iopad_fs_adapt_rstn[14],                      LO,
+                                                                      LO,   iopad_unused_aib62[14],                      HI,   iopad_unused_aib60[14],
+                                                    iopad_fs_rcv_clkb[14],                     LO,     iopad_fs_rcv_clk[14],  iopad_ns_adapt_rstn[14],
+                                                   iopad_unused_aib55[14],  iopad_unused_aib54[14],  iopad_unused_aib53[14],   iopad_unused_aib52[14],
+                                                   iopad_unused_aib51[14],  iopad_unused_aib50[14],    iopad_fs_mac_rdy[14],   iopad_unused_aib48[14],
+                                                   iopad_unused_aib47[14],  iopad_unused_aib46[14],                      HI,     iopad_fs_mac_rdy[14],
+                                                     iopad_fs_fwd_clk[14],   iopad_fs_fwd_clkb[14],    iopad_ns_fwd_clk[14],    iopad_ns_fwd_clkb[14],
+                                                      iopad_rx[299:280],     iopad_tx[299:280]}),
+
+    
+                    .io_aib_ch15                  ({ iopad_ns_sr_data[15],    iopad_ns_sr_load[15],    iopad_fs_sr_data[15],     iopad_fs_sr_load[15],
+                                                   iopad_unused_aib91[15],  iopad_unused_aib90[15],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[15],   iopad_ns_rcv_clkb[15],    iopad_ns_sr_clkb[15],      iopad_ns_sr_clk[15], 
+                                                      iopad_fs_sr_clk[15],    iopad_fs_sr_clkb[15],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[15],   iopad_unused_aib76[15],
+                                                   iopad_unused_aib75[15],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[15],  iopad_unused_aib70[15],  iopad_unused_aib69[15],   iopad_unused_aib68[15],
+                                                                      LO,   iopad_unused_aib66[15], iopad_fs_adapt_rstn[15],                      LO,
+                                                                      LO,   iopad_unused_aib62[15],                      HI,   iopad_unused_aib60[15],
+                                                    iopad_fs_rcv_clkb[15],                     LO,     iopad_fs_rcv_clk[15],  iopad_ns_adapt_rstn[15],
+                                                   iopad_unused_aib55[15],  iopad_unused_aib54[15],  iopad_unused_aib53[15],   iopad_unused_aib52[15],
+                                                   iopad_unused_aib51[15],  iopad_unused_aib50[15],    iopad_fs_mac_rdy[15],   iopad_unused_aib48[15],
+                                                   iopad_unused_aib47[15],  iopad_unused_aib46[15],                      HI,     iopad_fs_mac_rdy[15],
+                                                     iopad_fs_fwd_clk[15],   iopad_fs_fwd_clkb[15],    iopad_ns_fwd_clk[15],    iopad_ns_fwd_clkb[15],
+                                                      iopad_rx[319:300],     iopad_tx[319:300]}),
+
+    
+                    .io_aib_ch16                  ({ iopad_ns_sr_data[16],    iopad_ns_sr_load[16],    iopad_fs_sr_data[16],     iopad_fs_sr_load[16],
+                                                   iopad_unused_aib91[16],  iopad_unused_aib90[16],                      LO,                       LO,
+                                                     iopad_ns_rcv_clk[16],   iopad_ns_rcv_clkb[16],    iopad_ns_sr_clkb[16],      iopad_ns_sr_clk[16], 
+                                                      iopad_fs_sr_clk[16],    iopad_fs_sr_clkb[16],                      LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[16],   iopad_unused_aib76[16],
+                                                   iopad_unused_aib75[16],                     LO,                       LO,                       LO,
+                                                   iopad_unused_aib71[16],  iopad_unused_aib70[16],  iopad_unused_aib69[16],   iopad_unused_aib68[16],
+                                                                      LO,   iopad_unused_aib66[16], iopad_fs_adapt_rstn[16],                       LO,
+                                                                      LO,   iopad_unused_aib62[16],                      HI,   iopad_unused_aib60[16],
+                                                    iopad_fs_rcv_clkb[16],                     LO,     iopad_fs_rcv_clk[16],  iopad_ns_adapt_rstn[16],
+                                                   iopad_unused_aib55[16],  iopad_unused_aib54[16],  iopad_unused_aib53[16],   iopad_unused_aib52[16],
+                                                   iopad_unused_aib51[16],  iopad_unused_aib50[16],    iopad_fs_mac_rdy[16],   iopad_unused_aib48[16],
+                                                   iopad_unused_aib47[16],  iopad_unused_aib46[16],                      HI,     iopad_fs_mac_rdy[16],
+                                                     iopad_fs_fwd_clk[16],   iopad_fs_fwd_clkb[16],    iopad_ns_fwd_clk[16],    iopad_ns_fwd_clkb[16],
+                                                      iopad_rx[339:320],     iopad_tx[339:320]}),
+
+    
+                    .io_aib_ch17                  ({ iopad_ns_sr_data[17],    iopad_ns_sr_load[17],    iopad_fs_sr_data[17],     iopad_fs_sr_load[17],
+                                                   iopad_unused_aib91[17],  iopad_unused_aib90[17],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[17],   iopad_ns_rcv_clkb[17],    iopad_ns_sr_clkb[17],      iopad_ns_sr_clk[17], 
+                                                      iopad_fs_sr_clk[17],    iopad_fs_sr_clkb[17],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[17],   iopad_unused_aib76[17],
+                                                   iopad_unused_aib75[17],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[17],  iopad_unused_aib70[17],  iopad_unused_aib69[17],   iopad_unused_aib68[17],
+                                                                      LO,   iopad_unused_aib66[17], iopad_fs_adapt_rstn[17],                      LO,
+                                                                      LO,   iopad_unused_aib62[17],                      HI,   iopad_unused_aib60[17],
+                                                    iopad_fs_rcv_clkb[17],                     LO,     iopad_fs_rcv_clk[17],  iopad_ns_adapt_rstn[17],
+                                                   iopad_unused_aib55[17],  iopad_unused_aib54[17],  iopad_unused_aib53[17],   iopad_unused_aib52[17],
+                                                   iopad_unused_aib51[17],  iopad_unused_aib50[17],    iopad_fs_mac_rdy[17],   iopad_unused_aib48[17],
+                                                   iopad_unused_aib47[17],  iopad_unused_aib46[17],                      HI,     iopad_fs_mac_rdy[17],
+                                                     iopad_fs_fwd_clk[17],   iopad_fs_fwd_clkb[17],    iopad_ns_fwd_clk[17],    iopad_ns_fwd_clkb[17],
+                                                      iopad_rx[359:340],     iopad_tx[359:340]}),
+
+                    .io_aib_ch18                  ({ iopad_ns_sr_data[18],    iopad_ns_sr_load[18],    iopad_fs_sr_data[18],     iopad_fs_sr_load[18],
+                                                   iopad_unused_aib91[18],  iopad_unused_aib90[18],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[18],   iopad_ns_rcv_clkb[18],    iopad_ns_sr_clkb[18],      iopad_ns_sr_clk[18], 
+                                                      iopad_fs_sr_clk[18],    iopad_fs_sr_clkb[18],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[18],   iopad_unused_aib76[18],
+                                                   iopad_unused_aib75[18],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[18],  iopad_unused_aib70[18],  iopad_unused_aib69[18],   iopad_unused_aib68[18],
+                                                                      LO,   iopad_unused_aib66[18], iopad_fs_adapt_rstn[18],                      LO,
+                                                                      LO,   iopad_unused_aib62[18],                      HI,   iopad_unused_aib60[18],
+                                                    iopad_fs_rcv_clkb[18],                     LO,     iopad_fs_rcv_clk[18],  iopad_ns_adapt_rstn[18],
+                                                   iopad_unused_aib55[18],  iopad_unused_aib54[18],  iopad_unused_aib53[18],   iopad_unused_aib52[18],
+                                                   iopad_unused_aib51[18],  iopad_unused_aib50[18],    iopad_fs_mac_rdy[18],   iopad_unused_aib48[18],
+                                                   iopad_unused_aib47[18],  iopad_unused_aib46[18],                      HI,     iopad_fs_mac_rdy[18],
+                                                     iopad_fs_fwd_clk[18],   iopad_fs_fwd_clkb[18],    iopad_ns_fwd_clk[18],    iopad_ns_fwd_clkb[18],
+                                                      iopad_rx[379:360],     iopad_tx[379:360]}),
+
+    
+                    .io_aib_ch19                  ({ iopad_ns_sr_data[19],    iopad_ns_sr_load[19],    iopad_fs_sr_data[19],     iopad_fs_sr_load[19],
+                                                   iopad_unused_aib91[19],  iopad_unused_aib90[19],                      LO,                       LO,
+                                                     iopad_ns_rcv_clk[19],   iopad_ns_rcv_clkb[19],    iopad_ns_sr_clkb[19],      iopad_ns_sr_clk[19], 
+                                                      iopad_fs_sr_clk[19],    iopad_fs_sr_clkb[19],                      LO,                       LO,
+                                                                       LO,                      LO,  iopad_unused_aib77[19],   iopad_unused_aib76[19],
+                                                   iopad_unused_aib75[19],                      LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[19],  iopad_unused_aib70[19],   iopad_unused_aib69[19],   iopad_unused_aib68[19],
+                                                                       LO,  iopad_unused_aib66[19],  iopad_fs_adapt_rstn[19],                       LO,
+                                                                       LO,  iopad_unused_aib62[19],                       HI,   iopad_unused_aib60[19],
+                                                    iopad_fs_rcv_clkb[19],                      LO,     iopad_fs_rcv_clk[19],  iopad_ns_adapt_rstn[19],
+                                                   iopad_unused_aib55[19],  iopad_unused_aib54[19],   iopad_unused_aib53[19],   iopad_unused_aib52[19],
+                                                   iopad_unused_aib51[19],  iopad_unused_aib50[19],     iopad_fs_mac_rdy[19],   iopad_unused_aib48[19],
+                                                   iopad_unused_aib47[19],  iopad_unused_aib46[19],                       HI,     iopad_fs_mac_rdy[19],
+                                                     iopad_fs_fwd_clk[19],   iopad_fs_fwd_clkb[19],    iopad_ns_fwd_clk[19],    iopad_ns_fwd_clkb[19],
+                                                      iopad_rx[399:380],     iopad_tx[399:380]}),
+
+                    .io_aib_ch20                  ({ iopad_ns_sr_data[20],    iopad_ns_sr_load[20],    iopad_fs_sr_data[20],     iopad_fs_sr_load[20],
+                                                   iopad_unused_aib91[20],  iopad_unused_aib90[20],                      LO,                       LO,
+                                                     iopad_ns_rcv_clk[20],   iopad_ns_rcv_clkb[20],    iopad_ns_sr_clkb[20],      iopad_ns_sr_clk[20], 
+                                                      iopad_fs_sr_clk[20],    iopad_fs_sr_clkb[20],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[20],   iopad_unused_aib76[20],
+                                                   iopad_unused_aib75[20],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[20],  iopad_unused_aib70[20],  iopad_unused_aib69[20],   iopad_unused_aib68[20],
+                                                                      LO,   iopad_unused_aib66[20], iopad_fs_adapt_rstn[20],                      LO,
+                                                                      LO,   iopad_unused_aib62[20],                      HI,   iopad_unused_aib60[20],
+                                                    iopad_fs_rcv_clkb[20],                     LO,     iopad_fs_rcv_clk[20],  iopad_ns_adapt_rstn[20],
+                                                   iopad_unused_aib55[20],  iopad_unused_aib54[20],  iopad_unused_aib53[20],   iopad_unused_aib52[20],
+                                                   iopad_unused_aib51[20],  iopad_unused_aib50[20],    iopad_fs_mac_rdy[20],   iopad_unused_aib48[20],
+                                                   iopad_unused_aib47[20],  iopad_unused_aib46[20],                      HI,     iopad_fs_mac_rdy[20],
+                                                     iopad_fs_fwd_clk[20],   iopad_fs_fwd_clkb[20],    iopad_ns_fwd_clk[20],    iopad_ns_fwd_clkb[20],
+                                                      iopad_rx[419:400],     iopad_tx[419:400]}),
+
+    
+                    .io_aib_ch21                  ({ iopad_ns_sr_data[21],    iopad_ns_sr_load[21],    iopad_fs_sr_data[21],     iopad_fs_sr_load[21],
+                                                   iopad_unused_aib91[21],  iopad_unused_aib90[21],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[21],   iopad_ns_rcv_clkb[21],    iopad_ns_sr_clkb[21],      iopad_ns_sr_clk[21], 
+                                                      iopad_fs_sr_clk[21],    iopad_fs_sr_clkb[21],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[21],   iopad_unused_aib76[21],
+                                                   iopad_unused_aib75[21],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[21],  iopad_unused_aib70[21],  iopad_unused_aib69[21],   iopad_unused_aib68[21],
+                                                                      LO,   iopad_unused_aib66[21], iopad_fs_adapt_rstn[21],                      LO,
+                                                                      LO,   iopad_unused_aib62[21],                      HI,   iopad_unused_aib60[21],
+                                                    iopad_fs_rcv_clkb[21],                     LO,     iopad_fs_rcv_clk[21],  iopad_ns_adapt_rstn[21],
+                                                   iopad_unused_aib55[21],  iopad_unused_aib54[21],  iopad_unused_aib53[21],   iopad_unused_aib52[21],
+                                                   iopad_unused_aib51[21],  iopad_unused_aib50[21],    iopad_fs_mac_rdy[21],   iopad_unused_aib48[21],
+                                                   iopad_unused_aib47[21],  iopad_unused_aib46[21],                      HI,     iopad_fs_mac_rdy[21],
+                                                     iopad_fs_fwd_clk[21],   iopad_fs_fwd_clkb[21],    iopad_ns_fwd_clk[21],    iopad_ns_fwd_clkb[21],
+                                                      iopad_rx[439:420],     iopad_tx[439:420]}),
+
+    
+                    .io_aib_ch22                  ({ iopad_ns_sr_data[22],    iopad_ns_sr_load[22],    iopad_fs_sr_data[22],     iopad_fs_sr_load[22],
+                                                   iopad_unused_aib91[22],  iopad_unused_aib90[22],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[22],   iopad_ns_rcv_clkb[22],    iopad_ns_sr_clkb[22],      iopad_ns_sr_clk[22], 
+                                                      iopad_fs_sr_clk[22],    iopad_fs_sr_clkb[22],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[22],   iopad_unused_aib76[22],
+                                                   iopad_unused_aib75[22],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[22],  iopad_unused_aib70[22],  iopad_unused_aib69[22],   iopad_unused_aib68[22],
+                                                                      LO,   iopad_unused_aib66[22], iopad_fs_adapt_rstn[22],                      LO,
+                                                                      LO,   iopad_unused_aib62[22],                      HI,   iopad_unused_aib60[22],
+                                                    iopad_fs_rcv_clkb[22],                     LO,     iopad_fs_rcv_clk[22],  iopad_ns_adapt_rstn[22],
+                                                   iopad_unused_aib55[22],  iopad_unused_aib54[22],  iopad_unused_aib53[22],   iopad_unused_aib52[22],
+                                                   iopad_unused_aib51[22],  iopad_unused_aib50[22],    iopad_fs_mac_rdy[22],   iopad_unused_aib48[22],
+                                                   iopad_unused_aib47[22],  iopad_unused_aib46[22],                      HI,     iopad_fs_mac_rdy[22],
+                                                     iopad_fs_fwd_clk[22],   iopad_fs_fwd_clkb[22],    iopad_ns_fwd_clk[22],    iopad_ns_fwd_clkb[22],
+                                                      iopad_rx[459:440],     iopad_tx[459:440]}),
+
+                    .io_aib_ch23                  ({ iopad_ns_sr_data[23],    iopad_ns_sr_load[23],    iopad_fs_sr_data[23],     iopad_fs_sr_load[23],
+                                                   iopad_unused_aib91[23],  iopad_unused_aib90[23],                     LO,                       LO,
+                                                     iopad_ns_rcv_clk[23],   iopad_ns_rcv_clkb[23],    iopad_ns_sr_clkb[23],      iopad_ns_sr_clk[23], 
+                                                      iopad_fs_sr_clk[23],    iopad_fs_sr_clkb[23],                     LO,                       LO,
+                                                                      LO,                      LO,   iopad_unused_aib77[23],   iopad_unused_aib76[23],
+                                                   iopad_unused_aib75[23],                     LO,                      LO,                       LO,
+                                                   iopad_unused_aib71[23],  iopad_unused_aib70[23],  iopad_unused_aib69[23],   iopad_unused_aib68[23],
+                                                                      LO,   iopad_unused_aib66[23], iopad_fs_adapt_rstn[23],                      LO,
+                                                                      LO,   iopad_unused_aib62[23],                      HI,   iopad_unused_aib60[23],
+                                                    iopad_fs_rcv_clkb[23],                     LO,     iopad_fs_rcv_clk[23],  iopad_ns_adapt_rstn[23],
+                                                   iopad_unused_aib55[23],  iopad_unused_aib54[23],  iopad_unused_aib53[23],   iopad_unused_aib52[23],
+                                                   iopad_unused_aib51[23],  iopad_unused_aib50[23],    iopad_fs_mac_rdy[23],   iopad_unused_aib48[23],
+                                                   iopad_unused_aib47[23],  iopad_unused_aib46[23],                      HI,     iopad_fs_mac_rdy[23],
+                                                     iopad_fs_fwd_clk[23],   iopad_fs_fwd_clkb[23],    iopad_ns_fwd_clk[23],    iopad_ns_fwd_clkb[23],
+                                                      iopad_rx[479:460],     iopad_tx[479:460]}),
+
+    
+
+                    .io_aib_aux                  (io_aib_aux),
+                    .io_aux_bg_ext_2k            (io_aux_bg_ext_2k),
+	            .i_iocsr_rdy_aibaux          (i_iocsr_rdy_aibaux),
+	            .i_aibaux_por_vccl_ovrd      (i_aibaux_por_vccl_ovrd),      
+                    .i_aibaux_ctrl_bus0          (i_aibaux_ctrl_bus0), 
+                    .i_aibaux_ctrl_bus1          (i_aibaux_ctrl_bus1),  //observe oosc dft[12:0] 
+                    .i_aibaux_ctrl_bus2          (i_aibaux_ctrl_bus2), 
+                    .i_aibaux_osc_fuse_trim      (i_aibaux_osc_fuse_trim), 
+                    .i_osc_bypclk                (i_osc_bypclk),  
+                    .o_aibaux_osc_clk            (o_aibaux_osc_clk),      
+                    .i_scan_clk                  (i_scan_clk), 
+                    .i_test_clk_125m             (i_test_clk_125m), 
+                    .i_test_clk_1g               (i_test_clk_1g), 
+                    .i_test_clk_250m             (i_test_clk_250m), 
+                    .i_test_clk_500m             (i_test_clk_500m), 
+                    .i_test_clk_62m              (i_test_clk_62m), 	      
+                    .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
+                    .i_test_c3adapt_tcb_static_common (i_test_c3adapt_tcb_static_common),
+	            .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
+                    .i_jtag_clkdr                (i_jtag_clkdr),   
+                    .i_jtag_clksel               (i_jtag_clksel),   
+                    .i_jtag_intest               (i_jtag_intest),   
+                    .i_jtag_mode                 (i_jtag_mode),   
+                    .i_jtag_rstb_en              (i_jtag_rstb_en),   
+                    .i_jtag_rstb                 (i_jtag_rstb),   
+                    .i_jtag_weakpdn              (i_jtag_weakpdn),   
+                    .i_jtag_weakpu               (i_jtag_weakpu), 	      
+                    .i_jtag_tx_scan              (i_jtag_tx_scan),
+                    .i_jtag_tx_scanen            (i_jtag_tx_scanen),
+                    .i_aibdft2osc                (i_aibdft2osc),
+                    .o_aibdft2osc                (o_aibdft2osc),
+                    .o_last_bs_out               (o_last_bs_out),
+                    .o_por                       (o_por),
+                    .o_osc_monitor               (o_osc_monitor),
+                    .i_aux_atpg_mode_n           (i_aux_atpg_mode_n), 
+                    .i_aux_atpg_pipeline_global_en (i_aux_atpg_pipeline_global_en),
+                    .i_aux_atpg_rst_n            (i_aux_atpg_rst_n), 
+                    .i_aux_atpg_scan_clk         (i_aux_atpg_scan_clk),
+                    .i_aux_atpg_scan_in          (i_aux_atpg_scan_in),
+                    .i_aux_atpg_scan_shift_n     (i_aux_atpg_scan_shift_n),  
+                    .o_aux_atpg_scan_out         (o_aux_atpg_scan_out)    	      
+               );
+
+    
+endmodule 
+
