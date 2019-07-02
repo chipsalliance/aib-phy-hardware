@@ -81,6 +81,8 @@ module c3aib_master (
     inout  [19:0]                              iopad_rx,
     inout                                      iopad_ns_fwd_clkb,
     inout                                      iopad_ns_fwd_clk,
+    inout                                      iopad_ns_fwd_div2_clkb,
+    inout                                      iopad_ns_fwd_div2_clk,
     inout                                      iopad_fs_fwd_clkb,
     inout                                      iopad_fs_fwd_clk,
     inout                                      iopad_fs_mac_rdy,
@@ -95,6 +97,8 @@ module c3aib_master (
     inout                                      iopad_ns_sr_clkb,
     inout                                      iopad_ns_rcv_clkb,
     inout                                      iopad_ns_rcv_clk,
+    inout                                      iopad_ns_rcv_div2_clkb,
+    inout                                      iopad_ns_rcv_div2_clk,
     inout                                      iopad_fs_sr_load,
     inout                                      iopad_fs_sr_data,
     inout                                      iopad_ns_sr_load,
@@ -201,14 +205,9 @@ wire [39:0] o_tx_pma_data;
 wire        o_rx_xcvrif_rst_n;
 wire        iopad_unused_aib46;
 wire        iopad_unused_aib47;
-wire        iopad_unused_aib48;
-wire        iopad_unused_aib49;
 wire        iopad_unused_aib50;
 wire        iopad_unused_aib51;
 wire        iopad_unused_aib52;
-wire        iopad_unused_aib53;
-wire        iopad_unused_aib54;
-wire        iopad_unused_aib55;
 wire        iopad_unused_aib60;
 wire        iopad_unused_aib66;
 wire        iopad_unused_aib68;
@@ -328,15 +327,15 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                          .io_aib45              (HI), //From Tim's 3/26 aib_bump_map
                          .io_aib46              (iopad_unused_aib46),
                          .io_aib47              (iopad_unused_aib47),
-                         .io_aib48              (iopad_unused_aib48),
+                         .io_aib48              (iopad_ns_rcv_div2_clk),
                          .io_aib49              (iopad_ns_mac_rdy),
                          .io_aib5               (iopad_tx[5]),
                          .io_aib50              (iopad_unused_aib50),
                          .io_aib51              (iopad_unused_aib51),
                          .io_aib52              (iopad_unused_aib52),
-                         .io_aib53              (iopad_unused_aib53),
-                         .io_aib54              (iopad_unused_aib54),
-                         .io_aib55              (iopad_unused_aib55),
+                         .io_aib53              (iopad_ns_fwd_div2_clk),
+                         .io_aib54              (iopad_ns_fwd_div2_clkb),
+                         .io_aib55              (iopad_ns_rcv_div2_clkb),
                          .io_aib56              (iopad_ns_adapt_rstn),
                          .io_aib57              (iopad_fs_rcv_clk),
                        //.io_aib58              (aib58),
