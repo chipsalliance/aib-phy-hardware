@@ -51,13 +51,13 @@ reg        ms_device_detect, sl_por;
 reg [DATAWIDTH*2-1:0] ms_data_in;
 wire [DATAWIDTH*2-1:0] sl_data_out;
 wire [DATAWIDTH*2-1:0] ms_data_out;
-wire   ms_m_ns_fwd_clk, ms_m_ns_rvc_clk;
-wire   sl_m_ns_fwd_clk, sl_m_ns_rvc_clk;
+wire   ms_m_ns_fwd_clk, ms_m_ns_rcv_clk;
+wire   sl_m_ns_fwd_clk, sl_m_ns_rcv_clk;
 
 assign ms_m_ns_fwd_clk = clk;
-assign ms_m_ns_rvc_clk = clk;
+assign ms_m_ns_rcv_clk = clk;
 assign sl_m_ns_fwd_clk = clk;
-assign sl_m_ns_rvc_clk = clk;
+assign sl_m_ns_rcv_clk = clk;
 
 
     int err_count;
@@ -183,9 +183,9 @@ master
     .data_in(ms_data_in[DATAWIDTH*2 -1:0]), //output data to pad
     .data_out(ms_data_out[DATAWIDTH*2 -1:0]), //input data from pad
     .m_ns_fwd_clk(ms_m_ns_fwd_clk), //output data clock
-    .m_fs_rvc_clk(), 
+    .m_fs_rcv_clk(), 
     .m_fs_fwd_clk(), 
-    .m_ns_rvc_clk(ms_m_ns_rvc_clk), 
+    .m_ns_rcv_clk(ms_m_ns_rcv_clk), 
 
     .ms_ns_adapter_rstn(ms_ns_adapter_rstn),
     .sl_ns_adapter_rstn(sl_ns_adapter_rstn),
@@ -280,9 +280,9 @@ slave
     .data_in(sl_data_out[DATAWIDTH*2-1:0]), //output data to pad
     .data_out(sl_data_out[DATAWIDTH*2-1:0]), //input data from pad
     .m_ns_fwd_clk(sl_m_ns_fwd_clk), //output data clock
-    .m_fs_rvc_clk(), 
+    .m_fs_rcv_clk(), 
     .m_fs_fwd_clk(), 
-    .m_ns_rvc_clk(sl_m_ns_rvc_clk), 
+    .m_ns_rcv_clk(sl_m_ns_rcv_clk), 
 
     .ms_ns_adapter_rstn(ms_ns_adapter_rstn),
     .sl_ns_adapter_rstn(sl_ns_adapter_rstn),

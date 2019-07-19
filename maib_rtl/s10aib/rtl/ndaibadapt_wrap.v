@@ -122,7 +122,7 @@ module ndaibadapt_wrap (
     input  wire       bond_tx_hrdrst_ds_in_fabric_tx_dcd_cal_req,
     input  wire       bond_tx_hrdrst_us_in_fabric_tx_dcd_cal_req,
     
-    // Config  
+    // Config  (These are required for reset, look properly and configure as is in previous project
     input  wire [2:0] csr_config,
     input  wire       csr_clk_in,
     input  wire [2:0] csr_in,
@@ -226,7 +226,7 @@ module ndaibadapt_wrap (
     input  wire        pld_pma_tx_qpi_pulldn,
     input  wire        pld_pma_tx_qpi_pullup,
     input  wire        pld_pma_rx_qpi_pullup,
-    
+    input  wire        pld_pma_aib_tx_clk,    //Pull out for AIB spec. purpose. JZ 11/9/2018
     // PLD DCM
     input  wire        pld_rx_clk1_dcm,
     input  wire        pld_tx_clk1_dcm,
@@ -381,6 +381,8 @@ module ndaibadapt_wrap (
     output wire	       pld_pcs_tx_clk_out2_hioint,
     output wire	       pld_pll_cal_done,
     output wire	       pld_pma_adapt_done,
+    output wire        pld_pma_clkdiv_rx_user,    //Pull out for AIB spec. purpose. JZ 11/9/2018
+    output wire        pld_pma_clkdiv_tx_user,    //Pull out for AIB spec. purpose. JZ 11/9/2018
     output wire	       pld_pma_fpll_clk0bad,
     output wire	       pld_pma_fpll_clk1bad,
     output wire	       pld_pma_fpll_clksel,
@@ -409,6 +411,7 @@ module ndaibadapt_wrap (
     output wire	       pld_rx_hssi_fifo_latency_pulse,
     output wire	       pld_rx_prbs_done,
     output wire	       pld_rx_prbs_err,
+    output wire        pld_sr_clk_out,      //Pull out for AIB spec. purpose. JZ 11/9/2018
     output wire	       pld_ssr_load,
     output wire	[19:0] pld_test_data,
     output wire	       pld_tx_fabric_fifo_empty,
@@ -432,6 +435,8 @@ module ndaibadapt_wrap (
     output wire        pld_fabric_asn_dll_lock_en,	
     output wire [2:0]  pld_tx_ssr_reserved_out,
     output wire [1:0]  pld_rx_ssr_reserved_out,
+    output wire [117:0] ssrin_parallel_in,
+    output wire [93:0] ssrout_parallel_out_latch,
     
     // PLD DCM
     output wire        pld_pcs_rx_clk_out1_dcm,
@@ -603,7 +608,10 @@ wire          aib_fabric_tx_dcd_cal_req;
 wire          aib_fabric_tx_sr_clk_out;
 wire          aib_fabric_tx_transfer_clk;
     
-
+assign        pld_pma_clkdiv_rx_user = aib_fabric_pld_pma_clkdiv_rx_user;
+assign        pld_pma_clkdiv_tx_user = aib_fabric_pld_pma_clkdiv_tx_user;
+assign        pld_pma_aib_tx_clk = aib_fabric_pma_aib_tx_clk;
+assign        pld_sr_clk_out = aib_fabric_tx_sr_clk_out;
                       
 hdpldadapt hdpldadapt (
   // AIB
@@ -1055,6 +1063,8 @@ hdpldadapt hdpldadapt (
   .pld_fabric_asn_dll_lock_en                   (pld_fabric_asn_dll_lock_en),	
   .pld_tx_ssr_reserved_out                      (pld_tx_ssr_reserved_out),
   .pld_rx_ssr_reserved_out                      (pld_rx_ssr_reserved_out),
+  .ssrin_parallel_in                            (ssrin_parallel_in),
+  .ssrout_parallel_out_latch                    (ssrout_parallel_out_latch),
   
   // PLD DCM
   .pld_pcs_rx_clk_out1_dcm                      (pld_pcs_rx_clk_out1_dcm),
@@ -1063,96 +1073,46 @@ hdpldadapt hdpldadapt (
   .pld_pcs_tx_clk_out2_dcm                      (pld_pcs_tx_clk_out2_dcm)
 );
 
-/***
 aibnd_top_wrp aibnd_top_wrp ( 
-                                    .aib0               (),       // Templated
-                                    .aib1               (),       // Templated
-                                    .aib2               (),       // Templated
-                                    .aib3               (),       // Templated
-                                    .aib4               (),       // Templated
-                                    .aib5               (),       // Templated
-                                    .aib6               (),       // Templated
-                                    .aib7               (),       // Templated
-                                    .aib8               (),       // Templated
-                                    .aib9               (),       // Templated
-                                    .aib10              (),      // Templated
-                                    .aib11              (),      // Templated
-                                    .aib12              (),      // Templated
-                                    .aib13              (),      // Templated
-                                    .aib14              (),      // Templated
-                                    .aib15              (),      // Templated
-                                    .aib16              (),      // Templated
-                                    .aib17              (),      // Templated
-                                    .aib18              (),      // Templated
-                                    .aib19              (),      // Templated
-                                    .aib20              (),      // Templated
-                                    .aib21              (),      // Templated
-                                    .aib22              (),      // Templated
-                                    .aib23              (),      // Templated
-                                    .aib24              (),      // Templated
-                                    .aib25              (),      // Templated
-                                    .aib26              (),      // Templated
-                                    .aib27              (),      // Templated
-                                    .aib28              (),      // Templated
-                                    .aib29              (),      // Templated
-                                    .aib30              (),      // Templated
-                                    .aib31              (),      // Templated
-                                    .aib32              (),      // Templated
-                                    .aib33              (),      // Templated
-                                    .aib34              (),      // Templated
-                                    .aib35              (),      // Templated
-                                    .aib36              (),      // Templated
-                                    .aib37              (),      // Templated
-                                    .aib38              (),      // Templated
-                                    .aib39              (),      // Templated
-                                    .aib40              (),      // Templated
-                                    .aib41              (),      // Templated
-                                    .aib42              (),      // Templated
-                                    .aib43              (),      // Templated
-                                    //.aib0               (io_aib0),       // Templated
-                                    //.aib1               (io_aib1),       // Templated
-                                    //.aib2               (io_aib2),       // Templated
-                                    //.aib3               (io_aib3),       // Templated
-                                    //.aib4               (io_aib4),       // Templated
-                                    //.aib5               (io_aib5),       // Templated
-                                    //.aib6               (io_aib6),       // Templated
-                                    //.aib7               (io_aib7),       // Templated
-                                    //.aib8               (io_aib8),       // Templated
-                                    //.aib9               (io_aib9),       // Templated
-                                    //.aib10              (io_aib10),      // Templated
-                                    //.aib11              (io_aib11),      // Templated
-                                    //.aib12              (io_aib12),      // Templated
-                                    //.aib13              (io_aib13),      // Templated
-                                    //.aib14              (io_aib14),      // Templated
-                                    //.aib15              (io_aib15),      // Templated
-                                    //.aib16              (io_aib16),      // Templated
-                                    //.aib17              (io_aib17),      // Templated
-                                    //.aib18              (io_aib18),      // Templated
-                                    //.aib19              (io_aib19),      // Templated
-                                    //.aib20              (io_aib20),      // Templated
-                                    //.aib21              (io_aib21),      // Templated
-                                    //.aib22              (io_aib22),      // Templated
-                                    //.aib23              (io_aib23),      // Templated
-                                    //.aib24              (io_aib24),      // Templated
-                                    //.aib25              (io_aib25),      // Templated
-                                    //.aib26              (io_aib26),      // Templated
-                                    //.aib27              (io_aib27),      // Templated
-                                    //.aib28              (io_aib28),      // Templated
-                                    //.aib29              (io_aib29),      // Templated
-                                    //.aib30              (io_aib30),      // Templated
-                                    //.aib31              (io_aib31),      // Templated
-                                    //.aib32              (io_aib32),      // Templated
-                                    //.aib33              (io_aib33),      // Templated
-                                    //.aib34              (io_aib34),      // Templated
-                                    //.aib35              (io_aib35),      // Templated
-                                    //.aib36              (io_aib36),      // Templated
-                                    //.aib37              (io_aib37),      // Templated
-                                    //.aib38              (io_aib38),      // Templated
-                                    //.aib39              (io_aib39),      // Templated
-                                    //.aib40              (io_aib40),      // Templated
-                                    //.aib41              (io_aib41),      // Templated
-                                    //.aib42              (io_aib42),      // Templated
-                                    //.aib43              (io_aib43),      // Templated
+    .aib0                                      (io_aib0),
+    .aib1                                      (io_aib1),
+    .aib10                                     (io_aib10),
+    .aib11                                     (io_aib11),
+    .aib12                                     (io_aib12),
+    .aib13                                     (io_aib13),
+    .aib14                                     (io_aib14),
+    .aib15                                     (io_aib15),
+    .aib16                                     (io_aib16),
+    .aib17                                     (io_aib17),
+    .aib18                                     (io_aib18),
+    .aib19                                     (io_aib19),
+    .aib2                                      (io_aib2),
+    .aib20                                     (io_aib20),
+    .aib21                                     (io_aib21),
+    .aib22                                     (io_aib22),
+    .aib23                                     (io_aib23),
+    .aib24                                     (io_aib24),
+    .aib25                                     (io_aib25),
+    .aib26                                     (io_aib26),
+    .aib27                                     (io_aib27),
+    .aib28                                     (io_aib28),
+    .aib29                                     (io_aib29),
+    .aib3                                      (io_aib3),
+    .aib30                                     (io_aib30),
+    .aib31                                     (io_aib31),
+    .aib32                                     (io_aib32),
+    .aib33                                     (io_aib33),
+    .aib34                                     (io_aib34),
+    .aib35                                     (io_aib35),
+    .aib36                                     (io_aib36),
+    .aib37                                     (io_aib37),
+    .aib38                                     (io_aib38),
+    .aib39                                     (io_aib39),
+    .aib4                                      (io_aib4),
+    .aib40                                     (io_aib40),
+    .aib41                                     (io_aib41),
+    .aib42                                     (io_aib42),
+    .aib43                                     (io_aib43),
     .aib44                                     (io_aib44),
     .aib45                                     (io_aib45),
     .aib46                                     (io_aib46),
@@ -1195,14 +1155,10 @@ aibnd_top_wrp aibnd_top_wrp (
     .aib8                                      (io_aib8),
     .aib80                                     (io_aib80),
     .aib81                                     (io_aib81),
-                                    .aib82              (),      // Templated
-                                    .aib83              (),      // Templated
-                                    .aib84              (),      // Templated
-                                    .aib85              (),      // Templated
-    //.aib82                                     (io_aib82),
-    //.aib83                                     (io_aib83),
-    //.aib84                                     (io_aib84),
-    //.aib85                                     (io_aib85),
+    .aib82                                     (io_aib82),
+    .aib83                                     (io_aib83),
+    .aib84                                     (io_aib84),
+    .aib85                                     (io_aib85),
     .aib86                                     (io_aib86),
     .aib87                                     (io_aib87),
     .aib88                                     (io_aib88),
@@ -1210,14 +1166,10 @@ aibnd_top_wrp aibnd_top_wrp (
     .aib9                                      (io_aib9),
     .aib90                                     (io_aib90),
     .aib91                                     (io_aib91),
-    //.aib92                                     (io_aib92),
-    //.aib93                                     (io_aib93),
-    //.aib94                                     (io_aib94),
-    //.aib95                                     (io_aib95),
-                                    .aib92              (),      // Templated
-                                    .aib93              (),      // Templated
-                                    .aib94              (),      // Templated
-                                    .aib95              (),      // Templated
+    .aib92                                     (io_aib92),
+    .aib93                                     (io_aib93),
+    .aib94                                     (io_aib94),
+    .aib95                                     (io_aib95),
     .aib_fabric_adapter_rx_pld_rst_n           (aib_fabric_adapter_rx_pld_rst_n),
     .aib_fabric_adapter_tx_pld_rst_n           (aib_fabric_adapter_tx_pld_rst_n),
     .aib_fabric_avmm1_data_in                  (aib_fabric_avmm1_data_in),
@@ -1376,108 +1328,4 @@ aibnd_top_wrp aibnd_top_wrp (
     .ored_shift_en_out_chain1                  (ored_shift_en_out_chain1),
     .ored_shift_en_out_chain2                  (ored_shift_en_out_chain2) 
 );
-***/
-wire [19:0] sl_dataout0,sl_dataout1;
-
-    parameter DATAWIDTH      = 20;
-aib #(.DATAWIDTH(DATAWIDTH))  slave
- ( 
-    .iopad_tx({io_aib39, io_aib38,
-     io_aib37, io_aib36, io_aib35, io_aib34, io_aib33, io_aib32, io_aib31, io_aib30, io_aib29,
-     io_aib28, io_aib27, io_aib26, io_aib25, io_aib24, io_aib23, io_aib22, io_aib21, io_aib20}),
-    .iopad_rx({io_aib19, io_aib18, io_aib17,
-     io_aib16, io_aib15, io_aib14, io_aib13, io_aib12, io_aib11, io_aib10, io_aib9, io_aib8, io_aib7,
-     io_aib6, io_aib5, io_aib4, io_aib3, io_aib2, io_aib1, io_aib0}),
-    .iopad_ns_rcv_clkb(io_aib59), 
-    .iopad_ns_rcv_clk(io_aib57),
-    //.iopad_ns_fwd_clk(aib43), 
-    //.iopad_ns_fwd_clkb(aib42),
-    .iopad_ns_fwd_clk(io_aib43), 
-    .iopad_ns_fwd_clkb(io_aib42),
-    .iopad_ns_sr_clk(io_aib83), 
-    .iopad_ns_sr_clkb(io_aib82),
-    .iopad_ns_sr_load(io_aib92), 
-    .iopad_ns_sr_data(io_aib93),
-    //.iopad_ns_mac_rdy(sl_rstno), 
-    //.iopad_ns_adapter_rstn(sl_arstno),
-    .iopad_ns_mac_rdy(io_aib44), 
-    .iopad_ns_adapter_rstn(io_aib65),
-    .iopad_spare1(), 
-    .iopad_spare0(),
-    .iopad_fs_rcv_clkb(io_aib86), 
-    .iopad_fs_rcv_clk(io_aib87),
-    .iopad_fs_fwd_clkb(io_aib40), 
-    .iopad_fs_fwd_clk(io_aib41),
-    .iopad_fs_sr_clkb(io_aib84), 
-    .iopad_fs_sr_clk(io_aib85),
-    .iopad_fs_sr_load(io_aib94), 
-    .iopad_fs_sr_data(io_aib95),
-    //.iopad_fs_mac_rdy(pld_adapter_rx_pld_rst_n), 
-    //.iopad_fs_adapter_rstn(pld_adapter_tx_pld_rst_n),
-    .iopad_fs_mac_rdy(io_aib49), 
-    .iopad_fs_adapter_rstn(io_aib56),
-
-    .iopad_device_detect(device_detect),
-    .iopad_device_detect_copy(device_detectrdcy),
-    .iopad_por(),
-    .iopad_por_copy(),
-
-    .data_in({sl_dataout1[19:0],sl_dataout0[19:0]}), //output data to pad
-    .data_out({sl_dataout1[19:0],sl_dataout0[19:0]}), //input data from pad
-    .m_ns_fwd_clk(pld_tx_clk1_rowclk), //output data clock
-    .m_fs_rvc_clk(),
-    .m_fs_fwd_clk(),
-    .m_ns_rvc_clk(pld_tx_clk1_rowclk),
-
-    .ms_ns_adapter_rstn(pld_adapter_tx_pld_rst_n),
-    .sl_ns_adapter_rstn(pld_adapter_tx_pld_rst_n),
-    .ms_ns_mac_rdy(pld_adapter_rx_pld_rst_n),
-    .sl_ns_mac_rdy(pld_adapter_rx_pld_rst_n),
-    .fs_mac_rdy(),
-
-    .ms_config_done(1'b1),
-    .ms_rx_dcc_dll_lock_req(1'b0),
-    .ms_tx_dcc_dll_lock_req(1'b0),
-    .sl_config_done(pld_adapter_rx_pld_rst_n),
-    .sl_rx_dcc_dll_lock_req(pld_rx_dll_lock_req),
-    .sl_tx_dcc_dll_lock_req(pld_tx_dll_lock_req),
-    .ms_tx_transfer_en(),
-    .ms_rx_transfer_en(),
-    .sl_tx_transfer_en(),
-    .sl_rx_transfer_en(),
-    .sr_ms_tomac(),
-    .sr_sl_tomac(),
-    .ms_nsl(1'b0),
-
-    .iddren(1'b1),
-    .idataselb(1'b0), //output async data selection
-    .itxen(1'b1), //data tx enable
-    .irxen(3'b111),//data input enable
-
-    .ms_device_detect(),
-    .sl_por(pld_adapter_rx_pld_rst_n),
-
-    .jtag_clkdr_in(1'b0),
-    .scan_out(),
-    .jtag_intest(1'b0),
-    .jtag_mode_in(1'b0),
-    .jtag_rstb(1'b0),
-    .jtag_rstb_en(1'b0),
-    .jtag_weakpdn(1'b0),
-    .jtag_weakpu(1'b0),
-    .jtag_tx_scanen_in(1'b0),
-    .scan_in(1'b0),
-
-//Redundancy control signals
-`include "redundancy_ctrl_sim.vh"
-    .sl_external_cntl_26_0({1'b1,26'b0}),
-    .sl_external_cntl_30_28(3'b0),
-    .sl_external_cntl_57_32(26'b0),
-
-    .ms_external_cntl_4_0(5'b0),
-    .ms_external_cntl_65_8(58'b0),
-
-    .vccl_aib(1'b1),
-    .vssl_aib(1'b0) );
-
 endmodule

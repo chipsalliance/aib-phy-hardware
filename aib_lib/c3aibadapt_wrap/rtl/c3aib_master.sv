@@ -103,6 +103,39 @@ module c3aib_master (
     inout                                      iopad_fs_sr_data,
     inout                                      iopad_ns_sr_load,
     inout                                      iopad_ns_sr_data,
+    inout                                      iopad_unused_aib45,
+    inout                                      iopad_unused_aib46,
+    inout                                      iopad_unused_aib47,
+    inout                                      iopad_unused_aib50,
+    inout                                      iopad_unused_aib51,
+    inout                                      iopad_unused_aib52,
+    inout                                      iopad_unused_aib58,
+    inout                                      iopad_unused_aib60,
+    inout                                      iopad_unused_aib61,
+    inout                                      iopad_unused_aib62,
+    inout                                      iopad_unused_aib63,
+    inout                                      iopad_unused_aib64,
+    inout                                      iopad_unused_aib66,
+    inout                                      iopad_unused_aib67,
+    inout                                      iopad_unused_aib68,
+    inout                                      iopad_unused_aib69,
+    inout                                      iopad_unused_aib70,
+    inout                                      iopad_unused_aib71,
+    inout                                      iopad_unused_aib72,
+    inout                                      iopad_unused_aib73,
+    inout                                      iopad_unused_aib74,
+    inout                                      iopad_unused_aib75,
+    inout                                      iopad_unused_aib76,
+    inout                                      iopad_unused_aib77,
+    inout                                      iopad_unused_aib78,
+    inout                                      iopad_unused_aib79,
+    inout                                      iopad_unused_aib80,
+    inout                                      iopad_unused_aib81,
+    inout                                      iopad_unused_aib88,
+    inout                                      iopad_unused_aib89,
+    inout                                      iopad_unused_aib90,
+    inout                                      iopad_unused_aib91,
+
   //================================================================================================
   // DFT related interface
   // DFT CLK  All go to c3dfx_aibadaptwrap_tcb.
@@ -203,23 +236,6 @@ wire        o_tx_transfer_clk;
 wire        o_tx_transfer_div2_clk;
 wire [39:0] o_tx_pma_data;
 wire        o_rx_xcvrif_rst_n;
-wire        iopad_unused_aib46;
-wire        iopad_unused_aib47;
-wire        iopad_unused_aib50;
-wire        iopad_unused_aib51;
-wire        iopad_unused_aib52;
-wire        iopad_unused_aib60;
-wire        iopad_unused_aib66;
-wire        iopad_unused_aib68;
-wire        iopad_unused_aib69;
-wire        iopad_unused_aib70;
-wire        iopad_unused_aib71;
-wire        iopad_unused_aib75;
-wire        iopad_unused_aib76;
-wire        iopad_unused_aib77;
-wire        iopad_unused_aib84;
-wire        iopad_unused_aib90;
-wire        iopad_unused_aib91;
 wire        HI, LO;
 assign      HI = 1'b1;
 assign      LO = 1'b0;
@@ -323,8 +339,8 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                          .io_aib42              (iopad_fs_fwd_clkb),
                          .io_aib43              (iopad_fs_fwd_clk),
                          .io_aib44              (iopad_fs_mac_rdy),
-                       //.io_aib45              (aib45),
-                         .io_aib45              (HI), //From Tim's 3/26 aib_bump_map
+                         .io_aib45              (iopad_unused_aib45),
+                       //.io_aib45              (HI), //From Tim's 3/26 aib_bump_map
                          .io_aib46              (iopad_unused_aib46),
                          .io_aib47              (iopad_unused_aib47),
                          .io_aib48              (iopad_ns_rcv_div2_clk),
@@ -338,55 +354,55 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                          .io_aib55              (iopad_ns_rcv_div2_clkb),
                          .io_aib56              (iopad_ns_adapt_rstn),
                          .io_aib57              (iopad_fs_rcv_clk),
-                       //.io_aib58              (aib58),
-                         .io_aib58              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib58              (iopad_unused_aib58),
+                       //.io_aib58              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib59              (iopad_fs_rcv_clkb),
                          .io_aib6               (iopad_tx[6]),
                          .io_aib60              (iopad_unused_aib60),
-                       //.io_aib61              (aib61),
-                         .io_aib61              (HI), //From Tim's 3/26 aib_bump_map
+                         .io_aib61              (iopad_unused_aib61),
+                       //.io_aib61              (HI), //From Tim's 3/26 aib_bump_map
                          .io_aib62              (iopad_unused_aib62),
-                       //.io_aib63              (aib63),
-                         .io_aib63              (LO), //From Tim's 3/26 aib_bump_map
-                       //.io_aib64              (aib64),
-                         .io_aib64              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib63              (iopad_unused_aib63),
+                       //.io_aib63              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib64              (iopad_unused_aib64),
+                       //.io_aib64              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib65              (iopad_fs_adapt_rstn),
                          .io_aib66              (iopad_unused_aib66),
-                       //.io_aib67              (aib67),
-                         .io_aib67              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib67              (iopad_unused_aib67),
+                       //.io_aib67              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib68              (iopad_unused_aib68),
                          .io_aib69              (iopad_unused_aib69),
                          .io_aib7               (iopad_tx[7]),
                          .io_aib70              (iopad_unused_aib70),
                          .io_aib71              (iopad_unused_aib71),
-                       //.io_aib72              (aib72),
-                       //.io_aib73              (aib73),
-                       //.io_aib74              (aib74),
-                         .io_aib72              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib73              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib74              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib72              (iopad_unused_aib72),
+                         .io_aib73              (iopad_unused_aib73),
+                         .io_aib74              (iopad_unused_aib74),
+                       //.io_aib72              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib73              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib74              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib75              (iopad_unused_aib75),
                          .io_aib76              (iopad_unused_aib76),
                          .io_aib77              (iopad_unused_aib77),
-                       //.io_aib78              (aib78),
-                       //.io_aib79              (aib79),
-                       //.io_aib80              (aib80),
-                       //.io_aib81              (aib81),
-                         .io_aib78              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib79              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib78              (iopad_unused_aib78),
+                         .io_aib79              (iopad_unused_aib79),
+                         .io_aib80              (iopad_unused_aib80),
+                         .io_aib81              (iopad_unused_aib81),
+                       //.io_aib78              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib79              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib8               (iopad_tx[8]),
-                         .io_aib80              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib81              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib80              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib81              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib82              (iopad_fs_sr_clkb),
                          .io_aib83              (iopad_fs_sr_clk),
                          .io_aib84              (iopad_ns_sr_clk),
                          .io_aib85              (iopad_ns_sr_clkb),
                          .io_aib86              (iopad_ns_rcv_clkb),
                          .io_aib87              (iopad_ns_rcv_clk),
-                       //.io_aib88              (aib88),
-                       //.io_aib89              (aib89),
-                         .io_aib88              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib89              (LO), //From Tim's 3/26 aib_bump_map
+                         .io_aib88              (iopad_unused_aib88),
+                         .io_aib89              (iopad_unused_aib89),
+                       //.io_aib88              (LO), //From Tim's 3/26 aib_bump_map
+                       //.io_aib89              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib9               (iopad_tx[9]),
                          .io_aib90              (iopad_unused_aib90),
                          .io_aib91              (iopad_unused_aib91),
