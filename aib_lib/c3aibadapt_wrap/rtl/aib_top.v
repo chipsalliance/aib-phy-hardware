@@ -115,11 +115,11 @@ module aib_top
    input [31:0]                                                   i_aibaux_ctrl_bus0, //1st set of register bits from register file
    input [31:0]                                                   i_aibaux_ctrl_bus1, //2nd set of register bits from register file
    input [31:0]                                                   i_aibaux_ctrl_bus2, //3rd set of register bits from register file
-   input [9:0]                                                    i_aibaux_osc_fuse_trim, //control by Fuse/OTP from Jariet
+   input [9:0]                                                    i_aibaux_osc_fuse_trim, //control by Fuse/OTP from User
 
    //
-   input                                                          i_osc_bypclk,     // test clock from c4 bump, may tie low for Jariet if not used
-   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, Jariet may use this clock to connect with i_test_clk_1g
+   input                                                          i_osc_bypclk,     // test clock from c4 bump, may tie low for User if not used
+   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, User may use this clock to connect with i_test_clk_1g
     //======================================================================================
    // DFT signals
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
@@ -150,12 +150,12 @@ module aib_top
 
    input [2:0]                                                    i_aibdft2osc,  //To AIB osc.[2] force reset [1] force enable [0] 33 MHz JTAG
    output [12:0]                                                  o_aibdft2osc,  //Observability of osc and DLL/DCC status 
-                                                                                 //this signal go through C4 bump, Jariet may muxed it out with their test signals
+                                                                                 //this signal go through C4 bump, User may muxed it out with their test signals
    
    //output TCB 
    output                                                         o_last_bs_out, //last boundary scan chain output, TDO 
 
-   output                                                         o_por, // S10 POR to Jariet, can be left unconnected for Jariet
+   output                                                         o_por, // S10 POR to User, can be left unconnected for User
    output                                                         o_osc_monitor, //Output from oscillator, go to pinmux block before go to C4 test bump
 
 

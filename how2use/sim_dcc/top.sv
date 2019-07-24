@@ -174,10 +174,10 @@ module top;
     wire                iopad_fs_fwd_clk;  
     wire                iopad_fs_mac_rdy;    
     wire                iopad_ns_mac_rdy;   
-    wire                iopad_ns_adapt_rstn;
+    wire                iopad_ns_adapter_rstn;
     wire                iopad_fs_rcv_clk;  
     wire                iopad_fs_rcv_clkb;
-    wire                iopad_fs_adapt_rstn; 
+    wire                iopad_fs_adapter_rstn; 
     wire                iopad_fs_sr_clkb;   
     wire                iopad_fs_sr_clk;   
     wire                iopad_ns_sr_clk;  
@@ -197,7 +197,7 @@ module top;
 
    The following pins are tied to high so that the loopback test will work:
    iopad_fs_sr_data 
-   iopad_fs_adapt_rstn 
+   iopad_fs_adapter_rstn 
    
 *///////////////////////////////////////////////////////////////////////////   
 //-----------------------------------------------------------------------------------------
@@ -281,10 +281,10 @@ module top;
                          .iopad_fs_fwd_clk      (iopad_ns_fwd_clk),
                          .iopad_fs_mac_rdy      (iopad_ns_mac_rdy),
                          .iopad_ns_mac_rdy      (iopad_ns_mac_rdy),
-                         .iopad_ns_adapt_rstn   (iopad_ns_adapt_rstn),
+                         .iopad_ns_adapter_rstn (iopad_ns_adapter_rstn),
                          .iopad_fs_rcv_clk      (iopad_ns_fwd_clk),
                          .iopad_fs_rcv_clkb     (iopad_ns_fwd_clkb),
-                         .iopad_fs_adapt_rstn   (1'b1),
+                         .iopad_fs_adapter_rstn (1'b1),
                          .iopad_fs_sr_clkb      (iopad_ns_sr_clkb),
                          .iopad_fs_sr_clk       (iopad_ns_sr_clk),
                          .iopad_ns_sr_clk       (iopad_ns_sr_clk),

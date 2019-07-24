@@ -9,8 +9,8 @@ wire        rx_clkout;
 s10aib s10_wrap (
                        .iopad_ns_mac_rdy(ms_iopad_fs_mac_rdy),
                        .iopad_fs_mac_rdy(ms_iopad_ns_mac_rdy),
-                       .iopad_ns_adapt_rstn(ms_iopad_fs_adapt_rstn),
-                       .iopad_fs_adapt_rstn(ms_iopad_ns_adapt_rstn),
+                       .iopad_ns_adapter_rstn(ms_iopad_fs_adapter_rstn),
+                       .iopad_fs_adapter_rstn(ms_iopad_ns_adapter_rstn),
 
                        .iopad_tx(ms_iopad_rx),
                        .iopad_ns_fwd_clk(ms_iopad_fs_fwd_clk), 
@@ -109,7 +109,7 @@ wire [19:0] sl_dataout0,sl_dataout1;
                        .iopad_ns_sr_load(ms_iopad_fs_sr_load), 
                        .iopad_ns_sr_data(ms_iopad_fs_sr_data),
                        .iopad_ns_mac_rdy(ms_iopad_fs_mac_rdy), 
-                       .iopad_ns_adapter_rstn(ms_iopad_fs_adapt_rstn),
+                       .iopad_ns_adapter_rstn(ms_iopad_fs_adapter_rstn),
                        .iopad_spare1(), 
                        .iopad_spare0(),
                        .iopad_fs_rcv_clkb(ms_iopad_ns_rcv_clkb), 
@@ -121,7 +121,7 @@ wire [19:0] sl_dataout0,sl_dataout1;
                        .iopad_fs_sr_load(ms_iopad_ns_sr_load), 
                        .iopad_fs_sr_data(ms_iopad_ns_sr_data),
                        .iopad_fs_mac_rdy(ms_iopad_ns_mac_rdy), 
-                       .iopad_fs_adapter_rstn(ms_iopad_ns_adapt_rstn),
+                       .iopad_fs_adapter_rstn(ms_iopad_ns_adapter_rstn),
 
                        .iopad_device_detect(device_detect),
                        .iopad_device_detect_copy(device_detectrdcy),

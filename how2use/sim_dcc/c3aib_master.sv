@@ -91,10 +91,10 @@ module c3aib_master (
     inout                                      iopad_fs_fwd_clk,
     inout                                      iopad_fs_mac_rdy,
     inout                                      iopad_ns_mac_rdy,
-    inout                                      iopad_ns_adapt_rstn,
+    inout                                      iopad_ns_adapter_rstn,
     inout                                      iopad_fs_rcv_clk,
     inout                                      iopad_fs_rcv_clkb,
-    inout                                      iopad_fs_adapt_rstn,
+    inout                                      iopad_fs_adapter_rstn,
     inout                                      iopad_fs_sr_clkb,
     inout                                      iopad_fs_sr_clk,
     inout                                      iopad_ns_sr_clk,
@@ -358,7 +358,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                          .io_aib53              (iopad_ns_fwd_div2_clk),
                          .io_aib54              (iopad_ns_fwd_div2_clkb),
                          .io_aib55              (iopad_ns_rcv_div2_clkb),
-                         .io_aib56              (iopad_ns_adapt_rstn),
+                         .io_aib56              (iopad_ns_adapter_rstn),
                          .io_aib57              (iopad_fs_rcv_clk),
                          .io_aib58              (iopad_unused_aib58),
                        //.io_aib58              (LO), //From Tim's 3/26 aib_bump_map
@@ -372,7 +372,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                        //.io_aib63              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib64              (iopad_unused_aib64),
                        //.io_aib64              (LO), //From Tim's 3/26 aib_bump_map
-                         .io_aib65              (iopad_fs_adapt_rstn),
+                         .io_aib65              (iopad_fs_adapter_rstn),
                          .io_aib66              (iopad_unused_aib66),
                          .io_aib67              (iopad_unused_aib67),
                        //.io_aib67              (LO), //From Tim's 3/26 aib_bump_map

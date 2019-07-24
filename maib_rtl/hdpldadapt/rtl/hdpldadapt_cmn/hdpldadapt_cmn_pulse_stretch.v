@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 //------------------------------------------------------------------------
-// © 2009 Altera Corporation. All rights reserved.  
+// (C) 2009 Altera Corporation. All rights reserved.  
 //
 //------------------------------------------------------------------------
 // File:        $RCSfile: hdpldadapt_cmn_pulse_stretch.v.rca $

@@ -124,10 +124,10 @@ module top;
     wire               ms_iopad_fs_fwd_clk;
     wire               ms_iopad_fs_mac_rdy;
     wire               ms_iopad_ns_mac_rdy;
-    wire               ms_iopad_ns_adapt_rstn;
+    wire               ms_iopad_ns_adapter_rstn;
     wire               ms_iopad_fs_rcv_clk;
     wire               ms_iopad_fs_rcv_clkb;
-    wire               ms_iopad_fs_adapt_rstn;
+    wire               ms_iopad_fs_adapter_rstn;
     wire               ms_iopad_fs_sr_clkb;
     wire               ms_iopad_fs_sr_clk;
     wire               ms_iopad_ns_sr_clk;
@@ -299,10 +299,10 @@ module top;
                          .iopad_fs_fwd_clk      (ms_iopad_fs_fwd_clk),
                          .iopad_fs_mac_rdy      (ms_iopad_fs_mac_rdy),
                          .iopad_ns_mac_rdy      (ms_iopad_ns_mac_rdy),
-                         .iopad_ns_adapt_rstn   (ms_iopad_ns_adapt_rstn),
+                         .iopad_ns_adapter_rstn (ms_iopad_ns_adapter_rstn),
                          .iopad_fs_rcv_clk      (ms_iopad_fs_rcv_clk),
                          .iopad_fs_rcv_clkb     (ms_iopad_fs_rcv_clkb),
-                         .iopad_fs_adapt_rstn   (ms_iopad_fs_adapt_rstn),
+                         .iopad_fs_adapter_rstn (ms_iopad_fs_adapter_rstn),
                          .iopad_fs_sr_clkb      (ms_iopad_fs_sr_clkb),
                          .iopad_fs_sr_clk       (ms_iopad_fs_sr_clk),
                          .iopad_ns_sr_clk       (ms_iopad_ns_sr_clk),

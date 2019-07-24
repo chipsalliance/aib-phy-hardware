@@ -7,8 +7,8 @@ module s10aib (
 //*****  symmetrical Microbump *******//
 inout  wire         iopad_ns_mac_rdy,
 inout  wire         iopad_fs_mac_rdy,
-inout  wire         iopad_ns_adapt_rstn,
-inout  wire         iopad_fs_adapt_rstn,
+inout  wire         iopad_ns_adapter_rstn,
+inout  wire         iopad_fs_adapter_rstn,
 
 inout        [19:0] iopad_tx,
 inout  wire         iopad_ns_fwd_clk,
@@ -200,7 +200,7 @@ ndaibadapt_wrap  ndut(
                       .io_aib53(iopad_fs_fwd_div2_clk),       //From Tim's 3/26 aib_bump_map    
                       .io_aib54(iopad_fs_fwd_div2_clkb),       //From Tim's 3/26 aib_bump_map
                       .io_aib55(iopad_fs_rcv_div2_clkb),       
-                      .io_aib56(iopad_fs_adapt_rstn),
+                      .io_aib56(iopad_fs_adapter_rstn),
                       .io_aib57(iopad_ns_rcv_clk),
                       .io_aib58(iopad_unused_aib58),     //From Tim's 3/26 aib_bump_map
                       .io_aib59(iopad_ns_rcv_clkb),
@@ -210,7 +210,7 @@ ndaibadapt_wrap  ndut(
                       .io_aib62(iopad_unused_aib62),     // From Tim's 3/26 aib_bump_map
                       .io_aib63(iopad_unused_aib63),     //unused
                       .io_aib64(iopad_unused_aib64),     //unused
-                      .io_aib65(iopad_ns_adapt_rstn),
+                      .io_aib65(iopad_ns_adapter_rstn),
                       .io_aib66(iopad_unused_aib66),              //From Tim's 3/26 aib_bump_map
                       .io_aib67(iopad_unused_aib67),              //From Tim's 3/26 aib_bump_map
                       .io_aib68(iopad_unused_aib68),              //From Tim's 3/26 aib_bump_map

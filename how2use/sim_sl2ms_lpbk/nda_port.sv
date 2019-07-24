@@ -9,8 +9,8 @@ wire        sl_m_fs_fwd_clk;
 s10aib s10_wrap (
                        .iopad_ns_mac_rdy(ms_iopad_fs_mac_rdy),
                        .iopad_fs_mac_rdy(ms_iopad_ns_mac_rdy),
-                       .iopad_ns_adapt_rstn(ms_iopad_fs_adapt_rstn),
-                       .iopad_fs_adapt_rstn(ms_iopad_ns_adapt_rstn),
+                       .iopad_ns_adapter_rstn(ms_iopad_fs_adapter_rstn),
+                       .iopad_fs_adapter_rstn(ms_iopad_ns_adapter_rstn),
 
                        .iopad_tx(ms_iopad_rx),
                        .iopad_ns_fwd_clk(ms_iopad_fs_fwd_clk), 
