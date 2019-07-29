@@ -324,7 +324,7 @@ aib_sm  aib_sm
     .sl_rx_transfer_eni(sl_data_to_core[70]),
     .sl_osc_transfer_eni(sl_data_to_core[72]),
     .ms_nsl(ms_nsl),       //ms_adapter_rstn & sl_adapter_rstn
-    .atpg_mode(),
+    .atpg_mode(1'b0),
     .reset_n(adpt_rstn)       //ms_adapter_rstn & sl_adapter_rstn
     );
 
@@ -341,7 +341,7 @@ aib_sr_ms
     .sr_ms_load_in(srl_in), //master serial data load inupt
     .sr_ms_clk_in(sr_clk_in), //from input por
     .ms_nsl(ms_nsl), 
-    .atpg_mode(),
+    .atpg_mode(1'b0),
     .reset_n(adpt_rstn)       //ms_adapter_rstn & sl_adapter_rstn
     );
 
@@ -359,7 +359,7 @@ aib_sr_sl
     .sr_sl_load_in(srl_in), //slave serial data load inupt
     .sr_ms_clk_in(sr_clk_in), //input ms clock
     .ms_nsl(ms_nsl), 
-    .atpg_mode(),
+    .atpg_mode(1'b0),
     .reset_n(adpt_rstn)       //ms_adapter_rstn & sl_adapter_rstn
     );
 
@@ -375,7 +375,7 @@ aib_dcc aib_dcc
     .sl_dcc_cal_done(sl_tx_dcc_cal_doneint),
     .clk_out(dcc_clk_out),
     .ms_nsl(ms_nsl),
-    .atpg_mode(),
+    .atpg_mode(1'b0),
     .reset_n(adpt_rstn)       
     );
 
@@ -390,7 +390,7 @@ aib_dcc aib_dcc
      .sl_rx_dll_lock_req(sl_rx_dll_lock_req),
      .sl_rx_dll_lock(sl_rx_dll_lockint),
      .ms_nsl(ms_nsl),
-     .atpg_mode()
+     .atpg_mode(1'b0)
       );
 
 endmodule // aib_channel

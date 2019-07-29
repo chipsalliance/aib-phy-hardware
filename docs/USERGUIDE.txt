@@ -73,9 +73,9 @@ inout      iopad_por_copy,
 input  [39:0]  data_in,      //output data to pad
 output [39:0]  data_out,     //input data from pad
 input          m_ns_fwd_clk, //near side forward clock from MAC
-output         m_fs_rvc_clk, //far side receive clcok to MAC
+output         m_fs_rcv_clk, //far side receive clcok to MAC
 output         m_fs_fwd_clk, //far side forward clock to MAC
-input          m_ns_rvc_clk, //near side receive clock from MAC
+input          m_ns_rcv_clk, //near side receive clock from MAC
 
 input          ms_ns_adapter_rstn, //master adapter reset from MAC
 input          sl_ns_adapter_rstn, //slave adapter reset from MAC

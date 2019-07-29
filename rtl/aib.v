@@ -43,9 +43,9 @@ inout wire     iopad_por_copy,
 input [DATAWIDTH*2 - 1 :0]   data_in, //output data to pad
 output wire [DATAWIDTH*2 - 1:0]     data_out, //input data from pad
 input          m_ns_fwd_clk, //output data clock
-output wire    m_fs_rvc_clk,
+output wire    m_fs_rcv_clk,
 output wire    m_fs_fwd_clk,
-input          m_ns_rvc_clk,
+input          m_ns_rcv_clk,
 
 input          ms_ns_adapter_rstn,
 input          sl_ns_adapter_rstn,
@@ -129,9 +129,9 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel
      .iopad_arstni(iopad_fs_adapter_rstn),
 
      .tx_launch_clk(m_ns_fwd_clk), //output data clock
-     .fs_rvc_clk_tomac(m_fs_rvc_clk), 
+     .fs_rvc_clk_tomac(m_fs_rcv_clk), 
      .fs_fwd_clk_tomac(m_fs_fwd_clk), 
-     .ns_rvc_clk_frmac(m_ns_rvc_clk), 
+     .ns_rvc_clk_frmac(m_ns_rcv_clk), 
      .iddren(iddren),
      .idataselb(idataselb), //output async data selection
      .itxen(itxen), //data tx enable

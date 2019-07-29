@@ -148,7 +148,15 @@ module top;
     wire                o_txen_out_chain2;      // From dut of c3aibadapt_wrap.v
     wire  [81*24-1:0]   ms_sideband;
     wire  [73*24-1:0]   sl_sideband;              
-    wire  [95:0]        AIB_AUX;
+    wire  [7:0]         iopad_unused_aux95_88;
+    wire                iopad_power_on_reset_r; //iopad_aib_aux[87] power on redundency from slave
+    wire                iopad_unused_aux86;
+    wire                iopad_power_on_reset;   //iopad_aib_aux[85] power on from slave.
+    wire  [8:0]         iopad_unused_aux84_76;
+    wire                iopad_device_detect_r;  //iopad_aib_aux[75] device detect redundency to slave
+    wire                iopad_device_detect;    //iopad_aib_aux[74] device detect to slave
+    wire  [73:0]        iopad_unused_aux73_0;
+
     wire  [24*20-1:0]   iopad_tx;              
     wire  [24*20-1:0]   iopad_rx;             
     wire  [23:0]        iopad_ns_fwd_clkb;   
@@ -157,10 +165,10 @@ module top;
     wire  [23:0]        iopad_fs_fwd_clk;  
     wire  [23:0]        iopad_fs_mac_rdy;    
     wire  [23:0]        iopad_ns_mac_rdy;   
-    wire  [23:0]        iopad_ns_adapt_rstn;
+    wire  [23:0]        iopad_ns_adapter_rstn;
     wire  [23:0]        iopad_fs_rcv_clk;  
     wire  [23:0]        iopad_fs_rcv_clkb;
-    wire  [23:0]        iopad_fs_adapt_rstn; 
+    wire  [23:0]        iopad_fs_adapter_rstn; 
     wire  [23:0]        iopad_fs_sr_clkb;   
     wire  [23:0]        iopad_fs_sr_clk;   
     wire  [23:0]        iopad_ns_sr_clk;  
@@ -180,7 +188,7 @@ module top;
 
    The following pins are tied to high so that the loopback test will work:
    iopad_fs_sr_data 
-   iopad_fs_adapt_rstn 
+   iopad_fs_adapter_rstn 
    
 *///////////////////////////////////////////////////////////////////////////   
 //-----------------------------------------------------------------------------------------
@@ -230,10 +238,10 @@ module top;
                     .iopad_fs_fwd_clk            (iopad_ns_fwd_clk),
                     .iopad_fs_mac_rdy            (iopad_ns_mac_rdy),
                     .iopad_ns_mac_rdy            (iopad_ns_mac_rdy),
-                    .iopad_ns_adapt_rstn         (iopad_ns_adapt_rstn),
+                    .iopad_ns_adapter_rstn       (iopad_ns_adapter_rstn),
                     .iopad_fs_rcv_clk            (iopad_ns_fwd_clk),
                     .iopad_fs_rcv_clkb           (iopad_ns_fwd_clkb),
-                    .iopad_fs_adapt_rstn         (HI24),
+                    .iopad_fs_adapter_rstn       (HI24),
                     .iopad_fs_sr_clkb            (iopad_ns_sr_clkb),
                     .iopad_fs_sr_clk             (iopad_ns_sr_clk),
                     .iopad_ns_sr_clk             (iopad_ns_sr_clk),
@@ -244,8 +252,15 @@ module top;
                     .iopad_fs_sr_data            (HI24),
                     .iopad_ns_sr_load            (iopad_ns_sr_load),
                     .iopad_ns_sr_data            (iopad_ns_sr_data),
-                    .io_aib_aux                  (AIB_AUX),
-//                  .io_aib_aux                  (),
+                 // .io_aib_aux                  (AIB_AUX),
+                    .iopad_unused_aux95_88       (iopad_unused_aux95_88),
+                    .iopad_power_on_reset_r      (iopad_power_on_reset_r),
+                    .iopad_unused_aux86          (iopad_unused_aux86),
+                    .iopad_power_on_reset        (iopad_power_on_reset),
+                    .iopad_unused_aux84_76       (iopad_unused_aux84_76),
+                    .iopad_device_detect_r       (iopad_device_detect_r),
+                    .iopad_device_detect         (iopad_device_detect),
+                    .iopad_unused_aux73_0        (iopad_unused_aux73_0),
                     .io_aux_bg_ext_2k            (io_aux_bg_ext_2k),
 	            .i_iocsr_rdy_aibaux          (top_io.i_adpt_hard_rst_n),
 	            .i_aibaux_por_vccl_ovrd      (1'b1),      
@@ -280,7 +295,7 @@ module top;
                     .i_aibdft2osc                ({1'b0, 1'b1, i_rx_pma_div2_clk}),
                     .o_aibdft2osc                (),
                     .o_last_bs_out               (),
-                    .o_por                       (),
+                    .m_power_on_reset            (),
                     .o_osc_monitor               (),
                     .i_aux_atpg_mode_n           (1'b1),  //FIXME
                     .i_aux_atpg_pipeline_global_en (1'b0),  //FIXME

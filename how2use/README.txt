@@ -59,3 +59,7 @@ How to run:
 1) cd sim_mod2mod
 2) ./runsim
 3) ./simv
+
+sim_sl2ms_lpbk: This test shows how open source IP connect to Stratix 10 MAIB channel in loopback test.
+VCS/Cadence/Modelsim simulators run scripts are provided. See README.txt for detail.
+

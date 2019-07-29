@@ -243,7 +243,7 @@ program automatic test (dut_io.TB dut);
         bit [39:0] data = 0;
 
         while (toggle_gen < run_for_n_wa_cycle) begin
-            $display ("[%t] Generating data[%d] for naddar alignemnt  = %x \n", $time, toggle_gen, data);
+            $display ("[%t] Generating data[%d] for slave alignemnt  = %x \n", $time, toggle_gen, data);
 
             @(posedge top.i_rx_pma_clk);
             dut.cb_rx_pma.i_rx_pma_data <= data;
