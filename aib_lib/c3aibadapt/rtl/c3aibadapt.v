@@ -866,7 +866,7 @@ assign fpll_shared_direct_async[2] = tb_direct_async[1];
 assign fpll_shared_direct_async[1] = tb_direct_async[0];
 assign fpll_shared_direct_async[0] = tb_direct_async[0];
 
-assign sl_sideband = {avmm_hrdrst_fabric_osc_transfer_en_ssr_data, rx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[30],tx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[31], rx_ssr_parity_checker_in[29:0], tx_ssr_parity_checker_in[31:0]};
+assign sl_sideband = {sr_fabric_osc_transfer_en, rx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[30],tx_ssr_parity_checker_in[35:32], rx_ssr_parity_checker_in[31], rx_ssr_parity_checker_in[29:0], tx_ssr_parity_checker_in[31:0]};
 
 c3aibadapt_txchnl adapt_txchnl   (/*AUTOINST*/
        // Outputs
