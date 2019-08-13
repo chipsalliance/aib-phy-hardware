@@ -8,7 +8,7 @@ Both clocks and data are supplied at the slave side. c3aib was properly configur
 
                  ------------                           ---------------
     random       |          |                           |       rx-->||
-    data  tx---->| s10aib   |<=========================>| c3aib      V|(data loopback at FPGA fabric side)
+    data  tx---->| s10aib   |<=========================>| c3aib      V|(data loopback at master side)
                  |          |                           |       tx<--||
     data  rx<----|          |                           |             | 
     checker      |          |                           |             | 
