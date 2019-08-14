@@ -60,7 +60,7 @@ module c3aib_master (
     input [64:0]                               i_chnl_ssr, // Slow shift chain path
     input                                      i_rx_elane_clk,
     input [39:0]                               i_rx_pma_data,
-    input [77:0]                               data_in,   // i_rx_pma_data, Directed bump rx data sync path
+    input [77:0]                               data_in,   // i_rx_elane_data, Directed bump rx data sync path
 
  // Tx Path clocks/data, from slave (FPGA) to master (current chiplet)
     input                                      m_ns_rcv_clk, //i_tx_pma_clk, sent over to the other chiplet to be used for the clock
@@ -71,7 +71,7 @@ module c3aib_master (
     output                                     m_fs_fwd_div2_clk, // o_tx_transfer_div2_clk, half rate of tx data transmission clock
     input                                      i_tx_elane_clk,
     output [39:0]                              o_tx_pma_data,
-    output [77:0]                              data_out, //o_tx_pma_data, Directed bump tx data sync path
+    output [77:0]                              data_out, // o_tx_elane_data, Directed bump tx data sync path
 
  //=================================================================================================
  //AIB open source IP enhancement. The following ports are added to b compliance with AIB specification 1.1
