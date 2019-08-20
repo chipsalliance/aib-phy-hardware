@@ -3,6 +3,17 @@
 // This tests shows how to test 24 channel AIB (all channels are independent)
 // in loopback mode. DCC/DLL are bypassed. The delay setting is static
 // 03/13/2019
+// The setting of DCC/DLL bypass:
+// For DCC bypass. Program register 0x230 bit 28 and bit 29 to zero. (That's it)
+// For DLL bypass: Program register 0x230 bit 10 to one.
+//                 Program the static delay value {0x330 bit 21, 0x230bit 9:0]} 
+//                                                {1'b0, 10'b0} mininum delay.
+//                                                {1'b1, 10'b3ff} maximum delay.
+// The delay value is technology/operating temperature dependant. By sweeping the delay
+// you can find a value that will work instead of in the non-bypass mode, FSM will find
+// a value for you.
+// For each bit description, see open_source_aib_csr.xlsx in 
+// https://github.com/intel/aib-phy-hardware/tree/master/docs 
 // ==========================================================================
 
 program automatic test (dut_io.TB dut);
@@ -154,7 +165,6 @@ program automatic test (dut_io.TB dut);
             cfg_avmm_write(chan_num, 11'h228, 4'hf, 32'h0000_7451);
             cfg_avmm_write(chan_num, 11'h22c, 4'hf, 32'h0000_0000);
 //          cfg_avmm_write(chan_num, 11'h230, 4'hf, 32'h38f6_007b); //DLL not bypass
-//          cfg_avmm_write(chan_num, 11'h230, 4'hf, 32'h00f6_047b); //DLL bypass, disable
             cfg_avmm_write(chan_num, 11'h230, 4'hf, 32'h00f6_0400); //DLL bypass, disable. Least static delay setting
             cfg_avmm_write(chan_num, 11'h234, 4'hf, 32'h0000_0000);
             cfg_avmm_write(chan_num, 11'h238, 4'hf, 32'h0000_0000);
@@ -175,10 +185,8 @@ program automatic test (dut_io.TB dut);
             cfg_avmm_write(chan_num, 11'h32c, 4'hf, 32'h5555_a019);
             
             cfg_avmm_write(chan_num, 11'h330, 4'hf, 32'h0040_0082); //Bit 21 is idatdll_str_align_stconfig_new_dll[2] msb static delay
-      //    cfg_avmm_write(chan_num, 11'h334, 4'hf, 32'hbf0f_b000); /DCC not bypass 
-            cfg_avmm_write(chan_num, 11'h334, 4'hf, 32'hbf0f_9000); //DCC bypass
+            cfg_avmm_write(chan_num, 11'h334, 4'hf, 32'hbf0f_b000); 
             cfg_avmm_write(chan_num, 11'h338, 4'hf, 32'h0002_a9e1);
-       //   cfg_avmm_write(chan_num, 11'h33c, 4'hf, 32'h00ff_fff0);
             cfg_avmm_write(chan_num, 11'h33c, 4'hf, 32'h00ff_fff4);   
             cfg_avmm_write(chan_num, 11'h340, 4'hf, 32'h7f1c_0000);
             cfg_avmm_write(chan_num, 11'h344, 4'hf, 32'h0000_1c00);

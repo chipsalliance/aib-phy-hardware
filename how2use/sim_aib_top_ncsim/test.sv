@@ -154,7 +154,6 @@ program automatic test (dut_io.TB dut);
             cfg_avmm_write(chan_num, 11'h228, 4'hf, 32'h0000_7451);
             cfg_avmm_write(chan_num, 11'h22c, 4'hf, 32'h0000_0000);
             cfg_avmm_write(chan_num, 11'h230, 4'hf, 32'h38f6_007b); //DLL not bypass
-//          cfg_avmm_write(chan_num, 11'h230, 4'hf, 32'h00f6_047b); //DLL bypass, disable
             cfg_avmm_write(chan_num, 11'h234, 4'hf, 32'h0000_0000);
             cfg_avmm_write(chan_num, 11'h238, 4'hf, 32'h0000_0000);
             cfg_avmm_write(chan_num, 11'h23c, 4'hf, 32'h0000_0000);
@@ -237,7 +236,7 @@ program automatic test (dut_io.TB dut);
         static int pkts_rcvd = 0;
         begin
             while(pkts_rcvd < run_for_n_pkts) begin
-                @ (posedge top.i_tx_pma_clk);
+                @ (posedge top.o_tx_transfer_clk[0]);
                 if (top.o_tx_pma_data_24ch != 0) begin
                     $display ("[%t] Receiving data[%d] = %x \n", $time, pkts_rcvd, top.o_tx_pma_data_24ch);
                     data_exp = xmit_q.pop_front();
