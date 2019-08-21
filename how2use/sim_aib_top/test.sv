@@ -4,7 +4,7 @@
 // in loopback mode. DCC/DLL are bypassed. The delay setting is static
 // 03/13/2019
 // The setting of DCC/DLL bypass:
-// For DCC bypass. Program register 0x230 bit 28 and bit 29 to zero. (That's it)
+// For DCC bypass. Program register 0x230 bit 28 and bit 27 to zero. (That's it)
 // For DLL bypass: Program register 0x230 bit 10 to one.
 //                 Program the static delay value {0x330 bit 21, 0x230bit 9:0]} 
 //                                                {1'b0, 10'b0} mininum delay.
