@@ -33,7 +33,7 @@ module aib_io_buffer
    // I/O configuration
    input async,                   // 0 = Sample input data with ilaunch_clk
                                   // 1 = Async path from async_data to iopad
-   input ddren,                   // 0 = SDR data idat0 delayed 1.5 ilaunch_clk
+   input ddren,                   // 0 = SDR data idat0 delayed 1.0 ilaunch_clk
                                   // 1 = DDR data idat0 delayed 1.5 ilaunch_clk
                                   //              idat1 delayed 2.0 ilaunch_clk
    input txen,                    // 0 = output path disabled
@@ -118,7 +118,8 @@ assign #1  odat0_i_tmp = odat0_i;
 	odat1_r <= odat1_i;
      end	
    
-   assign odat0 = odat0_r && rxen && irstb;
+   //assign odat0 = odat0_r && rxen && irstb;
+   assign odat0 = ddren ? odat0_r && rxen && irstb : odat1_r && rxen && irstb;
    assign odat1 = odat1_r && rxen && irstb;
 
    // Asynchronous Rx data outputs
@@ -143,7 +144,9 @@ assign #1  odat0_i_tmp = odat0_i;
      end
 
    // SDR/DDR mux
-   assign idatsync_sel = ((ilaunch_clk == 1'b0) ? idat0_preg : idat_nreg) && txen;
+   //assign idatsync_sel = ((ilaunch_clk == 1'b0) ? idat0_preg : idat_nreg) && txen;
+   assign idatsync_sel = (((ilaunch_clk == 1'b1) & !ddren) ? idat0_preg : 
+                          ((ilaunch_clk == 1'b0) & ddren) ? idat0_preg : idat_nreg) && txen;
    
    // Async/Sync mux
    assign idat_iopad = async ? async_data && txen : idatsync_sel;

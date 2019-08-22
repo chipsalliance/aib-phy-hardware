@@ -130,6 +130,10 @@ wire        rxclki;
 
 wire        rxclk_rstb, rxclkb_rstb;
 
+wire        txfcko;
+
+assign      txfcko = iddren ? tx_launch_clk : ~tx_launch_clk;
+
 assign rxclk_rstb = shift_en_rxclk ? dig_rstb  : vccl_aib;
 assign rxclkb_rstb = shift_en_rxclkb ? dig_rstb  : vccl_aib;
 
@@ -660,8 +664,10 @@ aib_buffx1_top txfckb ( .idata1_in1_jtag_out(idata1_in1_txfckb),
      .oclk_out(nc_oclk_txfckb),
      .oclkb_out(nc_oclkb_txfckb), .odat0_out(nc_odat0_txfckb),
      .odat1_out(nc_odat1_txfckb), .odat_async_out(nc_odat_async_txfckb),
-     .async_dat_in0(~tx_launch_clk),
-     .async_dat_in1(~tx_launch_clk),
+     //.async_dat_in0(~tx_launch_clk),
+     //.async_dat_in1(~tx_launch_clk),
+     .async_dat_in0(~txfcko),
+     .async_dat_in1(~txfcko),
      .iclkin_dist_in0(jtag_clkdr_outn_txfckb),
      .iclkin_dist_in1(vssl_aib), .idata0_in0(~tx_launch_clk),
      //.idata0_in1(idat0_poutp[1]), .idata1_in0(~tx_launch_clk),
@@ -1333,8 +1339,10 @@ aib_buffx1_top txfck ( .idata1_in1_jtag_out(idata1_in1_txfck),
      .oclk_out(nc_oclk_txfck),
      .oclkb_out(nc_oclkb_txfck), .odat0_out(nc_odat0_txfck),
      .odat1_out(nc_odat1_txfck), .odat_async_out(nc_odat_async_txfck),
-     .async_dat_in0(tx_launch_clk),
-     .async_dat_in1(tx_launch_clk),
+     //.async_dat_in0(tx_launch_clk),
+     //.async_dat_in1(tx_launch_clk),
+     .async_dat_in0(txfcko),
+     .async_dat_in1(txfcko),
      .iclkin_dist_in0(jtag_clkdr_outn_txfck),
      .iclkin_dist_in1(vssl_aib), .idata0_in0(tx_launch_clk),
      //.idata0_in1(idat0_poutp[0]), .idata1_in0(tx_launch_clk),
