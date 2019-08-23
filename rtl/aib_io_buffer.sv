@@ -119,7 +119,7 @@ assign #1  odat0_i_tmp = odat0_i;
      end	
    
    //assign odat0 = odat0_r && rxen && irstb;
-   assign odat0 = ddren ? odat0_r && rxen && irstb : odat1_r && rxen && irstb;
+   assign odat0 = ddren ? odat0_r && rxen && irstb : iopad_nreg && rxen && irstb;
    assign odat1 = odat1_r && rxen && irstb;
 
    // Asynchronous Rx data outputs
