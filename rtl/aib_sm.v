@@ -505,22 +505,29 @@ always @(*)
                     msrxcal_nxst = ms_wait_rx_xfer_req;
                    end
       ms_wait_remt_tx_dcc_cal_done:        begin
-                   if (sl_tx_dcc_cal_done_sync ) 
+                   if (!ms_rx_dcc_dll_lock_req_sync | !sl_tx_dcc_dll_lock_req_sync)
+                    msrxcal_nxst = ms_wait_rx_xfer_req;
+                   else if (sl_tx_dcc_cal_done_sync )
                     msrxcal_nxst = ms_send_ms_rx_dll_lock_req;
                    else
                     msrxcal_nxst = ms_wait_remt_tx_dcc_cal_done;
                    end
       ms_send_ms_rx_dll_lock_req:        begin
-                   if (ms_rx_dll_lock_sync ) //???
+                   if (!ms_rx_dcc_dll_lock_req_sync | !sl_tx_dcc_dll_lock_req_sync)
+                    msrxcal_nxst = ms_wait_rx_xfer_req;
+                   else if (ms_rx_dll_lock_sync ) 
                     msrxcal_nxst = ms_rx_dll_lock_st;
                    else
                     msrxcal_nxst = ms_send_ms_rx_dll_lock_req;
                    end
       ms_rx_dll_lock_st:        begin
+                   if (!ms_rx_dcc_dll_lock_req_sync | !sl_tx_dcc_dll_lock_req_sync)
+                    msrxcal_nxst = ms_wait_rx_xfer_req;
+                   else
                     msrxcal_nxst = ms_rx_xfer_en;
                    end
       ms_rx_xfer_en:        begin
-                   if (~(sl_tx_dcc_dll_lock_req_sync & ms_rx_dcc_dll_lock_req_sync )) //???
+                   if (~(sl_tx_dcc_dll_lock_req_sync & ms_rx_dcc_dll_lock_req_sync )) 
                     msrxcal_nxst = ms_wait_rx_xfer_req;
                    else
                     msrxcal_nxst = ms_rx_xfer_en;
@@ -605,19 +612,25 @@ always @(*)
                     mstxcal_nxst = ms_wait_tx_xfer_req;
                    end
       ms_send_tx_dcc_cal_req:    begin
-                   if (ms_tx_dcc_cal_done_sync ) //???
+                   if (!ms_tx_dcc_dll_lock_req_sync | !sl_rx_dcc_dll_lock_req_sync ) 
+                    mstxcal_nxst = ms_wait_tx_xfer_req;
+                   else if (ms_tx_dcc_cal_done_sync ) 
                     mstxcal_nxst = ms_wait_remt_rx_dll_lock;
                    else
                     mstxcal_nxst = ms_send_tx_dcc_cal_req;
                    end
       ms_wait_remt_rx_dll_lock:        begin
-                   if (sl_rx_dll_lock_sync ) 
+                   if (!ms_tx_dcc_dll_lock_req_sync | !sl_rx_dcc_dll_lock_req_sync ) 
+                    mstxcal_nxst = ms_wait_tx_xfer_req;
+                   else if (sl_rx_dll_lock_sync ) 
                     mstxcal_nxst = ms_wait_remt_rx_transfer_en;
                    else
                     mstxcal_nxst = ms_wait_remt_rx_dll_lock;
                    end
       ms_wait_remt_rx_transfer_en:        begin
-                   if (sl_rx_transfer_en_sync ) //???
+                   if (!ms_tx_dcc_dll_lock_req_sync | !sl_rx_dcc_dll_lock_req_sync ) 
+                    mstxcal_nxst = ms_wait_tx_xfer_req;
+                   else if (sl_rx_transfer_en_sync ) 
                     mstxcal_nxst = ms_tx_xfer_en;
                    else
                     mstxcal_nxst = ms_wait_remt_rx_transfer_en;

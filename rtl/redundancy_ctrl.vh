@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2019 Intel Corporation. All rights reserved
-input [19:0]   shift_en_tx,        //tx data io redundancy control. "1" the io is bad, it is shifted
+input [DATAWIDTH-1:0]   shift_en_tx,        //tx data io redundancy control. "1" the io is bad, it is shifted
                                    //to the next io. "0" the io is good, no shifting is needed.
-input [19:0]   shift_en_rx,        //rx data io redundancy control. "1" the io is bad, it is shifted
+input [DATAWIDTH-1:0]   shift_en_rx,        //rx data io redundancy control. "1" the io is bad, it is shifted
                                    //to the next io. "0" the io is good, no shifting is needed.
 input          shift_en_rxclkb,    //fs_fwd_clkb io redundancy control, "1" the io is bad, it is shifted
                                    //to the next io. "0" the io is good, no shifting is needed. 
