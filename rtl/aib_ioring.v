@@ -172,15 +172,12 @@ wire [DATAWIDTH-1:0] nc_async_dat_pinpi, nc_idat1_pinp, nc_idat0_pinp, nc_oclk_p
 wire [DATAWIDTH-1:0] jtag_clkdr_outn_pinp, nc_oclkb_pinp, nc_odat_async_pinp;
 wire [DATAWIDTH-1:0] pcs_data_out0_pinp, pcs_data_out1_pinp;
 
+wire [DATAWIDTH-1:0] nc_async_dat_poutp, jtag_clkdr_outn_poutp;
+wire [DATAWIDTH-1:0] nc_async_dat_pinp, nc_odat_async_out0_pinp, nc_oclkb_out0_pinp;
+wire [DATAWIDTH-1:0] nc_oclk_out0_pinp, nc_oclkn_out0_pinp;
+
 wire [DATAWIDTH-1:0] jtag_rx_scan_out_rxdat;
 wire [DATAWIDTH:0] jtag_rx_scan_out_poutp;
-wire [99:0]      nc_async_dat_poutp; // rjs
-wire [99:0]      jtag_clkdr_outn_poutp; // rjs
-wire [99:0]      nc_async_dat_pinp; // rjs
-wire [99:0]      nc_odat_async_out0_pinp; // rjs
-wire [99:0]      nc_oclkb_out0_pinp; // rjs
-wire [99:0]      nc_oclk_out0_pinp; // rjs
-wire [99:0]      nc_oclkn_out0_pinp; // rjs
 
 assign jtag_rx_scan_out_poutp[DATAWIDTH]= jtag_tx_scanen_in;
 
@@ -2696,7 +2693,48 @@ aib_buffx1_top rstni ( .idata1_in1_jtag_out(idata1_in1_rstni),
 
    genvar i;
    generate
-     for (i=20; i<DATAWIDTH; i=i+1) begin:txdatao
+    for (i=20; i<DATAWIDTH; i=i+1) begin:txdatao
+     if ((i==DATAWIDTH-1) | (i==DATAWIDTH-2)) begin
+aib_buffx1_top txdat ( .idata1_in1_jtag_out(idat1_poutp[i]),
+     .async_dat_in1_jtag_out(nc_async_dat_poutp[i]),
+     .idata0_in1_jtag_out(idat0_poutp[i]),
+     .jtag_clkdr_outn(jtag_clkdr_outn_poutp[i]),
+     .jtag_rstb_en(jtag_rstb_en), 
+     .jtag_intest(jtag_intest), 
+     .oclk_out(nc_oclk[i]),
+     .oclkb_out(nc_oclkb[i]), .odat0_out(nc_odat0[i]),
+     .odat1_out(nc_odat1[i]), .odat_async_out(nc_odat_async[i]),
+     .async_dat_in0(vssl_aib),
+     .async_dat_in1(vssl_aib),
+     .iclkin_dist_in0(jtag_clkdr_outn_poutp[i]),
+     .iclkin_dist_in1(vssl_aib), .idata0_in0(idat0[i]),
+     .idata0_in1(vssl_aib), .idata1_in0(idat1[i]),
+     .idata1_in1(vssl_aib), .idataselb_in0(idataselb),
+     .idataselb_in1(idataselb), .iddren_in0(iddren),
+     .iddren_in1(iddren), .ilaunch_clk_in0(tx_launch_clk),
+     .ilaunch_clk_in1(tx_launch_clk), 
+     .irxen_in0({vssl_aib, vccl_aib,
+     vssl_aib}), .irxen_in1({vssl_aib, vccl_aib, vssl_aib}),
+     .istrbclk_in0(vssl_aib), .istrbclk_in1(vssl_aib),
+     .itxen_in0(itxen), .itxen_in1(itxen), .oclk_in1(vssl_aib),
+     .odat_async_aib(nc_odat_async_aib_pout[i]),
+     .oclkb_in1(vssl_aib), .odat0_in1(vssl_aib),
+     .odat1_in1(vssl_aib), .odat_async_in1(vssl_aib),
+     .shift_en(tx_shift_en[i]), 
+     .dig_rstb(dig_rstb),
+     .odat1_aib(nc_odat1_aib_pout[i]),
+     .jtag_rx_scan_out(jtag_rx_scan_out_poutp[i]),
+     .odat0_aib(nc_odat0_aib_pout[i]),
+     .oclk_aib(nc_oclk_aib_pout[i]),
+     .oclkb_aib(nc_oclkb_aib_pout[i]), .jtag_clkdr_in(jtag_clkdr_in),
+     .jtag_mode_in(jtag_mode_in), .jtag_rstb(jtag_rstb),
+     .jtag_tx_scan_in(jtag_rx_scan_out_poutp[i+1]),
+     .jtag_tx_scanen_in(jtag_tx_scanen_in), 
+     .iopad(iopad_txdat[i]), .oclkn(nc_oclkn_pout[i]),
+     .iclkn(vssl_aib), .test_weakpu(jtag_weakpu),
+     .test_weakpd(jtag_weakpdn));
+     end
+    else begin
 aib_buffx1_top txdat ( .idata1_in1_jtag_out(idat1_poutp[i]),
      .async_dat_in1_jtag_out(nc_async_dat_poutp[i]),
      .idata0_in1_jtag_out(idat0_poutp[i]),
@@ -2735,7 +2773,8 @@ aib_buffx1_top txdat ( .idata1_in1_jtag_out(idat1_poutp[i]),
      .iopad(iopad_txdat[i]), .oclkn(nc_oclkn_pout[i]),
      .iclkn(vssl_aib), .test_weakpu(jtag_weakpu),
      .test_weakpd(jtag_weakpdn));
-     end
+    end
+    end
    endgenerate
 
 
