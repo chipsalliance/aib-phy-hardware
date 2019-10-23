@@ -342,7 +342,7 @@ aib_sr_ms
     .sr_ms_clk_in(sr_clk_in), //from input por
     .ms_nsl(ms_nsl), 
     .atpg_mode(1'b0),
-    .reset_n(adpt_rstn)       //ms_adapter_rstn & sl_adapter_rstn
+    .reset_n(ms_config_done)       //Per email from Tim on 10/17/19. And confirmation from Julie, this is equivalent to HARD_RESET
     );
 
 aib_sr_sl #(
@@ -360,7 +360,7 @@ aib_sr_sl
     .sr_ms_clk_in(sr_clk_in), //input ms clock
     .ms_nsl(ms_nsl), 
     .atpg_mode(1'b0),
-    .reset_n(adpt_rstn)       //ms_adapter_rstn & sl_adapter_rstn
+    .reset_n(sl_config_done)       //Per email from Tim on 10/17/19. And confirmation from Julie, this is equivalent to HARD_RESET
     );
 
 aib_dcc aib_dcc
