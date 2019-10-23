@@ -186,9 +186,9 @@ assign stl_out = is_master ? sr_ms_load_out : sr_sl_load_out;
 assign adapter_rstno = is_master ? ms_adapter_rstn : sl_adapter_rstn;
 assign rstn_out = is_master ? ms_rstn : sl_rstn;
 
-assign ms_data_fr_core[80:0] = {ms_osc_transfer_en,1'b1,ms_tx_transfer_en,2'b11,ms_rx_transfer_en,ms_rx_dll_lock, 5'b11111,ms_tx_dcc_cal_done,1'b0,1'b0, ms_external_cntl_65_8[57:0], 1'b1, 1'b0, 1'b0, ms_external_cntl_4_0[4:0]}; 
+assign ms_data_fr_core[80:0] = {ms_osc_transfer_en,1'b1,ms_tx_transfer_en,2'b11,ms_rx_transfer_en,ms_rx_dll_lock, 5'b11111,ms_tx_dcc_cal_done,1'b0,1'b1, ms_external_cntl_65_8[57:0], 1'b1, 1'b0, 1'b1, ms_external_cntl_4_0[4:0]}; 
 
-assign sl_data_fr_core[72:0] = {sl_osc_transfer_en,1'b0,sl_rx_transfer_en,sl_rx_dcc_dll_lock_req, sl_rx_dll_lock,3'b0,sl_tx_transfer_en,sl_tx_dcc_dll_lock_req, 1'b0,1'b0,1'b0,1'b0, 1'b0, sl_external_cntl_57_32[25:0], sl_tx_dcc_cal_done, sl_external_cntl_30_28[2:0], 1'b0, sl_external_cntl_26_0[26:0]}; 
+assign sl_data_fr_core[72:0] = {sl_osc_transfer_en,1'b0,sl_rx_transfer_en,sl_rx_dcc_dll_lock_req, sl_rx_dll_lock,3'b0,sl_tx_transfer_en,sl_tx_dcc_dll_lock_req, 1'b0,1'b0,1'b1,1'b0, 1'b1, sl_external_cntl_57_32[25:0], sl_tx_dcc_cal_done, sl_external_cntl_30_28[2:0], 1'b0, sl_external_cntl_26_0[26:0]}; 
 
 aib_ioring #(.DATAWIDTH(DATAWIDTH)) aib_ioring ( 
      .iopad_txdat(iopad_txdat), 
