@@ -176,8 +176,8 @@ assign is_slave = !is_master;
 
 assign adpt_rstn =  is_master ? (ms_adapter_rstn & adapter_rstni) : (sl_adapter_rstn & adapter_rstni);
 
-//assign dig_rstb =  is_master ? (ms_config_done & por_ms) : (sl_config_done & por_sl);
-assign dig_rstb =  is_master ? ms_rstn : sl_rstn;
+assign dig_rstb =  is_master ? (ms_config_done & ms_rstn): (sl_config_done & sl_rstn);
+//assign dig_rstb =  is_master ? ms_rstn : sl_rstn;
 
 assign sr_clk_out = is_master ? osc_clk : sr_sl_clk_out; 
 assign std_out = is_master ? sr_ms_data_out : sr_sl_data_out;
