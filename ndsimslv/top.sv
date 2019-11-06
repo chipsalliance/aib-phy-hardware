@@ -255,6 +255,7 @@ module top;
                          .m_fs_fwd_div2_clk     (o_tx_transfer_div2_clk),
                          .data_out              (o_tx_pma_data[39:0]),
                          .ns_mac_rdy            (top_io.ns_mac_rdy),
+                         .ns_adapt_rstn         (top_io.ns_adapt_rstn),
                          .ms_sideband           (ms_sideband),
                          .sl_sideband           (sl_sideband),
                          .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]),

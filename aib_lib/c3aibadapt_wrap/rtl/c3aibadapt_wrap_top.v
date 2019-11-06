@@ -24,6 +24,15 @@
 //
 //
 //-----------------------------------------------------------------------------
+
+// changes
+//  1.  Fixed error in which chnl_aib_cfg_avmm_wdata_0 connects to inputs of channels
+//      6, 12, and 18. Channel 12 should be connected to chnl_aib_cfg_avmm_wdata_1
+//      and channel 18 should be connected to chnl_aib_cfg_avmm_wdata_2. This error does not
+//      affect the functionality. Only the routing optimization.
+//  2.  Pulled out ns_mac_rdy, ms_sideband and sl_sideband                                  
+//  3.  Pull out ns_adapt_rstn
+
 module c3aibadapt_wrap_top
   # (
      parameter TOTAL_CHNL_NUM = 24
@@ -75,6 +84,7 @@ module c3aibadapt_wrap_top
  //AIB open source IP enhancement. The following ports are added to
  //be compliance with AIB specification 1.1
    input  [TOTAL_CHNL_NUM-1:0]                                    ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive data. use aibio49
+   input  [TOTAL_CHNL_NUM-1:0]                                    ns_adapt_rstn, //From Mac. To reset near site adapt reset state machine and far site sm. Not implemented currently.
    output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
    output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
    //=================================================================================================
@@ -538,6 +548,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[0]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[39:0]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[0]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[0]),
                                     .ms_sideband        (ms_sideband[80:0]),
                                     .sl_sideband        (sl_sideband[72:0]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -701,6 +712,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[1]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[79:40]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[1]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[1]),
                                     .ms_sideband        (ms_sideband[161:81]),
                                     .sl_sideband        (sl_sideband[145:73]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[1][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -895,6 +907,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[2]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[119:80]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[2]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[2]),
                                     .ms_sideband        (ms_sideband[242:162]),
                                     .sl_sideband        (sl_sideband[218:146]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[2][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -1089,6 +1102,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[3]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[159:120]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[3]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[3]),
                                     .ms_sideband        (ms_sideband[323:243]),
                                     .sl_sideband        (sl_sideband[291:219]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[3][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -1283,6 +1297,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[4]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[199:160]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[4]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[4]),
                                     .ms_sideband        (ms_sideband[404:324]),
                                     .sl_sideband        (sl_sideband[364:292]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[4][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -1491,6 +1506,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[5]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[239:200]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[5]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[5]),
                                     .ms_sideband        (ms_sideband[485:405]),
                                     .sl_sideband        (sl_sideband[437:365]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[5][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -1818,6 +1834,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[6]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[279:240]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[6]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[6]),
                                     .ms_sideband        (ms_sideband[566:486]),
                                     .sl_sideband        (sl_sideband[510:438]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[6][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -1991,6 +2008,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[7]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[319:280]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[7]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[7]),
                                     .ms_sideband        (ms_sideband[647:567]),
                                     .sl_sideband        (sl_sideband[583:511]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[7][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -2185,6 +2203,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[8]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[359:320]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[8]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[8]),
                                     .ms_sideband        (ms_sideband[728:648]),
                                     .sl_sideband        (sl_sideband[656:584]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[8][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -2379,6 +2398,7 @@ module c3aibadapt_wrap_top
                                     .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[9]), // Templated
                                     .o_tx_pma_data      (o_tx_pma_data[399:360]), // Templated
                                     .ns_mac_rdy         (ns_mac_rdy[9]),
+                                    .ns_adapt_rstn      (ns_adapt_rstn[9]),
                                     .ms_sideband        (ms_sideband[809:729]),
                                     .sl_sideband        (sl_sideband[729:657]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[9][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -2573,6 +2593,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[10]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[439:400]), // Templated
                                      .ns_mac_rdy         (ns_mac_rdy[10]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[10]),
                                      .ms_sideband        (ms_sideband[890:810]),
                                      .sl_sideband        (sl_sideband[802:730]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[10][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -2781,6 +2802,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[11]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[479:440]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[11]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[11]),
                                      .ms_sideband       (ms_sideband[971:891]),
                                      .sl_sideband        (sl_sideband[875:803]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[11][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -3021,7 +3043,7 @@ module c3aibadapt_wrap_top
                                      .i_cfg_avmm_byte_en (chnl_aib_cfg_avmm_byte_en_1[3:0]),
                                      .i_cfg_avmm_read    (chnl_aib_cfg_avmm_read[1]), 
                                      .i_cfg_avmm_write   (chnl_aib_cfg_avmm_write[1]),
-                                     .i_cfg_avmm_wdata   (chnl_aib_cfg_avmm_wdata_0[31:0]), 
+                                     .i_cfg_avmm_wdata   (chnl_aib_cfg_avmm_wdata_1[31:0]), //chnl_aib_cfg_avmm_wdata_0[31:0]), 
                                      .i_adpt_hard_rst_n  (chnl_aib_adpt_hard_rst_n[1]), 
                                      .i_jtag_rstb_in     (chnl_jtag_rstb_out[1]), 
                                      .i_jtag_rstb_en_in  (chnl_jtag_rstb_en_out[1]),
@@ -3057,6 +3079,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[12]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[519:480]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[12]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[12]),
                                      .ms_sideband        (ms_sideband[1052:972]),
                                      .sl_sideband        (sl_sideband[948:876]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[12][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -3230,6 +3253,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[13]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[559:520]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[13]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[13]),
                                      .ms_sideband        (ms_sideband[1133:1053]),
                                      .sl_sideband        (sl_sideband[1021:949]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[13][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -3424,6 +3448,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[14]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[599:560]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[14]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[14]),
                                      .ms_sideband        (ms_sideband[1214:1134]),
                                      .sl_sideband        (sl_sideband[1094:1022]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[14][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -3618,6 +3643,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[15]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[639:600]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[15]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[15]),
                                      .ms_sideband        (ms_sideband[1295:1215]),
                                      .sl_sideband        (sl_sideband[1167:1095]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[15][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -3812,6 +3838,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[16]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[679:640]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[16]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[16]),
                                      .ms_sideband        (ms_sideband[1376:1296]),
                                      .sl_sideband        (sl_sideband[1240:1168]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[16][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -4020,6 +4047,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[17]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[719:680]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[17]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[17]),
                                      .ms_sideband        (ms_sideband[1457:1377]),
                                      .sl_sideband        (sl_sideband[1313:1241]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[17][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -4260,7 +4288,7 @@ module c3aibadapt_wrap_top
                                      .i_cfg_avmm_byte_en (chnl_aib_cfg_avmm_byte_en_2[3:0]),
                                      .i_cfg_avmm_read    (chnl_aib_cfg_avmm_read[2]), 
                                      .i_cfg_avmm_write   (chnl_aib_cfg_avmm_write[2]),
-                                     .i_cfg_avmm_wdata   (chnl_aib_cfg_avmm_wdata_0[31:0]), 
+                                     .i_cfg_avmm_wdata   (chnl_aib_cfg_avmm_wdata_2[31:0]), //(chnl_aib_cfg_avmm_wdata_0[31:0]), 
                                      .i_adpt_hard_rst_n  (chnl_aib_adpt_hard_rst_n[2]), 
                                      .i_jtag_rstb_in     (chnl_jtag_rstb_out[2]), 
                                      .i_jtag_rstb_en_in  (chnl_jtag_rstb_en_out[2]),
@@ -4296,6 +4324,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[18]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[759:720]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[18]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[18]),
                                      .ms_sideband        (ms_sideband[1538:1458]),
                                      .sl_sideband        (sl_sideband[1386:1314]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[18][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -4469,6 +4498,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[19]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[799:760]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[19]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[19]),
                                      .ms_sideband        (ms_sideband[1619:1539]),
                                      .sl_sideband        (sl_sideband[1459:1387]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[19][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -4663,6 +4693,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[20]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[839:800]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[20]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[20]),
                                      .ms_sideband        (ms_sideband[1700:1620]),
                                      .sl_sideband        (sl_sideband[1532:1460]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[20][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -4857,6 +4888,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[21]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[879:840]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[21]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[21]),
                                      .ms_sideband        (ms_sideband[1781:1701]),
                                      .sl_sideband        (sl_sideband[1605:1533]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[21][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -5051,6 +5083,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[22]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[919:880]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[22]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[22]),
                                      .ms_sideband        (ms_sideband[1862:1782]),
                                      .sl_sideband        (sl_sideband[1678:1606]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[22][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
@@ -5250,6 +5283,7 @@ module c3aibadapt_wrap_top
                                      .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk[23]), // Templated
                                      .o_tx_pma_data     (o_tx_pma_data[959:920]), // Templated
                                      .ns_mac_rdy        (ns_mac_rdy[23]),
+                                     .ns_adapt_rstn      (ns_adapt_rstn[23]),
                                      .ms_sideband        (ms_sideband[1943:1863]),
                                      .sl_sideband        (sl_sideband[1751:1679]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[23][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
