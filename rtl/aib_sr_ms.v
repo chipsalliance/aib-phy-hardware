@@ -22,7 +22,7 @@ module aib_sr_ms #(
     input                  sr_ms_clk_in, //from input por
     input                  ms_nsl,
     input                  atpg_mode,
-    input                  reset_n       //ms_adapter_rstn & sl_adapter_rstn
+    input                  reset_n       
 
     );
 

@@ -8,6 +8,9 @@
 //                 -----------     (1'b1, master)         -----------    (1'b0, slave)      
 //                   master                                 slave
 ///////////////////////////////////////////////////////////////////////////////////////////
+// This testbench testing DDR data path. The following change needs to make for SDR test 
+// .iddren(1'b1),  -> .iddren(1'b0), For both master and slave.
+//////////////////////////////////////////////////////////////////////////////////////////
 
 `timescale 1ps/1fs
 module tb_top ();
@@ -370,11 +373,21 @@ slave
         begin
             while(pkts_rcvd < run_for_n_pkts) begin
                 @ (posedge tb_top.ms_fs_rcv_clk);
-                if ({tb_top.ms_data_out[DATAWIDTH*2-1:0]} != 0) begin
+                if (tb_top.master.iddren & tb_top.slave.iddren & ({tb_top.ms_data_out[DATAWIDTH*2-1:0]} != 0)) begin
                     $display ("[%t] Receiving data[%d] = %x \n", $time, pkts_rcvd, tb_top.ms_data_out[DATAWIDTH*2-1:0]);
                     data_exp = xmit_q.pop_front();
                     pkts_rcvd++;
                     if ({tb_top.ms_data_out[DATAWIDTH*2-1:0]} != data_exp) begin
+                        err_count++;
+                        $display ("[%t]DATA COMPARE ERROR: received = %x | expected = %x\n", $time, tb_top.ms_data_out[DATAWIDTH*2-1:0], data_exp);
+                    end   
+                end
+                else
+                 if (!tb_top.master.iddren & !tb_top.slave.iddren & ({tb_top.ms_data_out[DATAWIDTH-1:0]} != 0)) begin
+                    $display ("[%t] Receiving data[%d] = %x \n", $time, pkts_rcvd, tb_top.ms_data_out[DATAWIDTH-1:0]);
+                    data_exp = xmit_q.pop_front();
+                    pkts_rcvd++;
+                    if ({tb_top.ms_data_out[DATAWIDTH-1:0]} != data_exp[DATAWIDTH-1:0]) begin
                         err_count++;
                         $display ("[%t]DATA COMPARE ERROR: received = %x | expected = %x\n", $time, tb_top.ms_data_out[DATAWIDTH*2-1:0], data_exp);
                     end   

@@ -43,7 +43,7 @@ program automatic test (dut_io.TB dut);
 	    dut.i_adpt_hard_rst_n <= 1'b0;
             dut.i_cfg_avmm_rst_n  <= 1'b0;
             dut.ns_mac_rdy <= 1'b0;
-            
+            dut.ns_adapt_rstn <= 1'b0;  
             err_count <= 0;
 
             //cfg_avmm_clk domain

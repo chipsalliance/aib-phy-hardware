@@ -72,6 +72,9 @@ module c3aib_master (
  //=================================================================================================
  //AIB open source IP enhancement. The following ports are added to b compliance with AIB specification 1.1
     input                                      ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive data. use aibio49
+    input                                      ns_adapt_rstn, //From Mac. To reset near site adapt reset state machine and far site sm. Not implemented currently.
+                                                              //Use aibio56
+
     output [80:0]                              ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
     output [72:0]                              sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.    
  //=================================================================================================
@@ -272,6 +275,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                          .o_tx_transfer_div2_clk(o_tx_transfer_div2_clk),
                          .o_tx_pma_data         (o_tx_pma_data[39:0]),
                          .ns_mac_rdy            (ns_mac_rdy),
+                         .ns_adapt_rstn         (ns_adapt_rstn),
                          .ms_sideband           (ms_sideband),
                          .sl_sideband           (sl_sideband),
                          .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]),
@@ -395,8 +399,8 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                        //.io_aib81              (LO), //From Tim's 3/26 aib_bump_map
                          .io_aib82              (iopad_fs_sr_clkb),
                          .io_aib83              (iopad_fs_sr_clk),
-                         .io_aib84              (iopad_ns_sr_clk),
-                         .io_aib85              (iopad_ns_sr_clkb),
+                         .io_aib84              (iopad_ns_sr_clkb),
+                         .io_aib85              (iopad_ns_sr_clk),
                          .io_aib86              (iopad_ns_rcv_clkb),
                          .io_aib87              (iopad_ns_rcv_clk),
                          .io_aib88              (iopad_unused_aib88),

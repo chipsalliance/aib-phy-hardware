@@ -19,8 +19,8 @@
 //
 //-----------------------------------------------------------------------------
 // Change log
-//
-//
+// Pulled out ns_mac_rdy, ms_sideband and sl_sideband
+// Pull out ns_adapt_rstn
 //
 //
 //-----------------------------------------------------------------------------
@@ -90,6 +90,8 @@ module c3aibadapt_wrap
  //=================================================================================================
  //AIB open source IP enhancement. The following ports are added to b compliance with AIB specification 1.1
     input                                      ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive data. use aibio49
+    input                                      ns_adapt_rstn, //From Mac. To reset near site adapt reset state machine and far site sm. Not implemented currently.
+                                                              //Use aibio56
     output [80:0]                              ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
     output [72:0]                              sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.                                                      
  //=================================================================================================
@@ -610,7 +612,7 @@ module c3aibadapt_wrap
     .i_tx_elane_clk                         (1'b1),
  // .i_rx_pma_div66_clk                     (1'b1),
     .i_rx_pma_div66_clk                     (ns_mac_rdy),    //Added for AIB spec 1.1 enhancement. 6/12/19
-    .i_tx_pma_div66_clk                     (1'b1),
+    .i_tx_pma_div66_clk                     (ns_adapt_rstn), //Added per tim 10/27/2019
     .i_rx_ehip_clk                          (1'b1),
      
     .i_tx_ehip_clk                          (1'b1),
@@ -822,8 +824,8 @@ module c3aibadapt_wrap
                            .i_rsvd_direct_async (1'b0),          // Templated
                            .i_rx_elane_clk      (1'b1),          // Templated
                            .i_tx_elane_clk      (1'b1),          // Templated
-                           .i_rx_pma_div66_clk  (1'b1),          // Templated
-                           .i_tx_pma_div66_clk  (1'b1),          // Templated
+                           .i_rx_pma_div66_clk  (ns_mac_rdy),       //Added per tim 10/27/2019 
+                           .i_tx_pma_div66_clk  (ns_adapt_rstn),    //Added per tim 10/27/2019    
                            .i_feedthru_clk      ({6{i_rx_pma_clk}}), // Templated
                            .i_elane_cfg_rdata   ({32{1'b0}}),    // Templated
                            .i_elane_cfg_rdatavld({1{1'b0}}),     // Templated

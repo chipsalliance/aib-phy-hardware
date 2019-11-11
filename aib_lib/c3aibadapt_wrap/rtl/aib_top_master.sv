@@ -55,6 +55,8 @@ module aib_top_master
  // AIB open source IP enhancement. The following ports are added to
  // be compliance with AIB specification 1.1
    input  [TOTAL_CHNL_NUM-1:0]                                    ns_mac_rdy,  //From Mac. To indicate MAC is ready to send and receive //     data. use aibio49
+   input  [TOTAL_CHNL_NUM-1:0]                                    ns_adapt_rstn, //From Mac. To reset near site adapt reset state machine and far site sm. Not implemented currently.
+
    output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
    output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
    //=================================================================================================
@@ -242,13 +244,14 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                     .o_tx_transfer_div2_clk      (o_tx_transfer_div2_clk),        // Not used 
                     .o_tx_pma_data               (o_tx_pma_data), 
 		    .ns_mac_rdy                  (ns_mac_rdy),
+                    .ns_adapt_rstn               (ns_adapt_rstn),
                     .ms_sideband                 (ms_sideband),
 		    .sl_sideband                 (sl_sideband),
 
     
                     .io_aib_ch0                  ({  iopad_ns_sr_data[0],       iopad_ns_sr_load[0],       iopad_fs_sr_data[0],      iopad_fs_sr_load[0],
                                                    iopad_unused_aib91[0],     iopad_unused_aib90[0],     iopad_unused_aib89[0],    iopad_unused_aib88[0],
-                                                     iopad_ns_rcv_clk[0],      iopad_ns_rcv_clkb[0],       iopad_ns_sr_clkb[0],       iopad_ns_sr_clk[0],
+                                                     iopad_ns_rcv_clk[0],      iopad_ns_rcv_clkb[0],        iopad_ns_sr_clk[0],      iopad_ns_sr_clkb[0],
                                                       iopad_fs_sr_clk[0],       iopad_fs_sr_clkb[0],     iopad_unused_aib81[0],    iopad_unused_aib80[0],
                                                    iopad_unused_aib79[0],     iopad_unused_aib78[0],     iopad_unused_aib77[0],    iopad_unused_aib76[0],
                                                    iopad_unused_aib75[0],     iopad_unused_aib74[0],     iopad_unused_aib73[0],    iopad_unused_aib72[0],
@@ -264,7 +267,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch1                  ({  iopad_ns_sr_data[1],       iopad_ns_sr_load[1],       iopad_fs_sr_data[1],      iopad_fs_sr_load[1],
                                                    iopad_unused_aib91[1],     iopad_unused_aib90[1],     iopad_unused_aib89[1],    iopad_unused_aib88[1],
-                                                     iopad_ns_rcv_clk[1],      iopad_ns_rcv_clkb[1],       iopad_ns_sr_clkb[1],       iopad_ns_sr_clk[1],
+                                                     iopad_ns_rcv_clk[1],      iopad_ns_rcv_clkb[1],        iopad_ns_sr_clk[1],      iopad_ns_sr_clkb[1],
                                                       iopad_fs_sr_clk[1],       iopad_fs_sr_clkb[1],     iopad_unused_aib81[1],    iopad_unused_aib80[1],
                                                    iopad_unused_aib79[1],     iopad_unused_aib78[1],     iopad_unused_aib77[1],    iopad_unused_aib76[1],
                                                    iopad_unused_aib75[1],     iopad_unused_aib74[1],     iopad_unused_aib73[1],    iopad_unused_aib72[1],
@@ -281,7 +284,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
     
                     .io_aib_ch2                  ({  iopad_ns_sr_data[2],       iopad_ns_sr_load[2],       iopad_fs_sr_data[2],      iopad_fs_sr_load[2],
                                                    iopad_unused_aib91[2],     iopad_unused_aib90[2],     iopad_unused_aib89[2],    iopad_unused_aib88[2],
-                                                     iopad_ns_rcv_clk[2],      iopad_ns_rcv_clkb[2],       iopad_ns_sr_clkb[2],       iopad_ns_sr_clk[2],
+                                                     iopad_ns_rcv_clk[2],      iopad_ns_rcv_clkb[2],        iopad_ns_sr_clk[2],      iopad_ns_sr_clkb[2],
                                                       iopad_fs_sr_clk[2],       iopad_fs_sr_clkb[2],     iopad_unused_aib81[2],    iopad_unused_aib80[2],
                                                    iopad_unused_aib79[2],     iopad_unused_aib78[2],     iopad_unused_aib77[2],    iopad_unused_aib76[2],
                                                    iopad_unused_aib75[2],     iopad_unused_aib74[2],     iopad_unused_aib73[2],    iopad_unused_aib72[2],
@@ -297,7 +300,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch3                  ({  iopad_ns_sr_data[3],       iopad_ns_sr_load[3],       iopad_fs_sr_data[3],      iopad_fs_sr_load[3],
                                                    iopad_unused_aib91[3],     iopad_unused_aib90[3],     iopad_unused_aib89[3],    iopad_unused_aib88[3],
-                                                     iopad_ns_rcv_clk[3],      iopad_ns_rcv_clkb[3],       iopad_ns_sr_clkb[3],       iopad_ns_sr_clk[3],
+                                                     iopad_ns_rcv_clk[3],      iopad_ns_rcv_clkb[3],        iopad_ns_sr_clk[3],      iopad_ns_sr_clkb[3],
                                                       iopad_fs_sr_clk[3],       iopad_fs_sr_clkb[3],     iopad_unused_aib81[3],    iopad_unused_aib80[3],
                                                    iopad_unused_aib79[3],     iopad_unused_aib78[3],     iopad_unused_aib77[3],    iopad_unused_aib76[3],
                                                    iopad_unused_aib75[3],     iopad_unused_aib74[3],     iopad_unused_aib73[3],    iopad_unused_aib72[3],
@@ -313,7 +316,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch4                  ({  iopad_ns_sr_data[4],       iopad_ns_sr_load[4],       iopad_fs_sr_data[4],      iopad_fs_sr_load[4],
                                                    iopad_unused_aib91[4],     iopad_unused_aib90[4],     iopad_unused_aib89[4],    iopad_unused_aib88[4],
-                                                     iopad_ns_rcv_clk[4],      iopad_ns_rcv_clkb[4],       iopad_ns_sr_clkb[4],       iopad_ns_sr_clk[4],
+                                                     iopad_ns_rcv_clk[4],      iopad_ns_rcv_clkb[4],        iopad_ns_sr_clk[4],      iopad_ns_sr_clkb[4],
                                                       iopad_fs_sr_clk[4],       iopad_fs_sr_clkb[4],     iopad_unused_aib81[4],    iopad_unused_aib80[4],
                                                    iopad_unused_aib79[4],     iopad_unused_aib78[4],     iopad_unused_aib77[4],    iopad_unused_aib76[4],
                                                    iopad_unused_aib75[4],     iopad_unused_aib74[4],     iopad_unused_aib73[4],    iopad_unused_aib72[4],
@@ -329,7 +332,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch5                  ({  iopad_ns_sr_data[5],       iopad_ns_sr_load[5],       iopad_fs_sr_data[5],      iopad_fs_sr_load[5],
                                                    iopad_unused_aib91[5],     iopad_unused_aib90[5],     iopad_unused_aib89[5],    iopad_unused_aib88[5],
-                                                     iopad_ns_rcv_clk[5],      iopad_ns_rcv_clkb[5],       iopad_ns_sr_clkb[5],       iopad_ns_sr_clk[5],
+                                                     iopad_ns_rcv_clk[5],      iopad_ns_rcv_clkb[5],        iopad_ns_sr_clk[5],      iopad_ns_sr_clkb[5],
                                                       iopad_fs_sr_clk[5],       iopad_fs_sr_clkb[5],     iopad_unused_aib81[5],    iopad_unused_aib80[5],
                                                    iopad_unused_aib79[5],     iopad_unused_aib78[5],     iopad_unused_aib77[5],    iopad_unused_aib76[5],
                                                    iopad_unused_aib75[5],     iopad_unused_aib74[5],     iopad_unused_aib73[5],    iopad_unused_aib72[5],
@@ -345,7 +348,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch6                  ({  iopad_ns_sr_data[6],       iopad_ns_sr_load[6],       iopad_fs_sr_data[6],      iopad_fs_sr_load[6],
                                                    iopad_unused_aib91[6],     iopad_unused_aib90[6],     iopad_unused_aib89[6],    iopad_unused_aib88[6],
-                                                     iopad_ns_rcv_clk[6],      iopad_ns_rcv_clkb[6],       iopad_ns_sr_clkb[6],       iopad_ns_sr_clk[6],
+                                                     iopad_ns_rcv_clk[6],      iopad_ns_rcv_clkb[6],        iopad_ns_sr_clk[6],      iopad_ns_sr_clkb[6],
                                                       iopad_fs_sr_clk[6],       iopad_fs_sr_clkb[6],     iopad_unused_aib81[6],    iopad_unused_aib80[6],
                                                    iopad_unused_aib79[6],     iopad_unused_aib78[6],     iopad_unused_aib77[6],    iopad_unused_aib76[6],
                                                    iopad_unused_aib75[6],     iopad_unused_aib74[6],     iopad_unused_aib73[6],    iopad_unused_aib72[6],
@@ -361,7 +364,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch7                  ({  iopad_ns_sr_data[7],       iopad_ns_sr_load[7],       iopad_fs_sr_data[7],      iopad_fs_sr_load[7],
                                                    iopad_unused_aib91[7],     iopad_unused_aib90[7],     iopad_unused_aib89[7],    iopad_unused_aib88[7],
-                                                     iopad_ns_rcv_clk[7],      iopad_ns_rcv_clkb[7],       iopad_ns_sr_clkb[7],       iopad_ns_sr_clk[7],
+                                                     iopad_ns_rcv_clk[7],      iopad_ns_rcv_clkb[7],        iopad_ns_sr_clk[7],      iopad_ns_sr_clkb[7],
                                                       iopad_fs_sr_clk[7],       iopad_fs_sr_clkb[7],     iopad_unused_aib81[7],    iopad_unused_aib80[7],
                                                    iopad_unused_aib79[7],     iopad_unused_aib78[7],     iopad_unused_aib77[7],    iopad_unused_aib76[7],
                                                    iopad_unused_aib75[7],     iopad_unused_aib74[7],     iopad_unused_aib73[7],    iopad_unused_aib72[7],
@@ -377,7 +380,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch8                  ({  iopad_ns_sr_data[8],       iopad_ns_sr_load[8],       iopad_fs_sr_data[8],      iopad_fs_sr_load[8],
                                                    iopad_unused_aib91[8],     iopad_unused_aib90[8],     iopad_unused_aib89[8],    iopad_unused_aib88[8],
-                                                     iopad_ns_rcv_clk[8],      iopad_ns_rcv_clkb[8],       iopad_ns_sr_clkb[8],       iopad_ns_sr_clk[8],
+                                                     iopad_ns_rcv_clk[8],      iopad_ns_rcv_clkb[8],        iopad_ns_sr_clk[8],      iopad_ns_sr_clkb[8],
                                                       iopad_fs_sr_clk[8],       iopad_fs_sr_clkb[8],     iopad_unused_aib81[8],    iopad_unused_aib80[8],
                                                    iopad_unused_aib79[8],     iopad_unused_aib78[8],     iopad_unused_aib77[8],    iopad_unused_aib76[8],
                                                    iopad_unused_aib75[8],     iopad_unused_aib74[8],     iopad_unused_aib73[8],    iopad_unused_aib72[8],
@@ -392,7 +395,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
                                                       iopad_rx[179:160],     iopad_tx[179:160]}),
                     .io_aib_ch9                  ({  iopad_ns_sr_data[9],       iopad_ns_sr_load[9],       iopad_fs_sr_data[9],      iopad_fs_sr_load[9],
                                                    iopad_unused_aib91[9],     iopad_unused_aib90[9],     iopad_unused_aib89[9],    iopad_unused_aib88[9],
-                                                     iopad_ns_rcv_clk[9],      iopad_ns_rcv_clkb[9],       iopad_ns_sr_clkb[9],       iopad_ns_sr_clk[9],
+                                                     iopad_ns_rcv_clk[9],      iopad_ns_rcv_clkb[9],        iopad_ns_sr_clk[9],      iopad_ns_sr_clkb[9],
                                                       iopad_fs_sr_clk[9],       iopad_fs_sr_clkb[9],     iopad_unused_aib81[9],    iopad_unused_aib80[9],
                                                    iopad_unused_aib79[9],     iopad_unused_aib78[9],     iopad_unused_aib77[9],    iopad_unused_aib76[9],
                                                    iopad_unused_aib75[9],     iopad_unused_aib74[9],     iopad_unused_aib73[9],    iopad_unused_aib72[9],
@@ -408,7 +411,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch10                 ({  iopad_ns_sr_data[10],       iopad_ns_sr_load[10],       iopad_fs_sr_data[10],      iopad_fs_sr_load[10],
                                                    iopad_unused_aib91[10],     iopad_unused_aib90[10],     iopad_unused_aib89[10],    iopad_unused_aib88[10],
-                                                     iopad_ns_rcv_clk[10],      iopad_ns_rcv_clkb[10],       iopad_ns_sr_clkb[10],       iopad_ns_sr_clk[10],
+                                                     iopad_ns_rcv_clk[10],      iopad_ns_rcv_clkb[10],        iopad_ns_sr_clk[10],      iopad_ns_sr_clkb[10],
                                                       iopad_fs_sr_clk[10],       iopad_fs_sr_clkb[10],     iopad_unused_aib81[10],    iopad_unused_aib80[10],
                                                    iopad_unused_aib79[10],     iopad_unused_aib78[10],     iopad_unused_aib77[10],    iopad_unused_aib76[10],
                                                    iopad_unused_aib75[10],     iopad_unused_aib74[10],     iopad_unused_aib73[10],    iopad_unused_aib72[10],
@@ -424,7 +427,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch11                 ({  iopad_ns_sr_data[11],       iopad_ns_sr_load[11],       iopad_fs_sr_data[11],      iopad_fs_sr_load[11],
                                                    iopad_unused_aib91[11],     iopad_unused_aib90[11],     iopad_unused_aib89[11],    iopad_unused_aib88[11],
-                                                     iopad_ns_rcv_clk[11],      iopad_ns_rcv_clkb[11],       iopad_ns_sr_clkb[11],       iopad_ns_sr_clk[11],
+                                                     iopad_ns_rcv_clk[11],      iopad_ns_rcv_clkb[11],       iopad_ns_sr_clk[11],       iopad_ns_sr_clkb[11],
                                                       iopad_fs_sr_clk[11],       iopad_fs_sr_clkb[11],     iopad_unused_aib81[11],    iopad_unused_aib80[11],
                                                    iopad_unused_aib79[11],     iopad_unused_aib78[11],     iopad_unused_aib77[11],    iopad_unused_aib76[11],
                                                    iopad_unused_aib75[11],     iopad_unused_aib74[11],     iopad_unused_aib73[11],    iopad_unused_aib72[11],
@@ -440,7 +443,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch12                 ({  iopad_ns_sr_data[12],       iopad_ns_sr_load[12],       iopad_fs_sr_data[12],      iopad_fs_sr_load[12],
                                                    iopad_unused_aib91[12],     iopad_unused_aib90[12],     iopad_unused_aib89[12],    iopad_unused_aib88[12],
-                                                     iopad_ns_rcv_clk[12],      iopad_ns_rcv_clkb[12],       iopad_ns_sr_clkb[12],       iopad_ns_sr_clk[12],
+                                                     iopad_ns_rcv_clk[12],      iopad_ns_rcv_clkb[12],        iopad_ns_sr_clk[12],      iopad_ns_sr_clkb[12],
                                                       iopad_fs_sr_clk[12],       iopad_fs_sr_clkb[12],     iopad_unused_aib81[12],    iopad_unused_aib80[12],
                                                    iopad_unused_aib79[12],     iopad_unused_aib78[12],     iopad_unused_aib77[12],    iopad_unused_aib76[12],
                                                    iopad_unused_aib75[12],     iopad_unused_aib74[12],     iopad_unused_aib73[12],    iopad_unused_aib72[12],
@@ -456,7 +459,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch13                 ({  iopad_ns_sr_data[13],       iopad_ns_sr_load[13],       iopad_fs_sr_data[13],      iopad_fs_sr_load[13],
                                                    iopad_unused_aib91[13],     iopad_unused_aib90[13],     iopad_unused_aib89[13],    iopad_unused_aib88[13],
-                                                     iopad_ns_rcv_clk[13],      iopad_ns_rcv_clkb[13],       iopad_ns_sr_clkb[13],       iopad_ns_sr_clk[13],
+                                                     iopad_ns_rcv_clk[13],      iopad_ns_rcv_clkb[13],        iopad_ns_sr_clk[13],      iopad_ns_sr_clkb[13],
                                                       iopad_fs_sr_clk[13],       iopad_fs_sr_clkb[13],     iopad_unused_aib81[13],    iopad_unused_aib80[13],
                                                    iopad_unused_aib79[13],     iopad_unused_aib78[13],     iopad_unused_aib77[13],    iopad_unused_aib76[13],
                                                    iopad_unused_aib75[13],     iopad_unused_aib74[13],     iopad_unused_aib73[13],    iopad_unused_aib72[13],
@@ -472,7 +475,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch14                 ({  iopad_ns_sr_data[14],       iopad_ns_sr_load[14],       iopad_fs_sr_data[14],      iopad_fs_sr_load[14],
                                                    iopad_unused_aib91[14],     iopad_unused_aib90[14],     iopad_unused_aib89[14],    iopad_unused_aib88[14],
-                                                     iopad_ns_rcv_clk[14],      iopad_ns_rcv_clkb[14],       iopad_ns_sr_clkb[14],       iopad_ns_sr_clk[14],
+                                                     iopad_ns_rcv_clk[14],      iopad_ns_rcv_clkb[14],        iopad_ns_sr_clk[14],      iopad_ns_sr_clkb[14],
                                                       iopad_fs_sr_clk[14],       iopad_fs_sr_clkb[14],     iopad_unused_aib81[14],    iopad_unused_aib80[14],
                                                    iopad_unused_aib79[14],     iopad_unused_aib78[14],     iopad_unused_aib77[14],    iopad_unused_aib76[14],
                                                    iopad_unused_aib75[14],     iopad_unused_aib74[14],     iopad_unused_aib73[14],    iopad_unused_aib72[14],
@@ -488,7 +491,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch15                 ({  iopad_ns_sr_data[15],       iopad_ns_sr_load[15],       iopad_fs_sr_data[15],      iopad_fs_sr_load[15],
                                                    iopad_unused_aib91[15],     iopad_unused_aib90[15],     iopad_unused_aib89[15],    iopad_unused_aib88[15],
-                                                     iopad_ns_rcv_clk[15],      iopad_ns_rcv_clkb[15],       iopad_ns_sr_clkb[15],       iopad_ns_sr_clk[15],
+                                                     iopad_ns_rcv_clk[15],      iopad_ns_rcv_clkb[15],        iopad_ns_sr_clk[15],      iopad_ns_sr_clkb[15],
                                                       iopad_fs_sr_clk[15],       iopad_fs_sr_clkb[15],     iopad_unused_aib81[15],    iopad_unused_aib80[15],
                                                    iopad_unused_aib79[15],     iopad_unused_aib78[15],     iopad_unused_aib77[15],    iopad_unused_aib76[15],
                                                    iopad_unused_aib75[15],     iopad_unused_aib74[15],     iopad_unused_aib73[15],    iopad_unused_aib72[15],
@@ -504,7 +507,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch16                 ({  iopad_ns_sr_data[16],       iopad_ns_sr_load[16],       iopad_fs_sr_data[16],      iopad_fs_sr_load[16],
                                                    iopad_unused_aib91[16],     iopad_unused_aib90[16],     iopad_unused_aib89[16],    iopad_unused_aib88[16],
-                                                     iopad_ns_rcv_clk[16],      iopad_ns_rcv_clkb[16],       iopad_ns_sr_clkb[16],       iopad_ns_sr_clk[16],
+                                                     iopad_ns_rcv_clk[16],      iopad_ns_rcv_clkb[16],       iopad_ns_sr_clk[16],       iopad_ns_sr_clkb[16],
                                                       iopad_fs_sr_clk[16],       iopad_fs_sr_clkb[16],     iopad_unused_aib81[16],    iopad_unused_aib80[16],
                                                    iopad_unused_aib79[16],     iopad_unused_aib78[16],     iopad_unused_aib77[16],    iopad_unused_aib76[16],
                                                    iopad_unused_aib75[16],     iopad_unused_aib74[16],     iopad_unused_aib73[16],    iopad_unused_aib72[16],
@@ -520,7 +523,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch17                 ({  iopad_ns_sr_data[17],       iopad_ns_sr_load[17],       iopad_fs_sr_data[17],      iopad_fs_sr_load[17],
                                                    iopad_unused_aib91[17],     iopad_unused_aib90[17],     iopad_unused_aib89[17],    iopad_unused_aib88[17],
-                                                     iopad_ns_rcv_clk[17],      iopad_ns_rcv_clkb[17],       iopad_ns_sr_clkb[17],       iopad_ns_sr_clk[17],
+                                                     iopad_ns_rcv_clk[17],      iopad_ns_rcv_clkb[17],        iopad_ns_sr_clk[17],      iopad_ns_sr_clkb[17],
                                                       iopad_fs_sr_clk[17],       iopad_fs_sr_clkb[17],     iopad_unused_aib81[17],    iopad_unused_aib80[17],
                                                    iopad_unused_aib79[17],     iopad_unused_aib78[17],     iopad_unused_aib77[17],    iopad_unused_aib76[17],
                                                    iopad_unused_aib75[17],     iopad_unused_aib74[17],     iopad_unused_aib73[17],    iopad_unused_aib72[17],
@@ -536,7 +539,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch18                 ({  iopad_ns_sr_data[18],       iopad_ns_sr_load[18],       iopad_fs_sr_data[18],      iopad_fs_sr_load[18],
                                                    iopad_unused_aib91[18],     iopad_unused_aib90[18],     iopad_unused_aib89[18],    iopad_unused_aib88[18],
-                                                     iopad_ns_rcv_clk[18],      iopad_ns_rcv_clkb[18],       iopad_ns_sr_clkb[18],       iopad_ns_sr_clk[18],
+                                                     iopad_ns_rcv_clk[18],      iopad_ns_rcv_clkb[18],        iopad_ns_sr_clk[18],      iopad_ns_sr_clkb[18],
                                                       iopad_fs_sr_clk[18],       iopad_fs_sr_clkb[18],     iopad_unused_aib81[18],    iopad_unused_aib80[18],
                                                    iopad_unused_aib79[18],     iopad_unused_aib78[18],     iopad_unused_aib77[18],    iopad_unused_aib76[18],
                                                    iopad_unused_aib75[18],     iopad_unused_aib74[18],     iopad_unused_aib73[18],    iopad_unused_aib72[18],
@@ -552,7 +555,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch19                 ({  iopad_ns_sr_data[19],       iopad_ns_sr_load[19],       iopad_fs_sr_data[19],      iopad_fs_sr_load[19],
                                                    iopad_unused_aib91[19],     iopad_unused_aib90[19],     iopad_unused_aib89[19],    iopad_unused_aib88[19],
-                                                     iopad_ns_rcv_clk[19],      iopad_ns_rcv_clkb[19],       iopad_ns_sr_clkb[19],       iopad_ns_sr_clk[19],
+                                                     iopad_ns_rcv_clk[19],      iopad_ns_rcv_clkb[19],        iopad_ns_sr_clk[19],      iopad_ns_sr_clkb[19],
                                                       iopad_fs_sr_clk[19],       iopad_fs_sr_clkb[19],     iopad_unused_aib81[19],    iopad_unused_aib80[19],
                                                    iopad_unused_aib79[19],     iopad_unused_aib78[19],     iopad_unused_aib77[19],    iopad_unused_aib76[19],
                                                    iopad_unused_aib75[19],     iopad_unused_aib74[19],     iopad_unused_aib73[19],    iopad_unused_aib72[19],
@@ -568,7 +571,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch20                 ({  iopad_ns_sr_data[20],       iopad_ns_sr_load[20],       iopad_fs_sr_data[20],      iopad_fs_sr_load[20],
                                                    iopad_unused_aib91[20],     iopad_unused_aib90[20],     iopad_unused_aib89[20],    iopad_unused_aib88[20],
-                                                     iopad_ns_rcv_clk[20],      iopad_ns_rcv_clkb[20],       iopad_ns_sr_clkb[20],       iopad_ns_sr_clk[20],
+                                                     iopad_ns_rcv_clk[20],      iopad_ns_rcv_clkb[20],        iopad_ns_sr_clk[20],      iopad_ns_sr_clkb[20],
                                                       iopad_fs_sr_clk[20],       iopad_fs_sr_clkb[20],     iopad_unused_aib81[20],    iopad_unused_aib80[20],
                                                    iopad_unused_aib79[20],     iopad_unused_aib78[20],     iopad_unused_aib77[20],    iopad_unused_aib76[20],
                                                    iopad_unused_aib75[20],     iopad_unused_aib74[20],     iopad_unused_aib73[20],    iopad_unused_aib72[20],
@@ -584,7 +587,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch21                 ({  iopad_ns_sr_data[21],       iopad_ns_sr_load[21],       iopad_fs_sr_data[21],      iopad_fs_sr_load[21],
                                                    iopad_unused_aib91[21],     iopad_unused_aib90[21],     iopad_unused_aib89[21],    iopad_unused_aib88[21],
-                                                     iopad_ns_rcv_clk[21],      iopad_ns_rcv_clkb[21],       iopad_ns_sr_clkb[21],       iopad_ns_sr_clk[21],
+                                                     iopad_ns_rcv_clk[21],      iopad_ns_rcv_clkb[21],        iopad_ns_sr_clk[21],      iopad_ns_sr_clkb[21],
                                                       iopad_fs_sr_clk[21],       iopad_fs_sr_clkb[21],     iopad_unused_aib81[21],    iopad_unused_aib80[21],
                                                    iopad_unused_aib79[21],     iopad_unused_aib78[21],     iopad_unused_aib77[21],    iopad_unused_aib76[21],
                                                    iopad_unused_aib75[21],     iopad_unused_aib74[21],     iopad_unused_aib73[21],    iopad_unused_aib72[21],
@@ -600,7 +603,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch22                 ({  iopad_ns_sr_data[22],       iopad_ns_sr_load[22],       iopad_fs_sr_data[22],      iopad_fs_sr_load[22],
                                                    iopad_unused_aib91[22],     iopad_unused_aib90[22],     iopad_unused_aib89[22],    iopad_unused_aib88[22],
-                                                     iopad_ns_rcv_clk[22],      iopad_ns_rcv_clkb[22],       iopad_ns_sr_clkb[22],       iopad_ns_sr_clk[22],
+                                                     iopad_ns_rcv_clk[22],      iopad_ns_rcv_clkb[22],        iopad_ns_sr_clk[22],      iopad_ns_sr_clkb[22],
                                                       iopad_fs_sr_clk[22],       iopad_fs_sr_clkb[22],     iopad_unused_aib81[22],    iopad_unused_aib80[22],
                                                    iopad_unused_aib79[22],     iopad_unused_aib78[22],     iopad_unused_aib77[22],    iopad_unused_aib76[22],
                                                    iopad_unused_aib75[22],     iopad_unused_aib74[22],     iopad_unused_aib73[22],    iopad_unused_aib72[22],
@@ -616,7 +619,7 @@ assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
                     .io_aib_ch23                 ({  iopad_ns_sr_data[23],       iopad_ns_sr_load[23],       iopad_fs_sr_data[23],      iopad_fs_sr_load[23],
                                                    iopad_unused_aib91[23],     iopad_unused_aib90[23],     iopad_unused_aib89[23],    iopad_unused_aib88[23],
-                                                     iopad_ns_rcv_clk[23],      iopad_ns_rcv_clkb[23],       iopad_ns_sr_clkb[23],       iopad_ns_sr_clk[23],
+                                                     iopad_ns_rcv_clk[23],      iopad_ns_rcv_clkb[23],        iopad_ns_sr_clk[23],      iopad_ns_sr_clkb[23],
                                                       iopad_fs_sr_clk[23],       iopad_fs_sr_clkb[23],     iopad_unused_aib81[23],    iopad_unused_aib80[23],
                                                    iopad_unused_aib79[23],     iopad_unused_aib78[23],     iopad_unused_aib77[23],    iopad_unused_aib76[23],
                                                    iopad_unused_aib75[23],     iopad_unused_aib74[23],     iopad_unused_aib73[23],    iopad_unused_aib72[23],
