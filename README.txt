@@ -25,9 +25,9 @@ README.txt           - This file
 Quick links to key top level files:
 Directory aib_lib/c3aibadapt_wrap/rtl
   aib_top_master.sv: Master 24 channels + AUX channel, 40bit RX, 40bit TX/channel register mode datapath.  Maps most legacy port names to AIB spec names.  Through aib_top, uses c3aibadapt_wrap_top and aibcr3aux_top_wrp.
-    c3aibadapt_wrap_top.v: Master 24 channels. Uses legacy port names.
-    c3aib_master.sv: Master single channel, 40bit RX, 40bit TX register mode datapath.  Maps most legacy port names to AIB spec names.
-	   c3aibadapt_wrap.v: Master single channel, 40bit RX, 40bit TX register mode datapath.  Uses legacy port names.
+  c3aibadapt_wrap_top.v: Master 24 channels. Uses legacy port names.
+  c3aib_master.sv: Master single channel, 40bit RX, 40bit TX register mode datapath.  Maps most legacy port names to AIB spec names.
+  c3aibadapt_wrap.v: Master single channel, 40bit RX, 40bit TX register mode datapath.  Uses legacy port names.
 
 Directory how2use/sim_phasecom
   c3aib_master.sv: Master single channel, 78bit RX, 78bit TX phase comp FIFO mode datapath.  Maps most legacy port names to AIB spec names.  Uses c3aibadapt_wrap in this same directory.
