@@ -1,17 +1,18 @@
 README.txt
-FEB 4, 2019
+November 11, 2019
 
 ============================================================
 ============================================================
 
 Included in this package are:
-1. c3aib rtl (RTL implementation of AIB interface with no timing constrain file supplied) 
-2. CHIP AIB model. Based on AIB spec 1.0.
+1. c3aib rtl (RTL implementation of AIB interface with no timing constraints file supplied) 
+2. CHIP AIB model. Based on AIB spec 1.2.
 3. Slave FPGA AIB model
 4. Base Test bench master c3aib connect to FPGA AIB or AIB model
 5. Test examples with different configurations 
 ===========================================================
 Revision history:
+Version 1.1: Pointer to the important top level files.
 Version 1.0: Initial release
 
 ============================================================
@@ -20,13 +21,26 @@ Files included:
 README.txt           - This file
 
 ============================================================
+
+Quick links to key top level files:
+Directory aib_lib/c3aibadapt_wrap/rtl
+  aib_top_master.sv: Master 24 channels + AUX channel, 40bit RX, 40bit TX/channel register mode datapath.  Maps most legacy port names to AIB spec names.  Through aib_top, uses c3aibadapt_wrap_top and aibcr3aux_top_wrp.
+  c3aibadapt_wrap_top.v: Master 24 channels. Uses legacy port names.
+  c3aib_master.sv: Master single channel, 40bit RX, 40bit TX register mode datapath.  Maps most legacy port names to AIB spec names.
+  c3aibadapt_wrap.v: Master single channel, 40bit RX, 40bit TX register mode datapath.  Uses legacy port names.
+
+Directory how2use/sim_phasecom
+  c3aib_master.sv: Master single channel, 78bit RX, 78bit TX phase comp FIFO mode datapath.  Maps most legacy port names to AIB spec names.  Uses c3aibadapt_wrap in this same directory.
+  c3aibadapt_wrap.v: Master single channel, 78bit RX, 78bit TX phase comp FIFO mode datapath.  Uses legacy port names.
+
+
 Directory structure:
 
 docs
  |-- AIB_Intel_Specification_1_0_version1.pdf AIB Secification. User should read this document first.
  |-- USERGUIDE.txt        - Detail description of the test bench and CHIP AIB model top level ports.
 
-rtl: AIB model files   This models implementation follows AIB_Intel_Specification_1_0_version1.pdf.
+rtl: AIB model files   This models implementation follows AIB_Intel_Specification_1_2_version1.pdf.
  |-aib.v               - AIB model top level.
  |-*.v and *.sv        - AIB model sub-level files.
  |-redundancy_ctrl.vh  - Redundancy Input control ports definition
