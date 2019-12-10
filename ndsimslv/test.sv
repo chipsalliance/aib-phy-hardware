@@ -74,6 +74,7 @@ program automatic test (dut_io.TB dut);
             configuration_setup();
             $display ("[%t] Done configuration", $time);
             dut.ns_mac_rdy <= 1'b1; 
+            dut.ns_adapt_rstn <= 1'b1;
             $display ("[%t] ns_mac_rdy is up. Clock should be stable prior to this", $time);
 	    repeat (random_dly_cycle) @ (posedge top.i_osc_clk);            
 	    dut.i_adpt_hard_rst_n <= 1'b1;
@@ -231,8 +232,6 @@ program automatic test (dut_io.TB dut);
     //***************************************************
     task wait_xfer_ready();
         wait (top.o_ehip_init_status[2:0] == 3'b111);
-
-        
     endtask
     //************************************************
     // task below generates data on RX path to DUT

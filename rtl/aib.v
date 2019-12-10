@@ -73,8 +73,12 @@ input          itxen, //data tx enable
 input [2:0]    irxen,//data input enable
 
 //Aux channel
-input          ms_device_detect,
-input          sl_por,
+//input          ms_device_detect,
+input          m_por_ovrd,
+input          m_device_detect_ovrd,
+input          m_power_on_reset_i,
+output wire    m_device_detect,
+output wire    m_power_on_reset,
 //JTAG signals
 input          jtag_clkdr_in,
 output wire    scan_out,
@@ -100,6 +104,8 @@ input         vccl_aib,
 input         vssl_aib );
 
 wire por_ms, osc_clk;
+
+assign m_power_on_reset = por_ms;
 
 aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel 
  ( 
@@ -159,7 +165,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel
      .ms_rstn(ms_ns_mac_rdy),
      .sl_rstn(sl_ns_mac_rdy),
      .fs_mac_rdy_tomac(fs_mac_rdy),
-     .por_sl(sl_por),
+     .por_sl(m_power_on_reset_i),
      .ms_nsl(ms_nsl),
      .por_ms(por_ms),
      .osc_clk(osc_clk),
@@ -216,9 +222,12 @@ aib_aux_channel  aib_aux_channel
     .iopad_dev_por(iopad_por),
     .iopad_dev_porrdcy(iopad_por_copy),
 
-    .device_detect_ms(ms_device_detect),
+//    .device_detect_ms(ms_device_detect),
+    .m_por_ovrd(m_por_ovrd),
+    .m_device_detect_ovrd(m_device_detect_ovrd),
     .por_ms(por_ms),
-    .por_sl(sl_por),
+    .m_device_detect(m_device_detect),
+    .por_sl(m_power_on_reset_i),
     .osc_clk(osc_clk),
     .ms_nsl(ms_nsl),
     .irstb(1'b1) // Output buffer tri-state enable

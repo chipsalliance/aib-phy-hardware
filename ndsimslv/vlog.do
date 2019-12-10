@@ -300,6 +300,7 @@ $AIB_LIB/c3aibadapt_wrap/rtl/c3aib_master.sv \
 $MODEL_RTL/dll.sv $MODEL_RTL/aib_io_buffer.sv \
 $MODEL_RTL/aib_dcc.v \
 $MODEL_RTL/aib_aux_channel.v \
+$MODEL_RTL/aib_aliasd.v \
 $MODEL_RTL/aib_bitsync.v \
 $MODEL_RTL/aib_bsr_red_wrap.v \
 $MODEL_RTL/aib_buffx1_top.v \

@@ -243,7 +243,7 @@ wire        HI, LO;
 assign      HI = 1'b1;
 assign      LO = 1'b0;
 
-assign {sl_tx_transfer_en, ms_tx_transfer_en, ms_osc_transfer_alive} = o_ehip_init_status[2:0];
+assign {ms_osc_transfer_alive, ms_tx_transfer_en, sl_tx_transfer_en} = o_ehip_init_status[2:0];
 assign  i_rx_pma_clk = m_ns_fwd_clk;
 assign  i_rx_pma_div2_clk = m_ns_fwd_div2_clk;
 assign  i_rx_pma_data = data_in;

@@ -358,6 +358,7 @@
 
 ../rtl/aib_dcc.v
 ../rtl/aib_aux_channel.v
+../rtl/aib_aliasd.v
 ../rtl/aib_bitsync.v
 ../rtl/aib_bsr_red_wrap.v
 ../rtl/aib_buffx1_top.v

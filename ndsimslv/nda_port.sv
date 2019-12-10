@@ -160,8 +160,11 @@ wire [19:0] sl_dataout0,sl_dataout1;
                        .itxen(1'b1), //data tx enable
                        .irxen(3'b111),//data input enable
                    
-                       .ms_device_detect(),
-                       .sl_por(pld_adapter_rx_pld_rst_n),
+                       .m_por_ovrd(1'b0),
+                       .m_device_detect_ovrd(1'b0),
+                       .m_power_on_reset_i(pld_adapter_rx_pld_rst_n),
+                       .m_device_detect(),
+                       .m_power_on_reset(),
                    
                        .jtag_clkdr_in(1'b0),
                        .scan_out(),

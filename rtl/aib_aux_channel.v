@@ -16,8 +16,10 @@ module aib_aux_channel
     inout wire          iopad_dev_por,
     inout wire          iopad_dev_porrdcy,
 
-    input               device_detect_ms,
+    input               m_por_ovrd, //Master onlhy input, it overrides the por signal. For slave, it is tied to "0"
+    input               m_device_detect_ovrd, //Slave only input, it overrides the device_detect signal. For Master, it is tied to "0"
     output wire         por_ms,
+    output wire         m_device_detect,
     input               por_sl,
     output wire         osc_clk,
     input               ms_nsl, //"1", this is a Master. "0", this is a Slave
@@ -25,36 +27,37 @@ module aib_aux_channel
     );
 
 
-   wire device_detect_oe, device_detect_oerdcy;
-   wire device_detect_ie, device_detect_ierdcy;
+aib_aliasd aliaspor ( .sig_red(iopad_dev_porrdcy), .sig_in(iopad_dev_por));
+aib_aliasd aliasdet ( .sig_red(iopad_dev_dectrdcy), .sig_in(iopad_dev_dect));
+
+   wire device_detect_oe;
+   wire device_detect_ie;
    
-   wire por_oe, por_oerdcy;
-   wire por_ie, por_ierdcy;
+   wire por_oe;
+   wire por_ie;
 
-   wire device_detect_sl_main, device_detect_sl_rdcy;
+   wire device_detect_sl_main;
 
-   wire por_ms_main, por_ms_rdcy;
+   wire por_ms_main;
 
-   assign por_ms = por_ms_main & por_ms_rdcy;
+   assign m_device_detect = device_detect_sl_main | m_device_detect_ovrd;
+
+   assign por_ms = por_ms_main & m_por_ovrd;
    
    assign device_detect_oe = (ms_nsl == 1'b1) ? 1'b1 : 1'b0;
-   assign device_detect_oerdcy = (ms_nsl == 1'b1) ? 1'b1 : 1'b0;
    assign device_detect_ie = !device_detect_oe;
-   assign device_detect_ierdcy = !device_detect_oerdcy;
 
    assign por_oe = (ms_nsl == 1'b1) ? 1'b0 : 1'b1;
-   assign por_oerdcy = (ms_nsl == 1'b1) ? 1'b0 : 1'b1;
    assign por_ie = !por_oe;
-   assign por_ierdcy = !por_oerdcy;
 
 	   aib_io_buffer u_device_detect 
 	     (
 	      // Tx Path
 	      .ilaunch_clk (1'b0),
 	      .irstb       (irstb),
-	      .idat0       (device_detect_ms),
-	      .idat1       (device_detect_ms),
-	      .async_data  (device_detect_ms),
+	      .idat0       (1'b1),
+	      .idat1       (1'b1),
+	      .async_data  (1'b1),
 	      .oclkn       (),
 
 	      // Rx Path
@@ -75,39 +78,7 @@ module aib_aux_channel
 	      .ddren       (1'b0),
 	      .txen        (device_detect_oe),
 	      .rxen        (device_detect_ie),
-	      .weaken      (1'b0),
-	      .weakdir     (1'b0)
-	      );
-
-	   aib_io_buffer u_device_detectrdcy  //redundancy pin
-	     (
-	      // Tx Path
-	      .ilaunch_clk (1'b0),
-	      .irstb       (irstb),
-	      .idat0       (device_detect_ms),
-	      .idat1       (device_detect_ms),
-	      .async_data  (device_detect_ms),
-	      .oclkn       (),
-
-	      // Rx Path
-	      .iclkn       (1'b0),
-	      .inclk       (1'b0),
-	      .inclk_dist  (1'b0),
-	      .oclk        (),
-	      .oclk_b      (),
-	      .odat0       (),
-	      .odat1       (),
-	      .odat_async  (device_detect_sl_rdcy),
-
-	      // Bidirectional Data 
-	      .io_pad      (iopad_dev_dectrdcy),
-
-	      // I/O configuration
-	      .async       (1'b1),
-	      .ddren       (1'b0),
-	      .txen        (device_detect_oerdcy),
-	      .rxen        (device_detect_ierdcy),
-	      .weaken      (1'b0),
+	      .weaken      (device_detect_ie),
 	      .weakdir     (1'b0)
 	      );
 
@@ -139,41 +110,10 @@ module aib_aux_channel
 	      .ddren       (1'b0),
 	      .txen        (por_oe),
 	      .rxen        (por_ie),
-	      .weaken      (1'b0),
-	      .weakdir     (1'b0)
+	      .weaken      (por_ie),
+	      .weakdir     (1'b1)
 	      );
 
-	   aib_io_buffer u_device_porrdcy  //redundancy pin
-	     (
-	      // Tx Path
-	      .ilaunch_clk (1'b0),
-	      .irstb       (irstb),
-	      .idat0       (por_sl),
-	      .idat1       (por_sl),
-	      .async_data  (por_sl),
-	      .oclkn       (),
-
-	      // Rx Path
-	      .iclkn       (1'b0),
-	      .inclk       (1'b0),
-	      .inclk_dist  (1'b0),
-	      .oclk        (),
-	      .oclk_b      (),
-	      .odat0       (),
-	      .odat1       (),
-	      .odat_async  (por_ms_rdcy),
-
-	      // Bidirectional Data 
-	      .io_pad      (iopad_dev_porrdcy),
-
-	      // I/O configuration
-	      .async       (1'b1),
-	      .ddren       (1'b0),
-	      .txen        (por_oerdcy),
-	      .rxen        (por_ierdcy),
-	      .weaken      (1'b0),
-	      .weakdir     (1'b0)
-	      );
 
 aib_osc_clk  aib_osc_clk
     (.osc_clk(osc_clk)

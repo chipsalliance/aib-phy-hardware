@@ -49,7 +49,8 @@ reg        ms_ns_adapter_rstn;
 reg        sl_ns_adapter_rstn;
 reg        ms_ns_mac_rdy;
 reg        sl_ns_mac_rdy;
-reg        ms_device_detect, sl_por;
+//reg        ms_device_detect, sl_por;
+reg        m_power_on_reset_i;
 
 reg [DATAWIDTH*2-1:0] ms_data_in;
 wire [DATAWIDTH*2-1:0] sl_data_out;
@@ -87,11 +88,16 @@ initial begin
 	sl_rx_dcc_dll_lock_req = 1'b0;
 	sl_tx_dcc_dll_lock_req = 1'b0;
         ms_data_in[DATAWIDTH*2-1:0] = {(DATAWIDTH*2){1'b0}};
-        ms_device_detect = 1'b0;
-        sl_por = 1'b0;
-        repeat (20) @(posedge clk);
-        ms_device_detect = 1'b1;
-        sl_por = 1'b1;
+//      ms_device_detect = 1'b0;
+        m_power_on_reset_i = 1'b0; 
+//      sl_por = 1'b0;
+        repeat (10) @(posedge clk);
+        m_power_on_reset_i = 1'b1;
+        repeat (10) @(posedge clk);
+//      ms_device_detect = 1'b1;
+        repeat (10) @(posedge clk);
+        m_power_on_reset_i = 1'b0;
+//      sl_por = 1'b1;
         ms_config_done = 1'b1;
         sl_config_done = 1'b1;
         repeat (10) @(posedge clk);
@@ -217,8 +223,15 @@ master
     .irxen(3'b111),//data input enable
 
     //Aux channel signals from MAC
-    .ms_device_detect(ms_device_detect),
-    .sl_por(),
+//  .ms_device_detect(ms_device_detect),
+//  .sl_por(),
+
+    .m_por_ovrd(1'b0),
+    .m_device_detect_ovrd(1'b0),
+    .m_power_on_reset_i(),
+    .m_device_detect(),
+    .m_power_on_reset(),
+
 
     //JTAG ports
     .jtag_clkdr_in(1'b0),
@@ -314,8 +327,14 @@ slave
     .irxen(3'b111),//data input enable
 
     //Aux channel signals from MAC
-    .ms_device_detect(),
-    .sl_por(sl_por),
+//  .ms_device_detect(),
+//  .sl_por(sl_por),
+    .m_por_ovrd(1'b0),
+    .m_device_detect_ovrd(1'b0),
+    .m_power_on_reset_i(m_power_on_reset_i),
+    .m_device_detect(),
+    .m_power_on_reset(),
+
 
     //JTAG ports
     .jtag_clkdr_in(1'b0),
