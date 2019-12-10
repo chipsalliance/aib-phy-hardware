@@ -25,6 +25,11 @@ input		rst_n;
 input		data_in;
 output		data_out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   c3lib_sync_metastable_behav_gate #(
 
     .RESET_VAL	( 1 ),
@@ -38,6 +43,8 @@ output		data_out;
     .data_out	( data_out )
 
   );
+
+`endif
 
 endmodule 
 

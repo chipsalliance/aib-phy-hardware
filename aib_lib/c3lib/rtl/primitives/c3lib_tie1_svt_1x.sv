@@ -19,7 +19,13 @@ module c3lib_tie1_svt_1x(
 
 output	out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   assign out = 1'b1;
 
+`endif
 endmodule 
 

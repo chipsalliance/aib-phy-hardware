@@ -21,7 +21,12 @@ module  c3lib_ckbuf_lvt_4x(
 input  		in;
 output 		out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
   assign out = in;
+`endif
 
 endmodule 
 

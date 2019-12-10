@@ -23,7 +23,14 @@ input		in0;
 input		in1;
 output		out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   assign out = ~(in0 & in1);
+
+`endif
 
 endmodule 
 

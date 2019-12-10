@@ -43,6 +43,11 @@ input		tst_override;
 input		tst_s0;
 input		tst_s1;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   var	logic	int_fp_ck_out;
   var	logic	int_tst_ck_out;
   var	logic	int_ck_out;
@@ -75,6 +80,6 @@ input		tst_s1;
     endcase
   end
   assign ck_out = int_ck_out;
-
+`endif
 endmodule
 

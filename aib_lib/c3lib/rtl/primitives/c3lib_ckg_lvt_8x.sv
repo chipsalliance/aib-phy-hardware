@@ -28,6 +28,11 @@ output 		gated_clk;
   var	logic	latch_d;
   var	logic	latch_q;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   // Formulate control signal
   assign latch_d = clk_en | tst_en;
 
@@ -36,6 +41,7 @@ output 		gated_clk;
 
   // Actual clk gating gate
   assign gated_clk = clk & latch_q;
+`endif
 
 endmodule 
 

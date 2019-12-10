@@ -31,6 +31,11 @@ output		data_out;
 input		scan_in;
 input		scan_en;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   var	logic	dff_reg;
 
   always @(negedge rst_n or posedge clk) begin
@@ -38,6 +43,6 @@ input		scan_en;
   end
 
   assign data_out = dff_reg;
-
+`endif
 endmodule 
 

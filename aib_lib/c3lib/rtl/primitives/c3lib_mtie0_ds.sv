@@ -19,7 +19,13 @@ module  c3lib_mtie0_ds(
 
 output	out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   assign out = 1'b0;
 
+`endif
 endmodule 
 

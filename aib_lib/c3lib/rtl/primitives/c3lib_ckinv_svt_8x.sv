@@ -21,7 +21,12 @@ module c3lib_ckinv_svt_8x(
 input		in;
 output		out;
 
-  assign out = ~in;
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
 
+  assign out = ~in;
+`endif
 endmodule 
 

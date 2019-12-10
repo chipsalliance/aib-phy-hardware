@@ -25,6 +25,11 @@ input		in1;
 input		sel;
 output		out;
 
+`ifdef USER_MACROS_ON
+ //replace this section with user technology cell
+ //for the purpose of cell hardening, synthesis don't touch
+`else
+
   var	logic	int_out;
 
   always_comb begin
@@ -35,6 +40,8 @@ output		out;
     endcase
   end
   assign out = int_out;
+
+`endif
 
 endmodule 
 
