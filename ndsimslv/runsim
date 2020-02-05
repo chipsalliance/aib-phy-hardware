@@ -1,3 +1,0 @@
-#!/bin/csh -fb
-rm -rf csrc simv simv.daidir
-vcs -sverilog +v2k -full64 +vcs+vcdpluson -timescale=1ps/1ps +define+VCS+TIMESCALE_EN+ALTR_HPS_INTEL_MACROS_OFF+S10_MODEL+REGISTER_MOD -f ./multidie.f ./top.sv ./dut_io.sv ./test.sv -l compile.log
