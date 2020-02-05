@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Syntax: run_sim_tapeout <tb> +DIAG=<diag>
+#   where the 2 required parameters are:
+#     <tb>   - file name of tesbench to use (eg ../tb/tb_bert.sv)
+#     <diag> - task name of diag to run (eg bert_basic_ch8_ln0)
+
+USE_OFFICIAL_ANA=0 # Set to 0 to use the known good BC analog models
+
+
+export RTL_ROOT="$(pwd)/../../rtl"
+export V2COM_ROOT="${RTL_ROOT}/v2_common"
+export V1M_ROOT="${RTL_ROOT}/v1_master"
+export V1S_ROOT="${RTL_ROOT}/v1_slave"
+export V2M_ROOT="${RTL_ROOT}/v2_master"
+export V2S_ROOT="${RTL_ROOT}/v2_slave"
+
+export AYAR_ROOT="${V2COM_ROOT}/armod"
+
+export AYAR_RTL="${AYAR_ROOT}"
+export BC_RTL="${V2COM_ROOT}/dig/bc_mod"
+export BC_ANA="${V2COM_ROOT}/ana"
+
+if [[ $1 == -no_rm ]]; then
+    shift
+else
+    \rm -rf ./ms1_work/*
+    \rm -rf ./sl1_work/*
+    \rm -rf ./ms2_sl2_work/*
+    \rm -rf ./work/*
+fi
+
+
+
+#vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+TIMESCALE_EN+BEHAVIORAL -work MS1_VAR -f ../flist/ms_v1.cf -l compile_ms1.log
+#vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+TIMESCALE_EN+BEHAVIORAL -work SL1_VAR -f ../flist/sl_v1.cf -l compile_sl1.log
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+TIMESCALE_EN+BEHAVIORAL -work MS2_SL2_VAR -f ../flist/aib_defines.cf -f ../flist/aibcr3_buffx1_top.cf -f ../flist/aib_analog.cf -f ../flist/aibcr3_cmn.cf -f ../flist/aibcr3_top_wrp.cf -f ../flist/c3aibadapt_wrap.cf -f ../flist/ms_v2.cf -l compile_ms2.log
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+TIMESCALE_EN+BEHAVIORAL -work MS2_SL2_VAR -f ../flist/sl_v2.cf -l compile_sl2.log
+
+#vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps -work WORK -f ../flist/tb_rtl.cf -l compile_tb.log
+
+#vcs -debug_acc+all cfg_full -full64 +error+100 -l vcs.log

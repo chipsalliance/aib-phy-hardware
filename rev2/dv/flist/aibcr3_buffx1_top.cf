@@ -1,0 +1,22 @@
+# ####################################################################
+# Design files specific to aibcr3_buffx1_top (PaR1) level            #
+# ####################################################################
+${AYAR_RTL}/aibcr3_buffx1.v
+${AYAR_RTL}/aibcr3_digital.v
+${AYAR_RTL}/aibcr3_latch.v
+${AYAR_RTL}/aibcr3_txdig.v
+${BC_RTL}/aibcr3_analog.v
+${BC_RTL}/aibcr3_buffx1_top.v
+${BC_RTL}/aibcr3_ddrmux.v
+${BC_RTL}/aibcr3_rxdig.v
+${BC_RTL}/scip/buf_hvt.v
+${BC_RTL}/scip/buffer.v
+${BC_RTL}/scip/flop_r.v
+${BC_RTL}/scip/latch_rn.v
+${V2COM_ROOT}/aibcr3_lib/rtl/aibcr3_red_custom_dig.v
+${V2COM_ROOT}/aibcr3_lib/rtl/aibcr3_red_custom_dig2.v
+${V2COM_ROOT}/aibcr3_lib/rtl/aibcr3_ulvt16_dffcdn_cust.v
+${V2COM_ROOT}/aibcr3pnr_lib/rtl/aibcr3pnr_bsr_red_wrap.v
+${V2COM_ROOT}/aibcr3pnr_lib/rtl/aibcr3pnr_jtag_bscan.v
+${V2COM_ROOT}/aibcr3pnr_lib/rtl/aibcr3pnr_redundancy.v
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_buf/c3lib_ckinv_ctn.sv

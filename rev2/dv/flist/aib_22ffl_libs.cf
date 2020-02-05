@@ -1,0 +1,8 @@
+# ####################################################################
+# Intel 22FFL standard cell and IO libraries                         #
+# ####################################################################
+-v /tools/PDK/intel22FFL/22FFL_STDCELL/lib222hpm_7t_108pp_base_f.1.0/verilog/hn/b15_hn_pwr_udp.v
+-v /tools/PDK/intel22FFL/22FFL_STDCELL/lib222hpm_7t_108pp_base_f.1.0/verilog/ln/b15_ln_pwr_udp.v
+-v /tools/PDK/intel22FFL/22FFL_STDCELL/lib222hpm_7t_108pp_base_f.1.0/verilog/mn/b15_mn_pwr_udp.v
+-v /tools/PDK/intel22FFL/22FFL_STDCELL/lib222hpm_7t_108pp_base_f.1.0/verilog/nn/b15_nn_pwr_udp.v
+-v /tools/PDK/intel22FFL/22FFL_GPIO/IO_PADLIB_CMOS_1V8_1222/ip222padlib_cmos_1v8/cmos_1v8_e1/rtl/cmos_1v8_e1.v
