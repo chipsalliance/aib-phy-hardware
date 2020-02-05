@@ -1,0 +1,39 @@
+# ####################################################################
+# Design files specific above  c3aibadapt_wrap (PaR3) level              #
+# ####################################################################
++incdir+${V1M_ROOT}/c3dfx/rtl/defines/
+${V2COM_ROOT}/c3lib/rtl/defines/c3lib_dv_defines.sv
+${V2COM_ROOT}/c3dfx/rtl/defines/c3dfx.vh
+${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_aux_dual.v
+${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_aliasd.v
+${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_io_buffer.sv
+${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_osc_clk.sv
+
+${V2S_ROOT}/aib_slv/aib_rstnsync.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_async_fifo.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_fifo_ptr.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_fifo_ram.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_fifo.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_map.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_rxdp.v
+${V2S_ROOT}/aib_slv/aib_adaptrxdp_word_align.v
+${V2S_ROOT}/aib_slv/aib_adapt_cmn_pulse_stretch.v
+${V2S_ROOT}/aib_slv/aib_adapt_rxchnl.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_async_fifo.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_fifo_ptr.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_fifo_ram.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_fifo.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_reg.v
+${V2S_ROOT}/aib_slv/aib_adapttxdp_txdp.v
+${V2S_ROOT}/aib_slv/aib_adapt_txchnl.v
+${V2S_ROOT}/aib_slv/aib_adapt_avmm.v
+${V2S_ROOT}/aib_slv/aib_adapt.v
+${V2S_ROOT}/aib_slv/aib_iotop_wrp.v
+${V2S_ROOT}/aib_slv/aib_sm.v
+${V2S_ROOT}/aib_slv/aib_sr_ms.v
+${V2S_ROOT}/aib_slv/aib_sr_sl.v
+${V2S_ROOT}/aib_slv/aib_slv.v
+
+${V2S_ROOT}/aibadapt_wrap/rtl/c3aibadapt_wrap_top_v2s.v
+${V2S_ROOT}/aibadapt_wrap/rtl/aib_top_v2s.v
+${V2S_ROOT}/aibadapt_wrap/rtl/aib_top_wrapper_v2s.sv

@@ -1,0 +1,20 @@
+# ####################################################################
+# Command line defines                                               #
+# ####################################################################
++define+INTCNOPWR    # Required by Intel models (connect no power (don't add power pins to STD cells))
++define+FUNCTIONAL   # Required by Intel models (use functional models for STD cells)
++define+NCVLOG       # Required by Ayar non-synthesizable models
+
+# ####################################################################
+# Include directories                                                #
+# ####################################################################
++libext+.v+.vh+.sv+.svh+
++incdir+${BC_RTL}/lib
+
+# ####################################################################
+# Defines files                                                      #
+# ####################################################################
+#${BC_RTL}/lib/bert/macros.svh
+#${BC_RTL}/lib/bert/prbs_matrix.svh
+${V2COM_ROOT}/c3dfx/rtl/defines/c3dfx.vh
+${V2COM_ROOT}/c3lib/rtl/defines/c3lib_dv_defines.sv

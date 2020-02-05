@@ -1,0 +1,9 @@
+--VCS MX setup file for ASIC
+--Mapping default work directory
+WORK > DEFAULT
+DEFAULT : ./work
+--Library Mapping
+MS1_VAR : ./ms1_work
+SL1_VAR : ./sl1_work
+MS2_SL2_VAR : ./ms2_sl2_work
+--Simulation variables

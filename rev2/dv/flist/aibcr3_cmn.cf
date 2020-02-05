@@ -1,0 +1,38 @@
+# ####################################################################
+# Design files common to different PaR levels                        #
+# ####################################################################
+${AYAR_RTL}/c3lib_sync2_reset_lvt_gate.sv
+${AYAR_RTL}/c3lib_sync2_reset_ulvt_gate.sv
+${AYAR_RTL}/c3lib_sync2_set_ulvt_gate.sv
+${AYAR_RTL}/c3lib_sync3_reset_ulvt_gate.sv
+${AYAR_RTL}/c3lib_sync3_set_ulvt_gate.sv
+${BC_RTL}/aibcr3_bypmux.v
+${BC_RTL}/c3lib_ckinv_svt_8x.sv
+${BC_RTL}/c3lib_ckmux4_lvt_gate.sv
+${BC_RTL}/data_sync_for_aib.v
+${BC_RTL}/scip/clock_inv.v
+${BC_RTL}/scip/clock_mux.v
+${BC_RTL}/scip/data_mux_2_1.v
+${V2COM_ROOT}/c3lib/rtl/avmm/c3_avmm_rdl_intf.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/bit_synchronizer/c3lib_bitsync.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync2_lvt_bitsync.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync2_ulvt_bitsync.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync3_ulvt_bitsync.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/glitch_free_mux/c3lib_gf_clkmux.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/reset_synchronizer/c3lib_rstsync.sv
+${V2COM_ROOT}/c3lib/rtl/cdc/vector_synchronizer/c3lib_vecsync_handshake.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_buf/c3lib_ckand2_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_buf/c3lib_ckbuf_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv2_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv4_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv8_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_gater/c3lib_ckg_negedge_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_gater/c3lib_ckg_posedge_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_mux/c3lib_mux2_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/ctn/clock_mux/c3lib_mux4_ctn.sv
+${V2COM_ROOT}/c3lib/rtl/lcell/c3lib_and2_lcell.sv
+${V2COM_ROOT}/c3lib/rtl/lcell/c3lib_nand2_lcell.sv
+${V2COM_ROOT}/c3lib/rtl/primitives/c3lib_and2_svt_4x.sv
+${V2COM_ROOT}/c3lib/rtl/primitives/c3lib_buf_svt_4x.sv
+${V2COM_ROOT}/c3lib/rtl/primitives/c3lib_mux2_svt_2x.sv
+${V2COM_ROOT}/c3lib/rtl/primitives/c3lib_nand2_svt_2x.sv

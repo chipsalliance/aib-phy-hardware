@@ -1,0 +1,14 @@
+# ####################################################################
+# Behavioral models of analog blocks                                 #
+# ####################################################################
+${BC_ANA}/DIFF_CLK_RCVR.v
+${BC_ANA}/aibcr3_dcc_dlyline64.v
+${BC_ANA}/aibcr3_dcc_helper.v
+${BC_ANA}/aibcr3_dcc_interpolator.v
+${BC_ANA}/aibcr3_dcc_phasedet.v
+${BC_ANA}/aibcr3_dll_dlyline64.v
+${BC_ANA}/aibcr3_dll_interpolator.v
+${BC_ANA}/aibcr3_dll_phasedet.v
+${BC_ANA}/aibcr3_dlycell_dcc.v
+${BC_ANA}/aibcr3_dlycell_dll_comb.v
+${BC_ANA}/aibcr3_frontend.v
