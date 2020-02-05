@@ -26,9 +26,14 @@ Main directory structure is below.  Read the README.txt files in the subdirector
 ```aib_phy_hardware
 ├── docs
 │   └── archive
-├── rev1              -- Originally from opensource release https://github.com/intel/aib-phy-hardware
-│   ├── aib_lib
-│   ├── how2use
-│   ├── maib_rtl
-│   ├── ndsimslv
-│   └── rtl
+└── rev2              --  Multi-die AIBs design (for advanced user reference)
+    ├── dv            --  System Verilog DV to be released in the future.
+    │   ├── flist     --  File lists for multi-die AIB IPs.
+    │   ├── sims      --  Compilation directory. VCS is supported for now.
+    └── rtl           --  For the detail of the rtl release, see README.txt in this directory
+        ├── v1_master
+        ├── v1_slave
+        ├── v2_common
+        ├── v2_master
+        └── v2_slave
+
