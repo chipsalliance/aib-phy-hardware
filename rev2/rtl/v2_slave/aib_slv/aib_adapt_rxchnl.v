@@ -14,8 +14,8 @@ input wire                      adapt_rstn,
 input wire  [39:0]	        din,   //from io buffer
 input wire  [39:0]              dout,  //loopback data from tx to io buffer
 input wire                      ns_fwd_clk, //loopback clock from tx
-input wire                      fs_fwd_clk, //loopback clock from tx
-input wire                      m_rd_clk, //loopback clock from tx
+input wire                      fs_fwd_clk, 
+input wire                      m_rd_clk, 
 input wire			rx_fifo_latency_adj_en,
 input wire 			r_rx_double_read,		
 input wire  [1:0]		r_rx_fifo_mode,		        

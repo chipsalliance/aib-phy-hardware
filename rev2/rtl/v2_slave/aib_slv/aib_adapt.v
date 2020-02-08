@@ -323,7 +323,7 @@ aib_adapt_rxchnl aib_adapt_rxchnl(
      .din(din[39:0]),   //from io buffer
      .dout(dout[39:0]),  //loopback data from tx to io buffer
      .ns_fwd_clk(m_ns_fwd_clk), //loopback clock from tx
-     .fs_fwd_clk(fs_fwd_clk), //loopback clock from tx
+     .fs_fwd_clk(fs_fwd_clk), 
      .m_rd_clk(m_rd_clk), 
      .rx_fifo_latency_adj_en(1'b0),
      .r_rx_double_read(r_rx_double_read),
@@ -348,8 +348,8 @@ aib_adapt_txchnl aib_adapt_txchnl(
      .data_in(data_in[77:0]),
      .rx_fifo_data_out(rx_fifo_data_out[79:0]), //loopback data from rx fifo mode
      .rx_reg_dout(reg_dout[39:0]),      //loopback data from rx reg mode
-     .din(din[39:0]),              //loopback data from rx aib io 
-     .m_rd_clk(m_rd_clk),         //loopback clock for rx fifo mode
+     .din(din[39:0]),              
+     .m_rd_clk(m_rd_clk),         
      .fs_fwd_clk(fs_fwd_clk),       //loopback clock for rx reg mode loopback
      .r_tx_double_write(r_tx_double_write),
      .r_tx_fifo_mode(r_tx_fifo_mode[1:0]),
