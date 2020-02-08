@@ -633,8 +633,8 @@ module aib_slv
                                     .ojtag_clkdr_out_chain(ojtag_clkdr_out_chain), 
                                     .ojtag_last_bs_out_chain(ojtag_last_bs_out_chain), 
                                     .ojtag_rx_scan_out_chain(ojtag_rx_scan_out_chain), 
-                                    .por_aib_vcchssi_out(o_por_aib_vcchssi_out), 
-                                    .por_aib_vccl_out   (o_por_aib_vccl_out), 
+                                    .por_aib_vcchssi_out(o_por_aib_vcchssi), 
+                                    .por_aib_vccl_out   (o_por_aib_vccl), 
                                     .oaibdftdll2adjch   (o_aibdftdll2adjch), 
                                     .ohssi_tx_data_in   (din[39:0]), 
                                     // Inouts

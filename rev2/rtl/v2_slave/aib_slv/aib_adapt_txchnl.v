@@ -30,27 +30,43 @@ wire			fifo_empty;
 wire			fifo_full;
 
 wire [39:0]   reg_din, reg_dout, fifo_dout;
-wire          txfifo_wrclk_sel;
 wire          loopback2, loopback3_reg, loopback3_fifo;
-wire          txrd_rstn, tx_fifo_ready, txfifo_wrclk, txwr_rstn, lbclk_sel;
+wire          txrd_rstn, tx_fifo_ready, txfifo_wrclk, txwr_rstn;
+wire          loopbk2_3reg;
+wire          reg_clk, regmd_rstn;
 
 assign loopback2 = (r_tx_adapter_lpbk_mode[1:0] == 2'b01);
 assign loopback3_reg = (r_tx_adapter_lpbk_mode[1:0] == 2'b10);
 assign loopback3_fifo = (r_tx_adapter_lpbk_mode[1:0] == 2'b11);
-
-assign txfifo_wrclk_sel = loopback3_reg | loopback3_fifo;
+assign loopbk2_3reg = loopback2 | loopback3_reg;
 
 assign dout[39:0]= loopback2 ? din[39:0] :
                    (r_tx_fifo_mode == 2'b11) ? reg_dout[39:0] : fifo_dout[39:0];
 
 assign reg_din[39:0]= loopback3_reg ? rx_reg_dout[39:0] : data_in[39:0];
 
+c3lib_mux2_ctn reg_clk_mux (
+    .ck_out      (reg_clk),
+    .ck0         (m_ns_fwd_clk),
+    .ck1         (fs_fwd_clk),
+    .s0          (loopback3_reg)
+                                );
+
+aib_rstnsync regmd_rstnsync
+  (
+    .clk(reg_clk),                   // Destination clock of reset to be synced
+    .i_rst_n(adapt_rstn),             // Asynchronous reset input
+    .scan_mode(atpg_mode),            // Scan bypass for reset
+    .sync_rst_n(regmd_rstn)            // Synchronized reset output
+
+   );
+
 aib_adapttxdp_reg txdp_reg (
   // Outputs
   .reg_dout	      (reg_dout[39:0]),
   // Inputs
-  .tx_clock_fifo_rd_clk               (m_ns_fwd_clk),
-  .tx_reset_fifo_rd_rst_n             (txrd_rstn),
+  .tx_clock_fifo_rd_clk               (reg_clk),
+  .tx_reset_fifo_rd_rst_n             (regmd_rstn),
   .r_tx_fifo_mode                     (r_tx_fifo_mode),
   .data_in                            (reg_din[39:0])
 );
@@ -89,23 +105,17 @@ aib_adapttxdp_txdp tx_datapath (
   .tx_reset_fifo_rd_rst_n                 (txrd_rstn)
 );
 
-c3lib_mux2_ctn tx_lpclk_mux (
-    .ck_out      (lbclk_sel),
-    .ck0         (fs_fwd_clk),
-    .ck1         (m_rd_clk),
-    .s0          (loopback3_fifo)
-                                );
 c3lib_mux2_ctn txfifo_wrclk_mux (
     .ck_out      (txfifo_wrclk),
     .ck0         (m_wr_clk),
-    .ck1         (lbclk_sel),
-    .s0          (txfifo_wrclk_sel)
+    .ck1         (m_rd_clk),
+    .s0          (loopback3_fifo)
                                 );
 c3lib_mux2_ctn ns_fwd_clk_mux (
     .ck_out      (ns_fwd_clk),
     .ck0         (m_ns_fwd_clk),
     .ck1         (rxfifo_wrclk),
-    .s0          (loopback2)
+    .s0          (loopbk2_3reg)
                                 );
 
 
