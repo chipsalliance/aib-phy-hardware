@@ -630,9 +630,9 @@ module aib_slv
                                     .ohssi_tx_dll_lock  (rx_dll_lock),  
                                     .ohssi_tx_transfer_clk(fs_fwd_clk),  //aib41
                                     .ohssirx_dcc_done   (tx_dcc_cal_done),  
-                                    .ojtag_clkdr_out_chain(ojtag_clkdr_out_chain), 
-                                    .ojtag_last_bs_out_chain(ojtag_last_bs_out_chain), 
-                                    .ojtag_rx_scan_out_chain(ojtag_rx_scan_out_chain), 
+                                    .ojtag_clkdr_out_chain(o_jtag_clkdr_out), 
+                                    .ojtag_last_bs_out_chain(o_jtag_last_bs_chain_out), 
+                                    .ojtag_rx_scan_out_chain(o_jtag_bs_chain_out), 
                                     .por_aib_vcchssi_out(o_por_aib_vcchssi), 
                                     .por_aib_vccl_out   (o_por_aib_vccl), 
                                     .oaibdftdll2adjch   (o_aibdftdll2adjch), 

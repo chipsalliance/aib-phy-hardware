@@ -86,10 +86,8 @@ module aib_top_v2s
    output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_transfer_en,
    output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_transfer_en,
    output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_transfer_en,
-   output [TOTAL_CHNL_NUM-1:0]                                    ms_tx_dcc_dll_lock_req,
-   output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_dcc_dll_lock_req,
-   output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_dcc_dll_lock_req,
-   output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_dcc_dll_lock_req,
+   input [TOTAL_CHNL_NUM-1:0]                                     sl_tx_dcc_dll_lock_req,
+   input [TOTAL_CHNL_NUM-1:0]                                     sl_rx_dcc_dll_lock_req,
    //=================================================================================================
    // Inout signals for AIB ubump
    inout [95:0]                                                   s0_ch0_aib, 
@@ -208,8 +206,8 @@ module aib_top_v2s
        .ms_rx_transfer_en               (ms_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
        .sl_tx_transfer_en               (sl_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
        .sl_rx_transfer_en               (sl_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
-       .ms_tx_dcc_dll_lock_req          (ms_tx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
-       .ms_rx_dcc_dll_lock_req          (ms_rx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
+       .ms_tx_dcc_dll_lock_req          (24'h0),
+       .ms_rx_dcc_dll_lock_req          (24'h0),
        .sl_tx_dcc_dll_lock_req          (sl_tx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
        .sl_rx_dcc_dll_lock_req          (sl_rx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
 

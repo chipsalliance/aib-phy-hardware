@@ -193,7 +193,7 @@ assign  aib69 = NC_AIB69;
                                     .jtag_mode_out      (jtag_mode_out), 
                                     .jtag_rstb_en_out   (jtag_rstb_en_out), 
                                     .jtag_rstb_out      (jtag_rstb_out), 
-                                    .jtag_tx_scanen_out (jtag_bs_scanen_out), 
+                                    .jtag_tx_scanen_out (jtag_tx_scanen_out), 
                                     .jtag_weakpdn_out   (jtag_weakpdn_out), 
                                     .jtag_weakpu_out    (jtag_weakpu_out), 
                                     .oatpg_bsr0_scan_out(oatpg_bsr0_scan_out), 
