@@ -68,8 +68,6 @@ module aib_top_wrapper_v2s
    output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_transfer_en,
    output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_transfer_en,
    output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_transfer_en,
-   input [TOTAL_CHNL_NUM-1:0]                                     ms_tx_dcc_dll_lock_req,
-   input [TOTAL_CHNL_NUM-1:0]                                     ms_rx_dcc_dll_lock_req,
    input  [TOTAL_CHNL_NUM-1:0]                                    sl_tx_dcc_dll_lock_req,
    input  [TOTAL_CHNL_NUM-1:0]                                    sl_rx_dcc_dll_lock_req,
 
@@ -261,8 +259,6 @@ assign                          LO = 1'b0;
                     .ms_rx_transfer_en           (ms_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
                     .sl_tx_transfer_en           (sl_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
                     .sl_rx_transfer_en           (sl_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
-                    .ms_tx_dcc_dll_lock_req      (ms_tx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
-                    .ms_rx_dcc_dll_lock_req      (ms_rx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
                     .sl_tx_dcc_dll_lock_req      (sl_tx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
                     .sl_rx_dcc_dll_lock_req      (sl_rx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
 

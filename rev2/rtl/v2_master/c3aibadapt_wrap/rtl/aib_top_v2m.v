@@ -60,7 +60,7 @@ module aib_top_v2m
    input [TOTAL_CHNL_NUM-1:0]                                     m_ns_fwd_div2_clk, // Divided by 2 clock on Rx pathinput                          
     
 // input [TOTAL_CHNL_NUM*65-1:0]                                  i_chnl_ssr, // Slow shift chain path, tie to 0s if not used
-   input [TOTAL_CHNL_NUM*40-1:0]                                  i_rx_pma_data, // Directed bump rx data sync path
+   input [TOTAL_CHNL_NUM*40-1:0]                                  data_in_reg_mode, // data out for direct register mode
  
    input [TOTAL_CHNL_NUM-1:0]                                     m_wr_clk, //Clock for phase compensation fifo
    input [TOTAL_CHNL_NUM*78-1:0]                                  data_in, //data in for phase compensation fifo
@@ -70,7 +70,7 @@ module aib_top_v2m
 // output [TOTAL_CHNL_NUM*61-1:0]                                 o_chnl_ssr, // Slow shift chain path, left unconnected if not used
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_clk, // clock used for tx data transmission
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_div2_clk, // half rate of tx data transmission clock
-// output [TOTAL_CHNL_NUM*40-1:0]                                 o_tx_pma_data, // Directed bump tx data sync path
+   output [TOTAL_CHNL_NUM*40-1:0]                                 data_out_reg_mode, //data out during direct register mode. 
    input  [TOTAL_CHNL_NUM-1:0]                                    m_rd_clk, //Clock for phase compensation fifo
    output [TOTAL_CHNL_NUM*78-1:0]                                 data_out, // data out for phase compensation fifo
 
@@ -117,15 +117,8 @@ module aib_top_v2m
 // inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
 
    //======================================================================================
-   // Interface with AIB control block
-   // reset for AIB AUX
    input                                                          m_por_ovrd, //test por override through c4 bump
    
-   // from control block register file
-// input [31:0]                                                   i_aibaux_ctrl_bus0, //1st set of register bits from register file
-// input [31:0]                                                   i_aibaux_ctrl_bus1, //2nd set of register bits from register file
-// input [31:0]                                                   i_aibaux_ctrl_bus2, //3rd set of register bits from register file
-// input [9:0]                                                    i_aibaux_osc_fuse_trim, //control by Fuse/OTP from User
 
    //
    input                                                          i_osc_clk,     // test clock from c4 bump, may tie low for User if not used
@@ -142,8 +135,6 @@ module aib_top_v2m
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
    input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
-// input [`AIBADAPTWRAPTCB_STATIC_COMMON_RNG]                     i_test_c3adapt_tcb_static_common, //TCM Controls for ATPG scan test. 
-// i_test_scan_reset, i_test_scan_enable, i_test_scan_mode
    input                                                          i_test_scan_en,     //Terminate i_test_c3adapt_tcb_static_common, only pull out Scan enable 
    input                                                          i_test_scan_mode,
    output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
@@ -160,25 +151,11 @@ module aib_top_v2m
    input                                                          i_jtag_weakpdn,  //(from dbg_test_bscan block)Enable AIB global pull down test. 
    input                                                          i_jtag_weakpu,  //(from dbg_test_bscan block)Enable AIB global pull up test. 
 
-// input [2:0]                                                    i_aibdft2osc,  //To AIB osc.[2] force reset [1] force enable [0] 33 MHz JTAG
-// output [12:0]                                                  o_aibdft2osc,  //Observability of osc and DLL/DCC status 
-                                                                                 //this signal go through C4 bump, User may muxed it out with their test signals
    
    //output TCB 
    output                                                         o_jtag_tdo, //last boundary scan chain output, TDO 
 
    output                                                         m_power_on_reset // S10 POR to User, can be left unconnected for User
-// output                                                         o_osc_monitor, //Output from oscillator, go to pinmux block before go to C4 test bump
-
-
-   //AUX channel ATPG signals                                     //AUX has seperate scan chain. The TCM is outside of the aib_top.
-// input                                                          i_aux_atpg_mode_n,   //ATPG scan mode 
-// input                                                          i_aux_atpg_pipeline_global_en,  //scan_loes_mode
-// input                                                          i_aux_atpg_rst_n,               //~scan_reset
-// input                                                          i_aux_atpg_scan_clk,            //This is the output of TCM outside of aib_top.
-// input                                                          i_aux_atpg_scan_in,             //scan chain in  
-// input                                                          i_aux_atpg_scan_shift_n,        //~scan_enable
-// output                                                         o_aux_atpg_scan_out             //scan chain out 
   
    );
 
@@ -200,7 +177,7 @@ module aib_top_v2m
        .o_chnl_ssr                      (),
        .o_tx_transfer_clk               (m_fs_fwd_clk[TOTAL_CHNL_NUM-1:0]),
        .o_tx_transfer_div2_clk          (m_fs_fwd_div2_clk[TOTAL_CHNL_NUM-1:0]),
-       .o_tx_pma_data                   (),
+       .o_tx_pma_data                   (data_out_reg_mode),
        .ns_mac_rdy                      (ns_mac_rdy[TOTAL_CHNL_NUM-1:0]),
        .ns_adapt_rstn                   (ns_adapter_rstn[TOTAL_CHNL_NUM-1:0]),
        .m_rxfifo_align_done            (m_rxfifo_align_done[TOTAL_CHNL_NUM-1:0]), 
@@ -258,7 +235,7 @@ module aib_top_v2m
        .i_rx_elane_data                 (data_in[TOTAL_CHNL_NUM*78-1:0]),
        .i_osc_clk                       (aibaux_osc_clk),        // Templated
        .i_chnl_ssr                      ({24{65'h0}}),
-       .i_rx_pma_data                   ({24{40'h0}}),
+       .i_rx_pma_data                   (data_in_reg_mode),
        .i_tx_pma_clk                    (m_ns_rcv_clk[TOTAL_CHNL_NUM-1:0]),
        .i_tx_elane_clk                  (m_rd_clk[TOTAL_CHNL_NUM-1:0]),
        .o_tx_elane_data                 (data_out[TOTAL_CHNL_NUM*78-1:0]),

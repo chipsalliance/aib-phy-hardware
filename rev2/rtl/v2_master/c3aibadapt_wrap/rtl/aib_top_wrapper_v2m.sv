@@ -16,7 +16,7 @@ module aib_top_wrapper_v2m
   (
      //================================================================================================
    // Reset Inteface
-   input                                                          i_conf_done, // AIB adaptor hard reset
+   input                                                          i_conf_done, // AIB adaptor hard reset. It resets IO buffer
 
    // reset for XCVRIF
    output [TOTAL_CHNL_NUM-1:0]                                    fs_mac_rdy, //o_rx_xcvrif_rst_n,  receiving path reset
@@ -43,7 +43,8 @@ module aib_top_wrapper_v2m
    input [TOTAL_CHNL_NUM-1:0]                                     m_ns_fwd_clk, // i_rx_pma_clk.Rx path clk for data receiving,
    input [TOTAL_CHNL_NUM-1:0]                                     m_ns_fwd_div2_clk, // i_rx_pma_div2_clk, Divided by 2 clock on Rx pathinput
     
-   input [TOTAL_CHNL_NUM*DATA_WIDTH-1:0]                          data_in ,   // i_rx_pma_data, Directed bump rx data sync path
+   input [TOTAL_CHNL_NUM*40-1:0]                                  data_in_reg_mode, // 40 bit data in for register mode
+   input [TOTAL_CHNL_NUM*78-1:0]                                  data_in ,   // 78 bit data for 2x FIFO mode
    input [TOTAL_CHNL_NUM-1:0]                                     m_wr_clk,  //Clock for phase compensation fifo
 
  
@@ -51,7 +52,8 @@ module aib_top_wrapper_v2m
    input [TOTAL_CHNL_NUM-1:0]                                     m_ns_rcv_clk, //i_tx_pma_clk, sent over to the other chiplet to be used for the clock 
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_clk, //o_tx_transfer_clk, clock used for tx data transmission
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_div2_clk, // o_tx_transfer_div2_clk, half rate of tx data transmission clock
-   output [TOTAL_CHNL_NUM*78-1:0]                                 data_out, //o_tx_pma_data, Directed bump tx data sync path
+   output [TOTAL_CHNL_NUM*40-1:0]                                 data_out_reg_mode, // 40 bit data out for register mode
+   output [TOTAL_CHNL_NUM*78-1:0]                                 data_out, // 78 bit data out for 2xFIFO mode.
    input  [TOTAL_CHNL_NUM-1:0]                                    m_rd_clk, //Clock for phase compensation fifo
  //=================================================================================================
  // AIB open source IP enhancement. The following ports are added to
@@ -124,33 +126,16 @@ module aib_top_wrapper_v2m
    inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_unused_aib91,
 
 
-// inout [95:0]                                                   io_aib_aux,
-// inout [7:0]                                                    iopad_unused_aux95_88,
    inout                                                          iopad_power_on_reset_r, //iopad_aib_aux[87] power on redundency from slave
-// inout                                                          iopad_unused_aux86,
    inout                                                          iopad_power_on_reset,   //iopad_aib_aux[85] power on from slave.
-// inout [8:0]                                                    iopad_unused_aux84_76,
    inout                                                          iopad_device_detect_r,  //iopad_aib_aux[75] device detect redundency to slave
    inout                                                          iopad_device_detect,    //iopad_aib_aux[74] device detect to slave
-// inout [73:0]                                                   iopad_unused_aux73_0,
-// inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
 
    //======================================================================================
-   // Interface with AIB control block
-   // reset for AIB AUX
-// input                                                          i_iocsr_rdy_aibaux, //same hard reset as in the channel, tie to chiplet config_done signal
 
    input                                                          m_por_ovrd, //test por override through c4 bump
    
-   // from control block register file
-// input [31:0]                                                   i_aibaux_ctrl_bus0, //1st set of register bits from register file
-// input [31:0]                                                   i_aibaux_ctrl_bus1, //2nd set of register bits from register file
-// input [31:0]                                                   i_aibaux_ctrl_bus2, //3rd set of register bits from register file
-// input [9:0]                                                    i_aibaux_osc_fuse_trim, //control by Fuse/OTP from User
-
-   //
    input                                                          i_osc_clk,     // test clock from c4 bump, may tie low for User if not used
-   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, User may use this clock to connect with i_test_clk_1g
     //======================================================================================
    // DFT signals
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
@@ -178,49 +163,17 @@ module aib_top_wrapper_v2m
    input                                                          i_jtag_tx_scanen,// (from dbg_test_bscan block)Drives AIB IO jtag_tx_scanen_in or BSR shift control  
    input                                                          i_jtag_weakpdn,  //(from dbg_test_bscan block)Enable AIB global pull down test. 
    input                                                          i_jtag_weakpu,  //(from dbg_test_bscan block)Enable AIB global pull up test. 
-
-// input [2:0]                                                    i_aibdft2osc,  //To AIB osc.[2] force reset [1] force enable [0] 33 MHz JTAG
-// output [12:0]                                                  o_aibdft2osc,  //Observability of osc and DLL/DCC status 
-                                                                                 //this signal go through C4 bump, User may muxed it out with their test signals
-   
-   //output TCB 
    output                                                         o_jtag_tdo, //last boundary scan chain output, TDO 
-
    output                                                         m_power_on_reset // S10 POR to User, can be left unconnected for User. In theory, MAc on master side
                                                                                     // should look at this signal to determine if "slave" is there and slave complete power up seq.
-// output                                                         o_osc_monitor, //Output from oscillator, go to pinmux block before go to C4 test bump
 
-
-   //AUX channel ATPG signals                                     //AUX has seperate scan chain. The TCM is outside of the aib_top.
-// input                                                          i_aux_atpg_mode_n,   //ATPG scan mode 
-// input                                                          i_aux_atpg_pipeline_global_en,  //scan_loes_mode
-// input                                                          i_aux_atpg_rst_n,               //~scan_reset
-// input                                                          i_aux_atpg_scan_clk,            //This is the output of TCM outside of aib_top.
-// input                                                          i_aux_atpg_scan_in,             //scan chain in  
-// input                                                          i_aux_atpg_scan_shift_n,        //~scan_enable
-// output                                                         o_aux_atpg_scan_out             //scan chain out 
    );
 
-wire [TOTAL_CHNL_NUM-1:0]       i_rx_pma_clk;
-wire [TOTAL_CHNL_NUM-1:0]       i_rx_pma_div2_clk;
-wire [TOTAL_CHNL_NUM*40-1:0]    i_rx_pma_data;
-wire [TOTAL_CHNL_NUM-1:0]       i_tx_pma_clk;
-wire [TOTAL_CHNL_NUM-1:0]       o_tx_transfer_clk;
-wire [TOTAL_CHNL_NUM-1:0]       o_tx_transfer_div2_clk;
-wire [TOTAL_CHNL_NUM*40-1:0]    o_tx_pma_data;
-wire [TOTAL_CHNL_NUM-1:0]       o_rx_xcvrif_rst_n;
 wire                            HI, LO;
 assign                          HI = 1'b1;
 assign                          LO = 1'b0;
 
-//assign  i_rx_pma_clk = m_ns_fwd_clk;
-//assign  i_rx_pma_div2_clk = m_ns_fwd_div2_clk;
 //assign  i_rx_pma_data = data_in;
-//assign  i_tx_pma_clk = m_ns_rcv_clk;
-//assign  m_fs_fwd_clk = o_tx_transfer_clk;
-//assign  m_fs_fwd_div2_clk = o_tx_transfer_div2_clk;
-//assign  data_out =  o_tx_pma_data;
-//assign  fs_mac_rdy = o_rx_xcvrif_rst_n;
 
 
     aib_top_v2m u_aib_top
@@ -241,12 +194,13 @@ assign                          LO = 1'b0;
                     .m_ns_fwd_div2_clk           (m_ns_fwd_div2_clk), 
                     .m_wr_clk                    (m_wr_clk),
                     .data_in                     (data_in),
-                    .i_rx_pma_data               ('0),
+                    .data_in_reg_mode            (data_in_reg_mode),
                     .m_ns_rcv_clk                (m_ns_rcv_clk), 
                     .m_fs_fwd_clk                (m_fs_fwd_clk), 
                     .m_fs_fwd_div2_clk           (m_fs_fwd_div2_clk),        // Not used 
                     .m_rd_clk                    (m_rd_clk),
                     .data_out                    (data_out),
+                    .data_out_reg_mode           (data_out_reg_mode),
 		    .ns_mac_rdy                  (ns_mac_rdy),
                     .ns_adapter_rstn             (ns_adapter_rstn),
                     .ms_sideband                 (ms_sideband),

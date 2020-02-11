@@ -227,7 +227,7 @@ c3aibadapt_cfg_rdmux cfg_rdmux (
   .cfg_only_waitreq         (cfg_only_waitreq),
   .ehip_cfg_rdata           (32'b0),
   .ehip_cfg_rdatavld        (1'b0),
-  .ehip_cfg_waitreq         (1'b0),
+  .ehip_cfg_waitreq         (1'b1),
   .adpt_cfg_rdata           (adpt_cfg_rdata),
   .adpt_cfg_rdatavld        (adpt_cfg_rdatavld),
   .adpt_cfg_waitreq         (adpt_cfg_waitreq)
