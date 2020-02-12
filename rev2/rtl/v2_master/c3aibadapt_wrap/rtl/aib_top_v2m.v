@@ -81,6 +81,10 @@ module aib_top_v2m
    input  [TOTAL_CHNL_NUM-1:0]                                    ns_adapter_rstn, //From Mac. To reset near adapt reset sm and far side reset sm. aibio56
    output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
    output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_transfer_en, //master link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_tx_transfer_en, //master link tx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_transfer_en, //slave link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_transfer_en, //slave link tx transfer enable
    output [TOTAL_CHNL_NUM-1:0]                                    m_rxfifo_align_done,  //Newly added rx data fifo alignment done signal.
    //=================================================================================================
    // Inout signals for AIB ubump
@@ -183,6 +187,10 @@ module aib_top_v2m
        .m_rxfifo_align_done            (m_rxfifo_align_done[TOTAL_CHNL_NUM-1:0]), 
        .ms_sideband                     (ms_sideband[TOTAL_CHNL_NUM*81-1:0]),
        .sl_sideband                     (sl_sideband[TOTAL_CHNL_NUM*73-1:0]),
+       .ms_tx_transfer_en               (ms_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+       .ms_rx_transfer_en               (ms_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+       .sl_tx_transfer_en               (sl_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+       .sl_rx_transfer_en               (sl_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
        .o_test_c3adapt_scan_out         (o_test_c3adapt_scan_out/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
        .o_test_c3adapttcb_jtag          (),                      // Templated
        .o_jtag_last_bs_chain_out        (o_jtag_tdo),     // Templated
