@@ -63,6 +63,11 @@ module aib_top_wrapper_v2m
 
    output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
    output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_transfer_en, //master link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_tx_transfer_en, //master link tx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_transfer_en, //slave link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_transfer_en, //slave link tx transfer enable
+
    output [TOTAL_CHNL_NUM-1:0]                                    m_rxfifo_align_done,
    //=================================================================================================
    // Inout signals for AIB ubump
@@ -206,6 +211,10 @@ assign                          LO = 1'b0;
                     .ms_sideband                 (ms_sideband),
 		    .sl_sideband                 (sl_sideband),
                     .m_rxfifo_align_done         (m_rxfifo_align_done),
+                    .ms_tx_transfer_en           (ms_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+                    .ms_rx_transfer_en           (ms_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+                    .sl_tx_transfer_en           (sl_tx_transfer_en[TOTAL_CHNL_NUM-1:0]),
+                    .sl_rx_transfer_en           (sl_rx_transfer_en[TOTAL_CHNL_NUM-1:0]),
     
                     .m0_ch0_aib                  ({  iopad_ns_sr_data[0],       iopad_ns_sr_load[0],       iopad_fs_sr_data[0],      iopad_fs_sr_load[0],
                                                    iopad_unused_aib91[0],     iopad_unused_aib90[0],     iopad_unused_aib89[0],    iopad_unused_aib88[0],

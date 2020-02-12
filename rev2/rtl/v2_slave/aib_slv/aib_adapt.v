@@ -231,6 +231,13 @@ wire             r_rx_double_read, r_rx_wa_en, r_rx_wr_adj_en;
 wire             r_rx_rd_adj_en, r_tx_double_write, r_tx_wm_en;
 wire             r_tx_wr_adj_en, r_tx_rd_adj_en, sr_sl_clk_out;
 wire             o_aib_bsr_scan_shift_clk, o_adpt_hard_rst_n, r_rx_aib_lpbk_en;
+wire             ms_tx_transfer_en_m, ms_rx_transfer_en_m;
+wire             sl_tx_transfer_en_s, sl_rx_transfer_en_s;
+
+assign ms_tx_transfer_en = dual_mode_select ? ms_tx_transfer_en_m : ms_data_to_core[78];
+assign ms_rx_transfer_en = dual_mode_select ? ms_rx_transfer_en_m : ms_data_to_core[75];
+assign sl_tx_transfer_en = !dual_mode_select ? sl_tx_transfer_en_s : sl_data_to_core[64];
+assign sl_rx_transfer_en = !dual_mode_select ? sl_rx_transfer_en_s : sl_data_to_core[70];
 
 assign o_adpt_cfg_clk = i_cfg_avmm_clk;
 assign o_adpt_cfg_rst_n = i_cfg_avmm_rst_n;
@@ -306,9 +313,9 @@ assign stl_out = is_master ? sr_ms_load_out : sr_sl_load_out;
 assign ns_adapter_rstno = ns_adapter_rstn; 
 assign ns_mac_rdyo = ns_mac_rdy;
 
-assign ms_data_fr_core[80:0] = {ms_osc_transfer_en,1'b1,ms_tx_transfer_en,2'b11,ms_rx_transfer_en,ms_rx_dll_lock, 5'b11111,ms_tx_dcc_cal_done,1'b0,1'b1, ms_external_cntl_65_8[57:0], 1'b1, 1'b0, 1'b1, ms_external_cntl_4_0[4:0]}; 
+assign ms_data_fr_core[80:0] = {ms_osc_transfer_en,1'b1,ms_tx_transfer_en_m,2'b11,ms_rx_transfer_en_m,ms_rx_dll_lock, 5'b11111,ms_tx_dcc_cal_done,1'b0,1'b1, ms_external_cntl_65_8[57:0], 1'b1, 1'b0, 1'b1, ms_external_cntl_4_0[4:0]}; 
 
-assign sl_data_fr_core[72:0] = {sl_osc_transfer_en,1'b0,sl_rx_transfer_en,sl_rx_dcc_dll_lock_req, sl_rx_dll_lock,3'b0,sl_tx_transfer_en,sl_tx_dcc_dll_lock_req, 1'b0,1'b0,1'b1,1'b0, 1'b1, sl_external_cntl_57_32[25:0], sl_tx_dcc_cal_done, sl_external_cntl_30_28[2:0], 1'b0, sl_external_cntl_26_0[26:0]}; 
+assign sl_data_fr_core[72:0] = {sl_osc_transfer_en,1'b0,sl_rx_transfer_en_s,sl_rx_dcc_dll_lock_req, sl_rx_dll_lock,3'b0,sl_tx_transfer_en_s,sl_tx_dcc_dll_lock_req, 1'b0,1'b0,1'b1,1'b0, 1'b1, sl_external_cntl_57_32[25:0], sl_tx_dcc_cal_done, sl_external_cntl_30_28[2:0], 1'b0, sl_external_cntl_26_0[26:0]}; 
 
 aib_adapt_rxchnl aib_adapt_rxchnl(
    // Outputs
@@ -368,7 +375,7 @@ aib_sm  aib_sm
     .sr_ms_clk_in(sr_clk_in), //input ms clock
     .ms_config_done(conf_done),   //master config done
     .ms_osc_transfer_en(ms_osc_transfer_en),
-    .ms_rx_transfer_en(ms_rx_transfer_en),
+    .ms_rx_transfer_en(ms_rx_transfer_en_m),
     .ms_osc_transfer_alive(ms_osc_transfer_alive),
     .ms_rx_async_rst(ms_rx_async_rst),
     .ms_rx_dll_lock_req(ms_rx_dll_lock_req),
@@ -377,7 +384,7 @@ aib_sm  aib_sm
     .ms_tx_dcc_cal_req(ms_tx_dcc_cal_req),
     .sl_tx_dcc_cal_req(sl_tx_dcc_cal_req),
     .ms_tx_dcc_cal_done(ms_tx_dcc_cal_done),
-    .ms_tx_transfer_en(ms_tx_transfer_en),
+    .ms_tx_transfer_en(ms_tx_transfer_en_m),
     .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req),
     .ms_tx_dcc_dll_lock_req(ms_tx_dcc_dll_lock_req),
     .ms_rx_dll_lockint(rx_dll_lock),   
@@ -389,9 +396,9 @@ aib_sm  aib_sm
     .ms_osc_transfer_eni(ms_data_to_core[80]),
     .sl_config_done(conf_done),   //slave config done
     .sl_osc_transfer_en(sl_osc_transfer_en),
-    .sl_rx_transfer_en(sl_rx_transfer_en),
+    .sl_rx_transfer_en(sl_rx_transfer_en_s),
     .sl_tx_dcc_cal_done(sl_tx_dcc_cal_done),
-    .sl_tx_transfer_en(sl_tx_transfer_en),
+    .sl_tx_transfer_en(sl_tx_transfer_en_s),
     .sl_rx_async_rst(sl_rx_async_rst),
     .sl_rx_dll_lock_req(sl_rx_dll_lock_req),
     .sl_rx_dll_lock(sl_rx_dll_lock),

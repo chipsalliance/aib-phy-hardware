@@ -94,7 +94,11 @@ module c3aibadapt_wrap
     input                                      ns_adapt_rstn, //From Mac. To reset near site adapt reset state machine and far site sm. Not implemented currently.
                                                               //Use aibio56
     output [80:0]                              ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
-    output [72:0]                              sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.                                                      
+    output [72:0]                              sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet. 
+    output                                     ms_rx_transfer_en, //master link rx transfer enable
+    output                                     ms_tx_transfer_en, //master link tx transfer enable
+    output                                     sl_rx_transfer_en, //slave link rx transfer enable
+    output                                     sl_tx_transfer_en, //slave link tx transfer enable
     output                                     m_rxfifo_align_done, //Indicates the receiving data word alignment is detected during 2xFIFO mode when asserted to high. 
  //=================================================================================================
  //// EMIB, AIB IO bumps

@@ -21,6 +21,8 @@
 //  2)  Pull out phasecom FIFO interface clock and data:
 //      i_rx_elane_clk,i_rx_elane_data,i_tx_elane_clk,o_tx_elane_data
 //  3)  Pull out ns_adapt_rstn
+//  2/12/2020 Pull out the following status signals
+//     ms_rx_transfer_en, ms_tx_transfer_en, sl_rx_transfer_en, sl_tx_transfer_en
 //-----------------------------------------------------------------------------
 module c3aibadapt_wrap_top
   # (
@@ -82,6 +84,11 @@ module c3aibadapt_wrap_top
    input  [TOTAL_CHNL_NUM-1:0]                                    ns_adapt_rstn, //From Mac. Reset near and far side reset state machine. Pin aibio56 
    output [TOTAL_CHNL_NUM*81-1:0]                                 ms_sideband, //Status of serial shifting bit from this master chiplet to slave chiplet
    output [TOTAL_CHNL_NUM*73-1:0]                                 sl_sideband, //Status of serial shifting bit from slave chiplet to master chiplet.
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_rx_transfer_en, //master link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    ms_tx_transfer_en, //master link tx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_rx_transfer_en, //slave link rx transfer enable
+   output [TOTAL_CHNL_NUM-1:0]                                    sl_tx_transfer_en, //slave link tx transfer enable
+
    //=================================================================================================
    // Inout signals for AIB ubump
    inout [95:0]                                                   io_aib_ch0, 
@@ -547,6 +554,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[80:0]),
                                     .sl_sideband        (sl_sideband[72:0]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[0]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[0]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[0]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[0]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[0]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[0][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[0]), // Templated
@@ -716,6 +727,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[161:81]),
                                     .sl_sideband        (sl_sideband[145:73]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[1]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[1]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[1]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[1]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[1]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[1][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[1][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[1]), // Templated
@@ -916,6 +931,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[242:162]),
                                     .sl_sideband        (sl_sideband[218:146]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[2]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[2]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[2]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[2]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[2]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[2][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[2][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[2]), // Templated
@@ -1116,6 +1135,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[323:243]),
                                     .sl_sideband        (sl_sideband[291:219]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[3]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[3]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[3]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[3]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[3]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[3][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[3][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[3]), // Templated
@@ -1316,6 +1339,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[404:324]),
                                     .sl_sideband        (sl_sideband[364:292]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[4]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[4]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[4]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[4]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[4]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[4][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[4][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[4]), // Templated
@@ -1530,6 +1557,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[485:405]),
                                     .sl_sideband        (sl_sideband[437:365]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[5]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[5]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[5]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[5]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[5]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[5][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[5][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[5]), // Templated
@@ -1863,6 +1894,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[566:486]),
                                     .sl_sideband        (sl_sideband[510:438]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[6]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[6]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[6]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[6]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[6]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[6][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[6][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[6]), // Templated
@@ -2042,6 +2077,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[647:567]),
                                     .sl_sideband        (sl_sideband[583:511]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[7]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[7]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[7]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[7]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[7]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[7][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[7][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[7]), // Templated
@@ -2242,6 +2281,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[728:648]),
                                     .sl_sideband        (sl_sideband[656:584]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[8]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[8]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[8]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[8]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[8]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[8][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[8][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[8]), // Templated
@@ -2442,6 +2485,10 @@ module c3aibadapt_wrap_top
                                     .ms_sideband        (ms_sideband[809:729]),
                                     .sl_sideband        (sl_sideband[729:657]),
                                     .m_rxfifo_align_done (m_rxfifo_align_done[9]),
+                                    .ms_tx_transfer_en  (ms_tx_transfer_en[9]),
+                                    .ms_rx_transfer_en  (ms_rx_transfer_en[9]),
+                                    .sl_tx_transfer_en  (sl_tx_transfer_en[9]),
+                                    .sl_rx_transfer_en  (sl_rx_transfer_en[9]),
                                     .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[9][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                     .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[9][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                     .o_jtag_clkdr_out   (aib_jtag_clkdr_out[9]), // Templated
@@ -2642,6 +2689,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[890:810]),
                                      .sl_sideband        (sl_sideband[802:730]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[10]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[10]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[10]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[10]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[10]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[10][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[10][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[10]), // Templated
@@ -2856,6 +2907,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband       (ms_sideband[971:891]),
                                      .sl_sideband        (sl_sideband[875:803]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[11]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[11]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[11]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[11]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[11]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[11][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[11][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[11]), // Templated
@@ -3138,6 +3193,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1052:972]),
                                      .sl_sideband        (sl_sideband[948:876]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[12]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[12]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[12]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[12]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[12]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[12][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[12][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[12]), // Templated
@@ -3317,6 +3376,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1133:1053]),
                                      .sl_sideband        (sl_sideband[1021:949]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[13]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[13]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[13]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[13]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[13]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[13][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[13][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[13]), // Templated
@@ -3517,6 +3580,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1214:1134]),
                                      .sl_sideband        (sl_sideband[1094:1022]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[14]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[14]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[14]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[14]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[14]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[14][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[14][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[14]), // Templated
@@ -3717,6 +3784,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1295:1215]),
                                      .sl_sideband        (sl_sideband[1167:1095]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[15]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[15]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[15]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[15]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[15]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[15][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[15][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[15]), // Templated
@@ -3917,6 +3988,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1376:1296]),
                                      .sl_sideband        (sl_sideband[1240:1168]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[16]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[16]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[16]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[16]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[16]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[16][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[16][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[16]), // Templated
@@ -4131,6 +4206,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1457:1377]),
                                      .sl_sideband        (sl_sideband[1313:1241]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[17]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[17]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[17]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[17]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[17]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[17][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[17][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[17]), // Templated
@@ -4413,6 +4492,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1538:1458]),
                                      .sl_sideband        (sl_sideband[1386:1314]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[18]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[18]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[18]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[18]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[18]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[18][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[18][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[18]), // Templated
@@ -4592,6 +4675,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1619:1539]),
                                      .sl_sideband        (sl_sideband[1459:1387]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[19]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[19]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[19]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[19]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[19]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[19][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[19][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[19]), // Templated
@@ -4792,6 +4879,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1700:1620]),
                                      .sl_sideband        (sl_sideband[1532:1460]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[20]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[20]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[20]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[20]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[20]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[20][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[20][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[20]), // Templated
@@ -4992,6 +5083,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1781:1701]),
                                      .sl_sideband        (sl_sideband[1605:1533]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[21]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[21]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[21]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[21]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[21]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[21][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[21][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[21]), // Templated
@@ -5192,6 +5287,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1862:1782]),
                                      .sl_sideband        (sl_sideband[1678:1606]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[22]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[22]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[22]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[22]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[22]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[22][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[22][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[22]), // Templated
@@ -5397,6 +5496,10 @@ module c3aibadapt_wrap_top
                                      .ms_sideband        (ms_sideband[1943:1863]),
                                      .sl_sideband        (sl_sideband[1751:1679]),
                                      .m_rxfifo_align_done (m_rxfifo_align_done[23]),
+                                     .ms_tx_transfer_en  (ms_tx_transfer_en[23]),
+                                     .ms_rx_transfer_en  (ms_rx_transfer_en[23]),
+                                     .sl_tx_transfer_en  (sl_tx_transfer_en[23]),
+                                     .sl_rx_transfer_en  (sl_rx_transfer_en[23]),
                                      .o_test_c3adapt_scan_out(o_test_c3adapt_scan_out[23][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), // Templated
                                      .o_test_c3adapttcb_jtag(o_test_c3adapttcb_jtag[23][`AIBADAPTWRAPTCB_JTAG_OUT_RNG]), // Templated
                                      .o_jtag_clkdr_out  (aib_jtag_clkdr_out[23]), // Templated
