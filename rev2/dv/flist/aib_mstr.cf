@@ -1,0 +1,30 @@
+# ####################################################################
+# Design files specific to aib_mstr (PaR4) level                     #
+# ####################################################################
+${BC_RTL}/aib_mstr/aib_avmm_mstr.sv
+${BC_RTL}/aib_mstr/aib_channel.sv
+${BC_RTL}/aib_mstr/aib_clk_rst.sv
+${BC_RTL}/aib_mstr/aib_data_gen_chk.sv
+${BC_RTL}/aib_mstr/aib_mac.sv
+${BC_RTL}/aib_mstr/aib_mstr.sv
+${BC_RTL}/aib_mstr/aib_phy.sv
+${BC_RTL}/aib_mstr/mac_chan_csr.sv
+${BC_RTL}/aib_mstr/mac_phy_csr.sv
+${BC_RTL}/aib_mstr/rx_bert_wrap.sv
+${BC_RTL}/aib_mstr/tx_bert_wrap.sv
+${BC_RTL}/io/io_bufs.sv
+${BC_RTL}/jtag/jtag_tap.sv
+${BC_RTL}/lib/bert/ber.sv
+${BC_RTL}/lib/bert/hybrid_counter.sv
+${BC_RTL}/lib/bert/pattern_generator.sv
+${BC_RTL}/lib/bert/pattern_generator_cfg_wrapper.sv
+${BC_RTL}/lib/bert/prbs.sv
+${BC_RTL}/lib/bert/rx_bert.sv
+${BC_RTL}/lib/bert/snapshot.sv
+${BC_RTL}/lib/bert/tx_bert.sv
+${BC_RTL}/lib/div_by_2.sv
+${BC_RTL}/lib/div_by_n.sv
+${BC_RTL}/scip/BIDI_BUF.sv
+${BC_RTL}/scip/clk_gate.sv
+${BC_RTL}/scip/sync.sv
+${BC_RTL}/scip/sync_rst_n.sv

@@ -1,0 +1,3 @@
+rm -rf INCA_libs
+
+irun -sv -timescale 1ps/1ps -f ./multidie.f ./top.sv ./dut_io.sv ./test.sv -vlog_ext +.vh +define+BEHAVIORAL+TIMESCALE_EN+ALTR_HPS_INTEL_MACROS_OFF+S10_MODEL -access rwc -input sim_input.tcl
