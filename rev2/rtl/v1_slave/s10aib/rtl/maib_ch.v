@@ -310,6 +310,7 @@ ndaibadapt_wrap  ndut(
                       .pld_pma_tx_qpi_pulldn(1'b0),
                       .pld_pma_tx_qpi_pullup(1'b1),    
                       .pld_pma_rx_qpi_pullup(1'b1),
+                      .pld_pma_aib_tx_clk(1'b0),
     
     // PLD DCM input
                       .pld_rx_clk1_dcm(rx_coreclkin),
@@ -463,6 +464,7 @@ ndaibadapt_wrap  ndut(
                       .pld_pll_cal_done(),
                       .pld_pma_adapt_done(),
                       .pld_pma_clkdiv_rx_user(fs_mac_rdy),
+                      .pld_pma_clkdiv_tx_user(),
                       .pld_pma_fpll_clk0bad(),
                       .pld_pma_fpll_clk1bad(),
                       .pld_pma_fpll_clksel(),
@@ -525,6 +527,7 @@ ndaibadapt_wrap  ndut(
                       .pld_pcs_tx_clk_out2_dcm(),
 
     //JTAG input
+                      .iatpg_pipeline_global_en(1'b0),
                       .iatpg_scan_clk_in0(1'b1),
                       .iatpg_scan_clk_in1(1'b1),
                       .iatpg_scan_in0(1'b0),

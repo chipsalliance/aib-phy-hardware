@@ -130,11 +130,11 @@ module aib_top_v2m
     //======================================================================================
    // DFT signals
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
-   input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
-   input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
-   input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
+// input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
+// input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
@@ -248,11 +248,11 @@ module aib_top_v2m
        .i_tx_elane_clk                  (m_rd_clk[TOTAL_CHNL_NUM-1:0]),
        .o_tx_elane_data                 (data_out[TOTAL_CHNL_NUM*78-1:0]),
        .i_scan_clk                      (i_scan_clk),
-       .i_test_clk_125m                 (i_test_clk_125m),
-       .i_test_clk_1g                   (i_test_clk_1g),
-       .i_test_clk_250m                 (i_test_clk_250m),
-       .i_test_clk_500m                 (i_test_clk_500m),
-       .i_test_clk_62m                  (i_test_clk_62m),
+       .i_test_clk_125m                 (1'b0),
+       .i_test_clk_1g                   (1'b0),
+       .i_test_clk_250m                 (1'b0),
+       .i_test_clk_500m                 (1'b0),
+       .i_test_clk_62m                  (1'b0),
        .i_test_c3adapt_scan_in          (i_test_c3adapt_scan_in/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
        .i_test_c3adapt_tcb_static_common({58'h0, i_test_scan_en, i_test_scan_mode}),
        .i_jtag_rstb_in                  (i_jtag_rstb),  // Templated

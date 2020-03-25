@@ -70,6 +70,8 @@ module aib_top_v2s
 // output [TOTAL_CHNL_NUM*61-1:0]                                 o_chnl_ssr, // Slow shift chain path, left unconnected if not used
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_clk, // clock used for tx data transmission
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_div2_clk, // half rate of tx data transmission clock
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_rcv_clk,
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_rcv_div2_clk,
 // output [TOTAL_CHNL_NUM*40-1:0]                                 o_tx_pma_data, // Directed bump tx data sync path
    input  [TOTAL_CHNL_NUM-1:0]                                    m_rd_clk, //Clock for phase compensation fifo
    output [TOTAL_CHNL_NUM*78-1:0]                                 data_out, // data out for phase compensation fifo
@@ -141,11 +143,11 @@ module aib_top_v2s
     //======================================================================================
    // DFT signals
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
-   input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
-   input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
-   input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
+// input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
+// input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
@@ -194,8 +196,8 @@ module aib_top_v2s
 //     .o_chnl_ssr                      (),
        .m_fs_fwd_clk                    (m_fs_fwd_clk[TOTAL_CHNL_NUM-1:0]),
        .m_fs_fwd_div2_clk               (m_fs_fwd_div2_clk[TOTAL_CHNL_NUM-1:0]),
-       .m_fs_rcv_clk                    (),
-       .m_fs_rcv_div2_clk               (),
+       .m_fs_rcv_clk                    (m_fs_rcv_clk[TOTAL_CHNL_NUM-1:0]),
+       .m_fs_rcv_div2_clk               (m_fs_rcv_div2_clk),
 //     .o_tx_pma_data                   (),
        .ns_mac_rdy                      (ns_mac_rdy[TOTAL_CHNL_NUM-1:0]),
        .ns_adapter_rstn                 (ns_adapter_rstn[TOTAL_CHNL_NUM-1:0]),
@@ -269,11 +271,11 @@ module aib_top_v2s
        .m_rd_clk                        (m_rd_clk[TOTAL_CHNL_NUM-1:0]),
        .data_out                        (data_out[TOTAL_CHNL_NUM*78-1:0]),
        .i_scan_clk                      (i_scan_clk),
-       .i_test_clk_125m                 (i_test_clk_125m),
-       .i_test_clk_1g                   (i_test_clk_1g),
-       .i_test_clk_250m                 (i_test_clk_250m),
-       .i_test_clk_500m                 (i_test_clk_500m),
-       .i_test_clk_62m                  (i_test_clk_62m),
+       .i_test_clk_125m                 (1'b0),
+       .i_test_clk_1g                   (1'b0),
+       .i_test_clk_250m                 (1'b0),
+       .i_test_clk_500m                 (1'b0),
+       .i_test_clk_62m                  (1'b0),
        .i_test_c3adapt_scan_in          (i_test_c3adapt_scan_in/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
        .i_test_c3adapt_tcb_static_common({58'h0, i_test_scan_en, i_test_scan_mode}),
        .i_jtag_rstb_in                  (i_jtag_rstb),  // Templated
