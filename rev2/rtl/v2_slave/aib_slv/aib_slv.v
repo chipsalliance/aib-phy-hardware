@@ -225,12 +225,12 @@ module aib_slv
     input                                      i_por_aib_vcchssi, //output of por circuit 
     input                                      i_por_aib_vccl, //From AUX. From S10 
     output wire                                o_por_aib_vcchssi, // Feed through pass to next channel 
-    output wire                                o_por_aib_vccl, // 
+    output wire                                o_por_aib_vccl // 
 
 
 // Go to next Channel AIB
-    input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
-    output wire [12:0]                          o_aibdftdll2adjch  // DCC/DLL observability Go to next channel 
+//  input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
+//  output wire [12:0]                          o_aibdftdll2adjch  // DCC/DLL observability Go to next channel 
  );
 
     wire                fs_fwd_clk;
@@ -635,7 +635,7 @@ module aib_slv
                                     .ojtag_rx_scan_out_chain(o_jtag_bs_chain_out), 
                                     .por_aib_vcchssi_out(o_por_aib_vcchssi), 
                                     .por_aib_vccl_out   (o_por_aib_vccl), 
-                                    .oaibdftdll2adjch   (o_aibdftdll2adjch), 
+                                    .oaibdftdll2adjch   (), 
                                     .ohssi_tx_data_in   (din[39:0]), 
                                     // Inouts
                                     .aib0               (io_aib0),       
