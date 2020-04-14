@@ -154,8 +154,8 @@ module aib_top_wrapper_v2m
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
-   input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
-   output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
+// input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
+// output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
   
    //Inputs from TCB (JTAG signals)
    input                                                          i_jtag_clkdr, // (from dbg_test_bscan block)Enable AIB IO boundary scan clock (clock gate control)
@@ -617,8 +617,8 @@ assign                          LO = 1'b0;
                 //  .i_test_clk_250m             (i_test_clk_250m), 
                 //  .i_test_clk_500m             (i_test_clk_500m), 
                 //  .i_test_clk_62m              (i_test_clk_62m), 	      
-                    .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
-	            .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
+                //  .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
+	        //  .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
                     .i_jtag_clkdr                (i_jtag_clkdr),   
                     .i_jtag_clksel               (i_jtag_clksel),   
                     .i_jtag_intest               (i_jtag_intest),   

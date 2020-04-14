@@ -46,7 +46,7 @@ aibcr3aux_pasred_baldwin xpasred (
      .iopad_dn_por(aib_aux85),
      .dn_por(dn_por_in));
 //assign o_por_vccl = ((~c4por_vccl_ovrd) | dn_por_in); The open source rev1 implementation.
-assign  o_por_vccl = (c4por_vccl_ovrd | dn_por_in); //Note, same polarity with dn_por_in; 12/9/2019
+assign  o_por_vccl = (c4por_vccl_ovrd & dn_por_in); //Note, same polarity with dn_por_in; 12/9/2019
 //aibcr_aliasd aliasd_xrtl1 ( .rb(aib_aux85), .ra(aib_aux87));       //Reviewed by Designer
 aibcr3_aliasd aliasd4 ( .rb(aib_aux75), .ra(aib_aux74));
 assign osc_clkout = iosc_bypclk;

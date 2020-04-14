@@ -71,6 +71,7 @@ module aib_slv
     input                                      i_osc_clk, // free running clock from MAC
     input                                      m_wr_clk,  //data_in reference clock for FIFO 1x or FIFO 2x modes 
     input                                      m_rd_clk,  //data_out reference clock for FIFO 1x or FIFO 2x modes 
+    output wire                                o_osc_clk, // output to next channel
     output wire [80:0]                         ms_sideband, //Captured Master sideband shift register bits
     output wire [72:0]                         sl_sideband, //Captured Slave sideband shift register bits
     input                                      dual_mode_select,  //Selection for adapter to be master or slave
@@ -225,12 +226,16 @@ module aib_slv
     input                                      i_por_aib_vcchssi, //output of por circuit 
     input                                      i_por_aib_vccl, //From AUX. From S10 
     output wire                                o_por_aib_vcchssi, // Feed through pass to next channel 
-    output wire                                o_por_aib_vccl // 
+    output wire                                o_por_aib_vccl, // 
 
 
 // Go to next Channel AIB
-//  input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
-//  output wire [12:0]                          o_aibdftdll2adjch  // DCC/DLL observability Go to next channel 
+    input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
+    output wire [12:0]                          o_aibdftdll2adjch,  // DCC/DLL observability Go to next channel 
+    input   wire                      scan_clk,
+    input   wire                      scan_enable,
+    input   wire [19:0]               scan_in,
+    output  wire [19:0]               scan_out
  );
 
     wire                fs_fwd_clk;
@@ -243,7 +248,7 @@ module aib_slv
     wire                rx_dll_lock;
     wire                ns_mac_rdyo;
     wire                ns_adapter_rstno;
- 
+    wire                osc_clk_adpt;
 
     wire                aib_adpt_ssr_data;      // From aib_iotop_wrp of aib_iotop_wrp.v
     wire                aib_adpt_ssr_load;      // From aib_iotop_wrp of aib_iotop_wrp.v
@@ -319,6 +324,7 @@ module aib_slv
     wire                aib_tx_sr_clk_in;       // From aib_iotop_wrp of aib_iotop_wrp.v
     wire                aib_tx_transfer_clk;    // From aib_iotop_wrp of aib_iotop_wrp.v
     wire [12:0]         aibdftdll2core;         // From aib_iotop_wrp of aib_iotop_wrp.v
+    wire [12:0]         w_dftdll2core;
     wire                atpg_bsr0_scan_in;      // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
     wire                atpg_bsr0_scan_out;     // From aib_iotop_wrp of aib_iotop_wrp.v
     wire                atpg_bsr1_scan_in;      // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
@@ -338,6 +344,7 @@ module aib_slv
     wire                w_avmm1_test_clk;       // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
     wire [`TCM_WRAP_CTRL_RNG] w_avmm1_tst_tcm_ctrl;// From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
     wire [1:0]          w_dftcore2dll;          // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
+    wire [1:0]          aibdftcore2dll;         
     wire                w_global_pipe_scanen;   // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
     wire                w_rxchnl_scan_clk;      // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
     wire                w_rxchnl_test_clk;      // From c3dfx_aibadaptwrap_tcb of c3dfx_aibadaptwrap_tcb.v
@@ -455,6 +462,8 @@ module aib_slv
                            .o_aib_dprio_ctrl_2  (aib_dprio_ctrl_2[7:0]), 
                            .o_aib_dprio_ctrl_3  (aib_dprio_ctrl_3[7:0]), 
                            .o_aib_dprio_ctrl_4  (aib_dprio_ctrl_4[7:0]), 
+                           .o_aibdftcore2dll    (aibdftcore2dll[1:0]),
+                           .o_dftdll2core       (w_dftdll2core[12:0]),
                            .ms_sideband         (ms_sideband[80:0]),
                            .sl_sideband         (sl_sideband[72:0]),
                            .ns_mac_rdyo         (ns_mac_rdyo),
@@ -491,7 +500,7 @@ module aib_slv
                            .ns_mac_rdy                     (ns_mac_rdy), 
                            .fs_mac_rdy                     (fs_mac_rdy), 
                            .dual_mode_select               (dual_mode_select), 
-                           .i_osc_clk                      (i_osc_clk), 
+                           .i_osc_clk                      (osc_clk_adpt), 
                            .sl_external_cntl_26_0          (sl_external_cntl_26_0[26:0]), 
                            .sl_external_cntl_30_28         (sl_external_cntl_30_28[2:0]), 
                            .sl_external_cntl_57_32         (sl_external_cntl_57_32[25:0]), 
@@ -510,6 +519,8 @@ module aib_slv
                            .i_cfg_avmm_write    (i_cfg_avmm_write), 
                            .i_cfg_avmm_read     (i_cfg_avmm_read), 
                            .i_cfg_avmm_byte_en  (i_cfg_avmm_byte_en[3:0]), 
+                           .i_dftcore2dll       (w_dftcore2dll[1:0]),
+                           .i_aibdftdll2core    (aibdftdll2core[12:0]),
                            .i_scan_mode_n       (w_scan_mode_n), 
                            .i_avmm1_tst_tcm_ctrl(w_avmm1_tst_tcm_ctrl[`TCM_WRAP_CTRL_RNG]), 
                            .i_avmm1_test_clk    (w_avmm1_test_clk), 
@@ -526,7 +537,11 @@ module aib_slv
                            .i_rxchnl_tst_tcm_ctrl(w_rxchnl_tst_tcm_ctrl[`TCM_WRAP_CTRL_RNG]), 
                            .i_rxchnl_test_clk   (w_rxchnl_test_clk), 
                            .i_rxchnl_scan_clk   (w_rxchnl_scan_clk), 
-                           .i_scan_rst_n        (w_scan_rst_n));  
+                           .i_scan_rst_n        (w_scan_rst_n),  
+                           .scan_clk            (scan_clk),  
+                           .scan_enable         (scan_enable),  
+                           .scan_in             (scan_in[19:0]),  
+                           .scan_out            (scan_out[19:0]));  
 
 
     c3dfx_aibadaptwrap_tcb c3dfx_aibadaptwrap_tcb (
@@ -593,17 +608,19 @@ module aib_slv
                                                    .i_tst_aibadaptwraptcb_jtag_common(2'h0), 
                                                    .i_tst_aibadaptwraptcb_static_common(i_test_c3adapt_tcb_static_common[`AIBADAPTWRAPTCB_STATIC_COMMON_RNG]), 
                                                    .i_tst_aibadaptwrap_scan_in(i_test_c3adapt_scan_in[`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]), 
-                                                   .i_dftdll2core       (13'b0), 
-                                                   .i_atpg_scan_out0    (w_atpg_scan_out0), 
-                                                   .i_atpg_scan_out1    (w_atpg_scan_out1), 
-                                                   .i_atpg_bsr0_scan_out(atpg_bsr0_scan_out), 
-                                                   .i_atpg_bsr1_scan_out(atpg_bsr1_scan_out), 
-                                                   .i_atpg_bsr2_scan_out(atpg_bsr2_scan_out), 
-                                                   .i_atpg_bsr3_scan_out(atpg_bsr3_scan_out)); 
+                                                   .i_dftdll2core       (w_dftdll2core[12:0]), 
+                                                   .i_atpg_scan_out0    (1'b0), 
+                                                   .i_atpg_scan_out1    (1'b0), 
+                                                   .i_atpg_bsr0_scan_out(1'b0), 
+                                                   .i_atpg_bsr1_scan_out(1'b0), 
+                                                   .i_atpg_bsr2_scan_out(1'b0), 
+                                                   .i_atpg_bsr3_scan_out(1'b0)); 
  
 
     aib_iotop_wrp aib_iotop_wrp (
                                     // Outputs
+                                    .osc_clkout         (o_osc_clk), 
+                                    .osc_clk_adpt       (osc_clk_adpt), 
                                     .jtag_clksel_out    (o_jtag_clksel_out), 
                                     .jtag_intest_out    (o_jtag_intest_out), 
                                     .jtag_mode_out      (o_jtag_mode_out), 
@@ -635,7 +652,8 @@ module aib_slv
                                     .ojtag_rx_scan_out_chain(o_jtag_bs_chain_out), 
                                     .por_aib_vcchssi_out(o_por_aib_vcchssi), 
                                     .por_aib_vccl_out   (o_por_aib_vccl), 
-                                    .oaibdftdll2adjch   (), 
+                                    .oaibdftdll2adjch   (o_aibdftdll2adjch), 
+                                    .oaibdftdll2core    (aibdftdll2core[12:0]), 
                                     .ohssi_tx_data_in   (din[39:0]), 
                                     // Inouts
                                     .aib0               (io_aib0),       
@@ -735,23 +753,23 @@ module aib_slv
                                     .aib94              (io_aib94),      
                                     .aib95              (io_aib95),      
                                     // Inputs
-                                    .iatpg_bsr0_scan_in (atpg_bsr0_scan_in), 
-                                    .iatpg_bsr0_scan_shift_clk(aib_bsr_scan_shift_clk), 
-                                    .iatpg_bsr1_scan_in (atpg_bsr1_scan_in), 
-                                    .iatpg_bsr1_scan_shift_clk(aib_bsr_scan_shift_clk), 
-                                    .iatpg_bsr2_scan_in (atpg_bsr2_scan_in), 
-                                    .iatpg_bsr2_scan_shift_clk(aib_bsr_scan_shift_clk), 
-                                    .iatpg_bsr3_scan_in (atpg_bsr3_scan_in), 
-                                    .iatpg_bsr3_scan_shift_clk(aib_bsr_scan_shift_clk), 
-                                    .iatpg_bsr_scan_shift_n(atpg_bsr_scan_shift_n), 
-                                    .iatpg_pipeline_global_en(w_global_pipe_scanen), 
+                                    .iatpg_bsr0_scan_in (1'b0), 
+                                    .iatpg_bsr0_scan_shift_clk(1'b0), 
+                                    .iatpg_bsr1_scan_in (1'b0), 
+                                    .iatpg_bsr1_scan_shift_clk(1'b0), 
+                                    .iatpg_bsr2_scan_in (1'b0), 
+                                    .iatpg_bsr2_scan_shift_clk(1'b0), 
+                                    .iatpg_bsr3_scan_in (1'b0), 
+                                    .iatpg_bsr3_scan_shift_clk(1'b0), 
+                                    .iatpg_bsr_scan_shift_n(1'b1), 
+                                    .iatpg_pipeline_global_en(1'b0), 
                                     .iatpg_scan_clk_in0 (1'b0), 
                                     .iatpg_scan_clk_in1 (1'b0), 
-                                    .iatpg_scan_in0     (w_atpg_scan_in0), 
-                                    .iatpg_scan_in1     (w_atpg_scan_in1), 
-                                    .iatpg_scan_mode_n  (w_scan_mode_n), 
-                                    .iatpg_scan_rst_n   (w_scan_rst_n),  
-                                    .iatpg_scan_shift_n (w_scan_shift_n), 
+                                    .iatpg_scan_in0     (1'b0), 
+                                    .iatpg_scan_in1     (1'b0), 
+                                    .iatpg_scan_mode_n  (1'b1), 
+                                    .iatpg_scan_rst_n   (1'b1),  
+                                    .iatpg_scan_shift_n (1'b1), 
                                     .ihssi_dcc_req      (tx_dcc_cal_req),  
                                     .ihssi_pld_pma_clkdiv_rx_user(ns_mac_rdyo),  
                                     .ihssi_pld_pma_clkdiv_tx_user(ns_adapter_rstno),  
@@ -763,22 +781,22 @@ module aib_slv
                                     .ihssi_tx_dcd_cal_req(rx_dll_lock_req), //dummy, goes to ssr user define bit in the aib spec
                                     .ihssi_tx_dll_lock_req(rx_dll_lock_req), 
                                     .ijtag_clkdr_in_chain(i_jtag_clkdr_in), 
-                                    .ijtag_last_bs_in_chain(1'b0), 
-                                    .ijtag_tx_scan_in_chain(1'b0), 
+                                    .ijtag_last_bs_in_chain(i_jtag_last_bs_chain_in), 
+                                    .ijtag_tx_scan_in_chain(i_jtag_bs_chain_in), 
                                     .irstb              (conf_done_o), 
-                                    .jtag_clksel        (1'b0), 
-                                    .jtag_intest        (1'b0), 
-                                    .jtag_mode_in       (1'b0), 
-                                    .jtag_rstb          (1'b1), 
-                                    .jtag_rstb_en       (1'b0), 
-                                    .jtag_tx_scanen_in  (1'b0), 
-                                    .jtag_weakpdn       (1'b0), 
-                                    .jtag_weakpu        (1'b0), 
-                                    .osc_clkin          (i_osc_clk), ///????? 
+                                    .jtag_clksel        (i_jtag_clksel_in), 
+                                    .jtag_intest        (i_jtag_intest_in), 
+                                    .jtag_mode_in       (i_jtag_mode_in), 
+                                    .jtag_rstb          (i_jtag_rstb_in), 
+                                    .jtag_rstb_en       (i_jtag_rstb_en_in), 
+                                    .jtag_tx_scanen_in  (i_jtag_bs_scanen_in), 
+                                    .jtag_weakpdn       (i_jtag_weakpdn_in), 
+                                    .jtag_weakpu        (i_jtag_weakpu_in), 
+                                    .osc_clkin          (i_osc_clk), 
                                     .por_aib_vcchssi    (i_por_aib_vcchssi), 
                                     .por_aib_vccl       (i_por_aib_vccl), 
                                     .r_aib_csr_ctrl_42  (aib_csr_ctrl_42[7:0]), 
-                                    .iaibdftdll2adjch   (13'b0),
+                                    .iaibdftdll2adjch   (i_aibdftdll2adjch),
                                     .r_aib_csr_ctrl_40  (aib_csr_ctrl_40[7:0]), 
                                     .r_aib_csr_ctrl_36  (aib_csr_ctrl_36[7:0]), 
                                     .r_aib_csr_ctrl_43  (aib_csr_ctrl_43[7:0]), 
@@ -792,7 +810,7 @@ module aib_slv
                                     .r_aib_csr_ctrl_34  (aib_csr_ctrl_34[7:0]), 
                                     .r_aib_csr_ctrl_35  (aib_csr_ctrl_35[7:0]), 
                                     .r_aib_dprio_ctrl_4 (aib_dprio_ctrl_4[7:0]), 
-                                    .iaibdftcore2dll    (2'b00), 
+                                    .iaibdftcore2dll    (aibdftcore2dll[1:0]), 
                                     .r_aib_dprio_ctrl_1 (aib_dprio_ctrl_1[7:0]), 
                                     .r_aib_dprio_ctrl_0 (aib_dprio_ctrl_0[7:0]), 
                                     .r_aib_csr_ctrl_20  (aib_csr_ctrl_20[7:0]), 

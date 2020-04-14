@@ -101,6 +101,7 @@ module c3dfx_tcm_wrap
 
   c3dfx_tcm uu_c3dfx_tcm (.i_func_clken(func_clken),
                           .i_func_clk(func_clk),
+                          .i_tcm_mode(4'h0),
                           .*);
 
 endmodule

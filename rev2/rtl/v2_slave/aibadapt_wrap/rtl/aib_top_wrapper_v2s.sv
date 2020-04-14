@@ -168,6 +168,11 @@ module aib_top_wrapper_v2s
    output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator 
     //======================================================================================
    // DFT signals
+   input                                                          scan_clk,
+   input                                                          scan_enable,
+   input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+   output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
+
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
    input                                                          i_test_scan_en,
    input                                                          i_test_scan_mode,
@@ -179,8 +184,8 @@ module aib_top_wrapper_v2s
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
-   input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
-   output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
+// input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
+// output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
   
    //Inputs from TCB (JTAG signals)
    input                                                          i_jtag_clkdr, // (from dbg_test_bscan block)Enable AIB IO boundary scan clock (clock gate control)
@@ -658,6 +663,11 @@ assign                          LO = 1'b0;
                     .io_aib_aux87                (iopad_power_on_reset_r),
                     .i_osc_clk                   (i_osc_clk),  
 //                  .o_aibaux_osc_clk            (o_aibaux_osc_clk),      
+                    .scan_clk                    (scan_clk),
+                    .scan_enable                 (scan_enable),
+                    .scan_in                     (scan_in),
+                    .scan_out                    (scan_out),
+
                     .i_scan_clk                  (i_scan_clk), 
                     .i_test_scan_en              (i_test_scan_en),
                     .i_test_scan_mode            (i_test_scan_mode),
@@ -666,8 +676,8 @@ assign                          LO = 1'b0;
                //   .i_test_clk_250m             (i_test_clk_250m), 
                //   .i_test_clk_500m             (i_test_clk_500m), 
                //   .i_test_clk_62m              (i_test_clk_62m), 	      
-                    .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
-	            .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
+               //   .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
+	       //   .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
                     .i_jtag_clkdr                (i_jtag_clkdr),   
                     .i_jtag_clksel               (i_jtag_clksel),   
                     .i_jtag_intest               (i_jtag_intest),   
