@@ -142,7 +142,11 @@ module aib_top_v2s
 // output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, User may use this clock to connect with i_test_clk_1g
     //======================================================================================
    // DFT signals
-   input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
+   input                                                          scan_clk,
+   input                                                          scan_enable,
+   input [TOTAL_CHNL_NUM-1:0][19:0]                               scan_in,
+   input [TOTAL_CHNL_NUM-1:0][19:0]                               scan_out,
+   input                                                          i_scan_clk,
 // input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
 // input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
 // input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
@@ -151,12 +155,12 @@ module aib_top_v2s
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
-   input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
+// input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
 // input [`AIBADAPTWRAPTCB_STATIC_COMMON_RNG]                     i_test_c3adapt_tcb_static_common, //TCM Controls for ATPG scan test. 
 // i_test_scan_reset, i_test_scan_enable, i_test_scan_mode
    input                                                          i_test_scan_en,     //Terminate i_test_c3adapt_tcb_static_common, only pull out Scan enable 
    input                                                          i_test_scan_mode,
-   output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
+// output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
   
    //Inputs from TCB (JTAG signals)
    input                                                          i_jtag_clkdr, // (from dbg_test_bscan block)Enable AIB IO boundary scan clock (clock gate control)
@@ -213,7 +217,7 @@ module aib_top_v2s
        .sl_tx_dcc_dll_lock_req          (sl_tx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
        .sl_rx_dcc_dll_lock_req          (sl_rx_dcc_dll_lock_req[TOTAL_CHNL_NUM-1:0]),
 
-       .o_test_c3adapt_scan_out         (o_test_c3adapt_scan_out/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
+       .o_test_c3adapt_scan_out         (),
        .o_test_c3adapttcb_jtag          (),                      // Templated
        .o_jtag_last_bs_chain_out        (o_jtag_tdo),     // Templated
        .o_red_idataselb_out_chain1      (red_idataselb_in_chain1), // Templated
@@ -224,6 +228,10 @@ module aib_top_v2s
        .o_txen_out_chain2               (o_txen_out_chain2),
        .o_directout_data_chain1_out     (o_directout_data_chain1_out),
        .o_directout_data_chain2_out     (o_directout_data_chain2_out),
+       .scan_clk                        (scan_clk),
+       .scan_enable                     (scan_enable),
+       .scan_in                         (scan_in),
+       .scan_out                        (scan_out),
    //  .o_aibdftdll2adjch               (),
        // Inouts
        .io_aib_ch0                      (s0_ch0_aib[95:0]),
@@ -276,7 +284,7 @@ module aib_top_v2s
        .i_test_clk_250m                 (1'b0),
        .i_test_clk_500m                 (1'b0),
        .i_test_clk_62m                  (1'b0),
-       .i_test_c3adapt_scan_in          (i_test_c3adapt_scan_in/*[TOTAL_CHNL_NUM-1:0][`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]*/),
+       .i_test_c3adapt_scan_in          ({24{17'h0}}),
        .i_test_c3adapt_tcb_static_common({58'h0, i_test_scan_en, i_test_scan_mode}),
        .i_jtag_rstb_in                  (i_jtag_rstb),  // Templated
        .i_jtag_rstb_en_in               (i_jtag_rstb_en), // Templated

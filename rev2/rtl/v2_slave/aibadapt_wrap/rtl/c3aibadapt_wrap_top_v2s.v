@@ -118,6 +118,10 @@ module c3aibadapt_wrap_top_v2s
 
    //======================================================================================
    // DFT signals
+   input                                                          scan_clk,
+   input                                                          scan_enable,
+   input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+   output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
    input                                                          i_scan_clk, 
    input                                                          i_test_clk_125m,
    input                                                          i_test_clk_1g, 
@@ -323,6 +327,7 @@ module c3aibadapt_wrap_top_v2s
      wire [23:0]        aib_jtag_rstb_out;      // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
      wire [23:0]        aib_jtag_weakpdn_out;   // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
      wire [23:0]        aib_jtag_weakpu_out;    // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
+     wire [22:0]        aib_osc_clk;            // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
      wire [22:0]        aib_por_vcchssi;        // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
      wire [22:0]        aib_por_vccl;           // From u_c3aibadapt_0 of c3aibadapt_wrap.v, ...
      wire [24:1]        aib_red_idataselb_chain1;// From u_c3aibadapt_1 of c3aibadapt_wrap.v, ...
@@ -539,7 +544,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[0]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[0]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch0[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[0]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[0]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[60:0]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[0]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[0]), // Templated
@@ -575,6 +580,10 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_bs_scanen_out(aib_jtag_bs_scanen_out[0]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[0]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[0]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[0][19:0]),
+                                    .scan_out           (scan_out[0][19:0]),
                                     // Inouts
                                     .io_aib0            (io_aib_ch0[0]), // Templated
                                     .io_aib1            (io_aib_ch0[1]), // Templated
@@ -718,7 +727,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[1]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[1]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch1[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[1]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[1]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[121:61]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[1]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[1]), // Templated
@@ -755,6 +764,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[1]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[1]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[1]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[1][19:0]),
+                                    .scan_out           (scan_out[1][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[1]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[1]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[1]), // Templated
@@ -878,7 +892,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[2]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[1]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[1]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[0]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[129:65]), // Templated
                                     .m_wr_clk     (m_wr_clk[1]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[1]), // Templated
@@ -930,7 +944,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[2]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[2]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch2[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[2]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[2]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[182:122]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[2]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[2]), // Templated
@@ -967,6 +981,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[2]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[2]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[2]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[2][19:0]),
+                                    .scan_out           (scan_out[2][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[2]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[2]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[2]), // Templated
@@ -1090,7 +1109,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[3]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[2]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[2]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[1]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[194:130]), // Templated
                                     .m_wr_clk     (m_wr_clk[2]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[2]), // Templated
@@ -1142,7 +1161,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[3]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[3]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch3[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[3]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[3]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[243:183]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[3]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[3]), // Templated
@@ -1179,6 +1198,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[3]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[3]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[3]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[3][19:0]),
+                                    .scan_out           (scan_out[3][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[3]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[3]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[3]), // Templated
@@ -1302,7 +1326,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[4]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[3]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[3]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[2]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[259:195]), // Templated
                                     .m_wr_clk     (m_wr_clk[3]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[3]), // Templated
@@ -1354,7 +1378,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[4]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[4]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch4[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[4]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[4]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[304:244]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[4]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[4]), // Templated
@@ -1391,6 +1415,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[4]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[4]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[4]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[4][19:0]),
+                                    .scan_out           (scan_out[4][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[4]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[4]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[4]), // Templated
@@ -1514,7 +1543,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[5]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[4]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[4]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[3]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[324:260]), // Templated
                                     .m_wr_clk     (m_wr_clk[4]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[4]), // Templated
@@ -1580,7 +1609,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[5]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[5]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch5[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[5]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[5]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[365:305]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[5]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[5]), // Templated
@@ -1617,6 +1646,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[5]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[5]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[5]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[5][19:0]),
+                                    .scan_out           (scan_out[5][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[5]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[5]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[5]), // Templated
@@ -1737,7 +1771,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_cfg_avmm_wdata   (aib_cfg_avmm_wdata_ch4[31:0]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[5]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[5]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[4]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[389:325]), // Templated
                                     .m_wr_clk     (m_wr_clk[5]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[5]), // Templated
@@ -1838,7 +1872,7 @@ module c3aibadapt_wrap_top_v2s
                                            .o_txen_chain1       (chnl_aib_txen_chain1[0]), // Templated
                                            .o_txen_chain2       (chnl_aib_txen_chain2[0]), // Templated
                                            .o_osc_clk           (), // Templated
-                                           //.o_osc_clk           (chnl_aib_osc_clk[0]), // Templated
+                                           .o_osc_clk           (chnl_aib_osc_clk[0]), // Templated
                                            .o_aibdftdll2adjch   (chnl_aib_dftdll2adjch_0[12:0]), // Templated
                                            .o_vccl              (chnl_aib_vccl[0]), // Templated
                                            .o_vcchssi           (chnl_aib_vcchssi[0]), // Templated
@@ -1870,7 +1904,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_red_shift_en_chain2(aib_red_shift_en_chain2[6]), // Templated
                                            .i_txen_chain1       (aib_txen_chain1[6]), // Templated
                                            .i_txen_chain2       (aib_txen_chain2[6]), // Templated
-                                           .i_osc_clk           (i_osc_clk), // Templated
+                                           .i_osc_clk           (aib_osc_clk[5]), // Templated
                                            .i_aibdftdll2adjch   (aib_dftdll2adjch_ch6[12:0]), // Templated
                                            .i_vccl              (aib_por_vccl[5]), // Templated
                                            .i_vcchssi           (aib_por_vcchssi[5]), // Templated
@@ -1892,7 +1926,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_jtag_weakpu_in    (aib_jtag_weakpu_out[5])); // Templated
     
     aib_slv u_aib_slv_6 (
-                                    .i_osc_clk          (i_osc_clk),
+                                    .i_osc_clk          (chnl_aib_osc_clk[0]),
                                     .i_cfg_avmm_clk     (chnl_aib_cfg_avmm_clk[0]), 
                                     .i_cfg_avmm_rst_n   (chnl_aib_cfg_avmm_rst_n[0]), 
                                     .i_cfg_avmm_addr    (chnl_aib_cfg_avmm_addr_0[16:0]),
@@ -1928,7 +1962,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[6]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[6]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch6[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[6]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[6]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[426:366]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[6]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[6]), // Templated
@@ -1965,6 +1999,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[6]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[6]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[6]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[6][19:0]),
+                                    .scan_out           (scan_out[6][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[6]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[6]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[6]), // Templated
@@ -2117,7 +2156,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[7]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[7]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch7[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[7]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[7]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[487:427]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[7]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[7]), // Templated
@@ -2154,6 +2193,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[7]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[7]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[7]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[7][19:0]),
+                                    .scan_out           (scan_out[7][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[7]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[7]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[7]), // Templated
@@ -2277,7 +2321,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[8]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[7]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[7]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[6]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[519:455]), // Templated
                                     .m_wr_clk     (m_wr_clk[7]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[7]), // Templated
@@ -2329,7 +2373,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[8]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[8]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch8[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[8]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[8]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[548:488]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[8]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[8]), // Templated
@@ -2366,6 +2410,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[8]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[8]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[8]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[8][19:0]),
+                                    .scan_out           (scan_out[8][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[8]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[8]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[8]), // Templated
@@ -2489,7 +2538,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[9]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[8]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[8]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[7]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[584:520]), // Templated
                                     .m_wr_clk     (m_wr_clk[8]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[8]), // Templated
@@ -2541,7 +2590,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_adpt_cfg_read    (aib_cfg_avmm_read[9]), // Templated
                                     .o_adpt_cfg_write   (aib_cfg_avmm_write[9]), // Templated
                                     .o_adpt_cfg_wdata   (aib_cfg_avmm_wdata_ch9[31:0]), // Templated
-                                    //.o_osc_clk          (aib_osc_clk[9]), // Templated
+                                    .o_osc_clk          (aib_osc_clk[9]), // Templated
                                     //.o_chnl_ssr        (o_chnl_ssr[609:549]), // Templated
                                     .m_fs_fwd_clk  (m_fs_fwd_clk[9]), // Templated
                                     .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[9]), // Templated
@@ -2578,6 +2627,11 @@ module c3aibadapt_wrap_top_v2s
                                     .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[9]), // Templated
                                     .o_por_aib_vcchssi  (aib_por_vcchssi[9]), // Templated
                                     .o_por_aib_vccl     (aib_por_vccl[9]), // Templated
+                                    .scan_clk           (scan_clk),
+                                    .scan_enable        (scan_enable),
+                                    .scan_in            (scan_in[9][19:0]),
+                                    .scan_out           (scan_out[9][19:0]),
+
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[9]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[9]), // Templated
 //                                    .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[9]), // Templated
@@ -2701,7 +2755,7 @@ module c3aibadapt_wrap_top_v2s
                                     .i_adpt_cfg_waitreq (aib_cfg_avmm_waitreq[10]), // Templated
                                     .m_ns_fwd_clk       (m_ns_fwd_clk[9]), // Templated
                                     .m_ns_fwd_div2_clk  (m_ns_fwd_div2_clk[9]), // Templated
-                                    .i_osc_clk          (i_osc_clk), // Templated
+                                    .i_osc_clk          (aib_osc_clk[8]), // Templated
                                     //.i_chnl_ssr         (i_chnl_ssr[649:585]), // Templated
                                     .m_wr_clk     (m_wr_clk[9]),
                                     .m_ns_rcv_clk       (m_ns_rcv_clk[9]), // Templated
@@ -2753,7 +2807,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[10]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[10]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch10[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[10]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[10]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[670:610]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[10]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[10]), // Templated
@@ -2790,6 +2844,11 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[10]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[10]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[10]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[10][19:0]),
+                                     .scan_out           (scan_out[10][19:0]),
+
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[10]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[10]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[10]), // Templated
@@ -2913,7 +2972,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[11]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[10]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[10]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[9]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[714:650]), // Templated
                                      .m_wr_clk     (m_wr_clk[10]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[10]), // Templated
@@ -2979,7 +3038,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[11]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[11]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch11[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[11]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[11]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[731:671]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[11]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[11]), // Templated
@@ -3016,6 +3075,11 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[11]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[11]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[11]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[11][19:0]),
+                                     .scan_out           (scan_out[11][19:0]),
+
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[11]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[11]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[11]), // Templated
@@ -3136,7 +3200,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_cfg_avmm_wdata  (aib_cfg_avmm_wdata_ch10[31:0]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[11]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[11]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[10]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[779:715]), // Templated
                                      .m_wr_clk     (m_wr_clk[11]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[11]), // Templated
@@ -3185,8 +3249,7 @@ module c3aibadapt_wrap_top_v2s
                                            .o_red_shift_en_chain2(chnl_aib_red_shift_en_chain2[1]), // Templated
                                            .o_txen_chain1       (chnl_aib_txen_chain1[1]), // Templated
                                            .o_txen_chain2       (chnl_aib_txen_chain2[1]), // Templated
-                                           .o_osc_clk           (), // Templated
-                                           //.o_osc_clk           (chnl_aib_osc_clk[1]), // Templated
+                                           .o_osc_clk           (chnl_aib_osc_clk[1]), // Templated
                                            .o_aibdftdll2adjch   (chnl_aib_dftdll2adjch_1[12:0]), // Templated
                                            .o_vccl              (chnl_aib_vccl[1]), // Templated
                                            .o_vcchssi           (chnl_aib_vcchssi[1]), // Templated
@@ -3218,7 +3281,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_red_shift_en_chain2(aib_red_shift_en_chain2[12]), // Templated
                                            .i_txen_chain1       (aib_txen_chain1[12]), // Templated
                                            .i_txen_chain2       (aib_txen_chain2[12]), // Templated
-                                           .i_osc_clk           (i_osc_clk), // Templated
+                                           .i_osc_clk           (aib_osc_clk[11]), // Templated
                                            .i_aibdftdll2adjch   (aib_dftdll2adjch_ch12[12:0]), // Templated
                                            .i_vccl              (aib_por_vccl[11]), // Templated
                                            .i_vcchssi           (aib_por_vcchssi[11]), // Templated
@@ -3240,7 +3303,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_jtag_weakpu_in    (aib_jtag_weakpu_out[11])); // Templated
                                   
     aib_slv u_aib_slv_12 (
-                                     .i_osc_clk          (i_osc_clk),
+                                     .i_osc_clk          (chnl_aib_osc_clk[1]),
                                      .i_cfg_avmm_clk     (chnl_aib_cfg_avmm_clk[1]), 
                                      .i_cfg_avmm_rst_n   (chnl_aib_cfg_avmm_rst_n[1]), 
                                      .i_cfg_avmm_addr    (chnl_aib_cfg_avmm_addr_1[16:0]),
@@ -3276,7 +3339,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[12]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[12]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch12[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[12]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[12]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[792:732]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[12]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[12]), // Templated
@@ -3313,6 +3376,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[12]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[12]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[12]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[12][19:0]),
+                                     .scan_out           (scan_out[12][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[12]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[12]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[12]), // Templated
@@ -3465,7 +3532,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[13]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[13]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch13[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[13]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[13]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[853:793]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[13]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[13]), // Templated
@@ -3502,6 +3569,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[13]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[13]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[13]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[13][19:0]),
+                                     .scan_out           (scan_out[13][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[13]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[13]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[13]), // Templated
@@ -3625,7 +3696,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[14]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[13]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[13]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[12]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[909:845]), // Templated
                                      .m_wr_clk     (m_wr_clk[13]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[13]), // Templated
@@ -3677,7 +3748,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[14]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[14]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch14[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[14]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[14]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[914:854]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[14]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[14]), // Templated
@@ -3714,6 +3785,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[14]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[14]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[14]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[14][19:0]),
+                                     .scan_out           (scan_out[14][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[14]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[14]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[14]), // Templated
@@ -3837,7 +3912,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[15]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[14]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[14]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[13]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[974:910]), // Templated
                                      .m_wr_clk     (m_wr_clk[14]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[14]), // Templated
@@ -3889,7 +3964,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[15]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[15]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch15[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[15]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[15]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[975:915]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[15]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[15]), // Templated
@@ -3926,6 +4001,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[15]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[15]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[15]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[15][19:0]),
+                                     .scan_out           (scan_out[15][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[15]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[15]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[15]), // Templated
@@ -4049,7 +4128,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[16]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[15]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[15]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[14]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1039:975]), // Templated
                                      .m_wr_clk     (m_wr_clk[15]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[15]), // Templated
@@ -4101,7 +4180,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[16]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[16]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch16[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[16]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[16]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1036:976]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[16]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[16]), // Templated
@@ -4138,6 +4217,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[16]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[16]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[16]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[16][19:0]),
+                                     .scan_out           (scan_out[16][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[16]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[16]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[16]), // Templated
@@ -4261,7 +4344,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[17]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[16]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[16]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[15]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1104:1040]), // Templated
                                      .m_wr_clk     (m_wr_clk[16]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[16]), // Templated
@@ -4327,7 +4410,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[17]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[17]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch17[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[17]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[17]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1097:1037]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[17]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[17]), // Templated
@@ -4364,6 +4447,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[17]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[17]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[17]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[17][19:0]),
+                                     .scan_out           (scan_out[17][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[17]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[17]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[17]), // Templated
@@ -4484,7 +4571,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_cfg_avmm_wdata  (aib_cfg_avmm_wdata_ch16[31:0]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[17]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[17]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[16]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1169:1105]), // Templated
                                      .m_wr_clk     (m_wr_clk[17]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[17]), // Templated
@@ -4533,8 +4620,7 @@ module c3aibadapt_wrap_top_v2s
                                            .o_red_shift_en_chain2(chnl_aib_red_shift_en_chain2[2]), // Templated
                                            .o_txen_chain1       (chnl_aib_txen_chain1[2]), // Templated
                                            .o_txen_chain2       (chnl_aib_txen_chain2[2]), // Templated
-                                           .o_osc_clk           (), // Templated
-                                           //.o_osc_clk           (chnl_aib_osc_clk[2]), // Templated
+                                           .o_osc_clk           (chnl_aib_osc_clk[2]), // Templated
                                            .o_aibdftdll2adjch   (chnl_aib_dftdll2adjch_2[12:0]), // Templated
                                            .o_vccl              (chnl_aib_vccl[2]), // Templated
                                            .o_vcchssi           (chnl_aib_vcchssi[2]), // Templated
@@ -4566,7 +4652,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_red_shift_en_chain2(aib_red_shift_en_chain2[18]), // Templated
                                            .i_txen_chain1       (aib_txen_chain1[18]), // Templated
                                            .i_txen_chain2       (aib_txen_chain2[18]), // Templated
-                                           .i_osc_clk           (i_osc_clk), // Templated
+                                           .i_osc_clk           (aib_osc_clk[17]), // Templated
                                            .i_aibdftdll2adjch   (aib_dftdll2adjch_ch18[12:0]), // Templated
                                            .i_vccl              (aib_por_vccl[17]), // Templated
                                            .i_vcchssi           (aib_por_vcchssi[17]), // Templated
@@ -4588,7 +4674,7 @@ module c3aibadapt_wrap_top_v2s
                                            .i_jtag_weakpu_in    (aib_jtag_weakpu_out[17])); // Templated
     
     aib_slv u_aib_slv_18 (
-                                     .i_osc_clk          (i_osc_clk),
+                                     .i_osc_clk          (chnl_aib_osc_clk[2]),
                                      .i_cfg_avmm_clk     (chnl_aib_cfg_avmm_clk[2]), 
                                      .i_cfg_avmm_rst_n   (chnl_aib_cfg_avmm_rst_n[2]), 
                                      .i_cfg_avmm_addr    (chnl_aib_cfg_avmm_addr_2[16:0]),
@@ -4624,7 +4710,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[18]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[18]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch18[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[18]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[18]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1158:1098]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[18]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[18]), // Templated
@@ -4661,6 +4747,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[18]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[18]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[18]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[18][19:0]),
+                                     .scan_out           (scan_out[18][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[18]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[18]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[18]), // Templated
@@ -4813,7 +4903,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[19]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[19]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch19[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[19]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[19]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1219:1159]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[19]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[19]), // Templated
@@ -4850,6 +4940,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[19]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[19]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[19]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[19][19:0]),
+                                     .scan_out           (scan_out[19][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[19]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[19]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[19]), // Templated
@@ -4973,7 +5067,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[20]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[19]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[19]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[18]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1299:1235]), // Templated
                                      .m_wr_clk     (m_wr_clk[19]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[19]), // Templated
@@ -5025,7 +5119,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[20]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[20]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch20[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[20]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[20]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1280:1220]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[20]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[20]), // Templated
@@ -5062,6 +5156,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[20]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[20]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[20]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[20][19:0]),
+                                     .scan_out           (scan_out[20][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[20]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[20]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[20]), // Templated
@@ -5185,7 +5283,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[21]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[20]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[20]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[19]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1364:1300]), // Templated
                                      .m_wr_clk     (m_wr_clk[20]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[20]), // Templated
@@ -5237,7 +5335,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[21]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[21]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch21[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[21]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[21]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1341:1281]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[21]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[21]), // Templated
@@ -5274,6 +5372,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[21]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[21]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[21]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[21][19:0]),
+                                     .scan_out           (scan_out[21][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[21]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[21]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[21]), // Templated
@@ -5397,7 +5499,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[22]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[21]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[21]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[20]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1429:1365]), // Templated
                                      .m_wr_clk     (m_wr_clk[21]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[21]), // Templated
@@ -5449,7 +5551,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (aib_cfg_avmm_read[22]), // Templated
                                      .o_adpt_cfg_write  (aib_cfg_avmm_write[22]), // Templated
                                      .o_adpt_cfg_wdata  (aib_cfg_avmm_wdata_ch22[31:0]), // Templated
-                                     //.o_osc_clk         (aib_osc_clk[22]), // Templated
+                                     .o_osc_clk         (aib_osc_clk[22]), // Templated
                                      //.o_chnl_ssr       (o_chnl_ssr[1402:1342]), // Templated
                                      .m_fs_fwd_clk (m_fs_fwd_clk[22]), // Templated
                                      .m_fs_fwd_div2_clk(m_fs_fwd_div2_clk[22]), // Templated
@@ -5486,6 +5588,10 @@ module c3aibadapt_wrap_top_v2s
                                      .o_jtag_last_bs_chain_out(aib_jtag_last_bs_chain_out[22]), // Templated
                                      .o_por_aib_vcchssi (aib_por_vcchssi[22]), // Templated
                                      .o_por_aib_vccl    (aib_por_vccl[22]), // Templated
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[22][19:0]),
+                                     .scan_out           (scan_out[22][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[22]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[22]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[22]), // Templated
@@ -5609,7 +5715,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[23]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[22]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[22]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[21]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1494:1430]), // Templated
                                      .m_wr_clk     (m_wr_clk[22]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[22]), // Templated
@@ -5658,9 +5764,13 @@ module c3aibadapt_wrap_top_v2s
                                      .o_adpt_cfg_read   (),
                                      .o_adpt_cfg_write  (),
                                      .o_adpt_cfg_wdata  (),
-                                     //.o_osc_clk         (),
+                                     .o_osc_clk         (),
                                      .o_por_aib_vcchssi (),
                                      .o_por_aib_vccl    (),                                     
+                                     .scan_clk           (scan_clk),
+                                     .scan_enable        (scan_enable),
+                                     .scan_in            (scan_in[23][19:0]),
+                                     .scan_out           (scan_out[23][19:0]),
                                      
                                      /*AUTOINST*/
                                      // Outputs
@@ -5824,7 +5934,7 @@ module c3aibadapt_wrap_top_v2s
                                      .i_adpt_cfg_waitreq(aib_cfg_avmm_waitreq[24]), // Templated
                                      .m_ns_fwd_clk      (m_ns_fwd_clk[23]), // Templated
                                      .m_ns_fwd_div2_clk (m_ns_fwd_div2_clk[23]), // Templated
-                                     .i_osc_clk         (i_osc_clk), // Templated
+                                     .i_osc_clk         (aib_osc_clk[22]), // Templated
                                      //.i_chnl_ssr        (i_chnl_ssr[1559:1495]), // Templated
                                      .m_wr_clk     (m_wr_clk[23]),
                                      .m_ns_rcv_clk      (m_ns_rcv_clk[23]), // Templated

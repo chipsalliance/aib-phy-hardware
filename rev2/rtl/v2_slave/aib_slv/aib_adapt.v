@@ -162,6 +162,10 @@ input [57:0]   ms_external_cntl_65_8,  //user defined bits 65:8 for master shift
   output  wire [7:0]                o_aib_dprio_ctrl_4,
 
   // DFT
+  input   wire [1:0]                i_dftcore2dll,
+  input   wire [12:0]               i_aibdftdll2core,
+  output  wire [1:0]                o_aibdftcore2dll,
+  output  wire [12:0]               o_dftdll2core,
 
   input   wire                      i_scan_mode_n,
 
@@ -183,8 +187,12 @@ input [57:0]   ms_external_cntl_65_8,  //user defined bits 65:8 for master shift
   input   wire                      i_rxchnl_test_clk,
   input   wire                      i_rxchnl_scan_clk,
 
+  input   wire                      i_scan_rst_n,
 
-  input   wire                      i_scan_rst_n);
+  input   wire                      scan_clk,
+  input   wire                      scan_enable,
+  input   wire [19:0]               scan_in,
+  output  wire [19:0]               scan_out);
 
 wire        is_master, is_slave;
 wire        dig_rstb;
@@ -233,6 +241,9 @@ wire             r_tx_wr_adj_en, r_tx_rd_adj_en, sr_sl_clk_out;
 wire             o_aib_bsr_scan_shift_clk, o_adpt_hard_rst_n, r_rx_aib_lpbk_en;
 wire             ms_tx_transfer_en_m, ms_rx_transfer_en_m;
 wire             sl_tx_transfer_en_s, sl_rx_transfer_en_s;
+
+assign o_aibdftcore2dll[1:0] = i_dftcore2dll[1:0];
+assign o_dftdll2core[12:0] = i_aibdftdll2core[12:0];
 
 assign ms_tx_transfer_en = dual_mode_select ? ms_tx_transfer_en_m : ms_data_to_core[78];
 assign ms_rx_transfer_en = dual_mode_select ? ms_rx_transfer_en_m : ms_data_to_core[75];
