@@ -52,6 +52,8 @@ module aib_top_wrapper_v2s
    input [TOTAL_CHNL_NUM-1:0]                                     m_ns_rcv_clk, //i_tx_pma_clk, sent over to the other chiplet to be used for the clock 
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_clk, //o_tx_transfer_clk, clock used for tx data transmission
    output [TOTAL_CHNL_NUM-1:0]                                    m_fs_fwd_div2_clk, // o_tx_transfer_div2_clk, half rate of tx data transmission clock
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_rcv_clk,
+   output [TOTAL_CHNL_NUM-1:0]                                    m_fs_rcv_div2_clk,
    output [TOTAL_CHNL_NUM*78-1:0]                                 data_out, //o_tx_pma_data, Directed bump tx data sync path
    input  [TOTAL_CHNL_NUM-1:0]                                    m_rd_clk, //Clock for phase compensation fifo
  //=================================================================================================
@@ -163,22 +165,27 @@ module aib_top_wrapper_v2s
 
    //
    input                                                          i_osc_clk,     // test clock from c4 bump, may tie low for User if not used
-   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator, User may use this clock to connect with i_test_clk_1g
+   output                                                         o_aibaux_osc_clk, // osc clk output to test C4 bump to characterize the oscillator 
     //======================================================================================
    // DFT signals
+   input                                                          scan_clk,
+   input                                                          scan_enable,
+   input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+   output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
+
    input                                                          i_scan_clk,     //ATPG Scan shifting clock from Test Pad.  
    input                                                          i_test_scan_en,
    input                                                          i_test_scan_mode,
-   input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
-   input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
-   input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
-   input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
+// input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
+// input                                                          i_test_clk_250m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_500m,//Divided down from i_test_clk_1g.
+// input                                                          i_test_clk_62m, //Divided down from i_test_clk_1g.
                                                                                   //The divided down clock is for different clock domain at
                                                                                   //speed test.
    //Channel ATPG signals from/to CODEC
-   input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
-   output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
+// input [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG]  i_test_c3adapt_scan_in, //scan in hook from Codec 
+// output [TOTAL_CHNL_NUM-1:0] [`AIBADAPTWRAPTCB_SCAN_CHAINS_RNG] o_test_c3adapt_scan_out, //scan out hook to Codec
   
    //Inputs from TCB (JTAG signals)
    input                                                          i_jtag_clkdr, // (from dbg_test_bscan block)Enable AIB IO boundary scan clock (clock gate control)
@@ -245,6 +252,8 @@ assign                          LO = 1'b0;
                     .m_ns_rcv_clk                (m_ns_rcv_clk), 
                     .m_fs_fwd_clk                (m_fs_fwd_clk), 
                     .m_fs_fwd_div2_clk           (m_fs_fwd_div2_clk),        // Not used 
+                    .m_fs_rcv_clk                (m_fs_rcv_clk),
+                    .m_fs_rcv_div2_clk           (m_fs_rcv_div2_clk),
                     .m_rd_clk                    (m_rd_clk),
                     .data_out                    (data_out),
 		    .ns_mac_rdy                  (ns_mac_rdy),
@@ -654,16 +663,21 @@ assign                          LO = 1'b0;
                     .io_aib_aux87                (iopad_power_on_reset_r),
                     .i_osc_clk                   (i_osc_clk),  
 //                  .o_aibaux_osc_clk            (o_aibaux_osc_clk),      
+                    .scan_clk                    (scan_clk),
+                    .scan_enable                 (scan_enable),
+                    .scan_in                     (scan_in),
+                    .scan_out                    (scan_out),
+
                     .i_scan_clk                  (i_scan_clk), 
                     .i_test_scan_en              (i_test_scan_en),
                     .i_test_scan_mode            (i_test_scan_mode),
-                    .i_test_clk_125m             (i_test_clk_125m), 
-                    .i_test_clk_1g               (i_test_clk_1g), 
-                    .i_test_clk_250m             (i_test_clk_250m), 
-                    .i_test_clk_500m             (i_test_clk_500m), 
-                    .i_test_clk_62m              (i_test_clk_62m), 	      
-                    .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
-	            .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
+               //   .i_test_clk_125m             (i_test_clk_125m), 
+               //   .i_test_clk_1g               (i_test_clk_1g), 
+               //   .i_test_clk_250m             (i_test_clk_250m), 
+               //   .i_test_clk_500m             (i_test_clk_500m), 
+               //   .i_test_clk_62m              (i_test_clk_62m), 	      
+               //   .i_test_c3adapt_scan_in      (i_test_c3adapt_scan_in),
+	       //   .o_test_c3adapt_scan_out     (o_test_c3adapt_scan_out),
                     .i_jtag_clkdr                (i_jtag_clkdr),   
                     .i_jtag_clksel               (i_jtag_clksel),   
                     .i_jtag_intest               (i_jtag_intest),   

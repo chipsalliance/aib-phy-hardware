@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2019 Intel Corporation. 
 
-module aib_iotop_wrp ( jtag_clksel_out, jtag_intest_out,
+module aib_iotop_wrp ( osc_clkout, osc_clk_adpt, jtag_clksel_out, jtag_intest_out,
      jtag_mode_out, jtag_rstb_en_out, jtag_rstb_out,
      jtag_tx_scanen_out, jtag_weakpdn_out, jtag_weakpu_out,
-     oaibdftdll2adjch, oatpg_bsr0_scan_out,
+     oaibdftdll2core, oaibdftdll2adjch, oatpg_bsr0_scan_out,
      oatpg_bsr1_scan_out, oatpg_bsr2_scan_out, oatpg_bsr3_scan_out,
      oatpg_scan_out0, oatpg_scan_out1, odirectout_data_out_chain1,
      ohssi_adapter_rx_pld_rst_n, odirectout_data_out_chain2, 
@@ -65,7 +65,7 @@ module aib_iotop_wrp ( jtag_clksel_out, jtag_intest_out,
      r_aib_dprio_ctrl_2, r_aib_dprio_ctrl_3, r_aib_dprio_ctrl_4 
      );
 
-output  jtag_clksel_out, jtag_intest_out, jtag_mode_out,
+output  osc_clkout, osc_clk_adpt, jtag_clksel_out, jtag_intest_out, jtag_mode_out,
      jtag_rstb_en_out, jtag_rstb_out, jtag_tx_scanen_out,
      jtag_weakpdn_out, jtag_weakpu_out, oatpg_bsr0_scan_out,
      oatpg_bsr1_scan_out, oatpg_bsr2_scan_out, oatpg_bsr3_scan_out,
@@ -111,6 +111,7 @@ input  iatpg_bsr0_scan_in, iatpg_bsr0_scan_shift_clk,
      por_aib_vcchssi, por_aib_vccl;
 
 output [12:0]  oaibdftdll2adjch;
+output [12:0]  oaibdftdll2core;
 output [39:0]  ohssi_tx_data_in;
 
 input [7:0]  r_aib_csr_ctrl_42;
@@ -221,7 +222,7 @@ assign  aib69 = NC_AIB69;
                                     .ohssi_ssr_load_in  (ohssi_ssr_load_in), 
                                     .ohssi_tx_dcd_cal_done(ohssi_tx_dcd_cal_done), 
                                     .ohssi_tx_dll_lock  (ohssi_tx_dll_lock), 
-                                    .ohssi_tx_sr_clk_in (),  //
+                                    .ohssi_tx_sr_clk_in (osc_clk_adpt), 
                                     .ohssi_tx_transfer_clk(ohssi_tx_transfer_clk), 
                                     .ohssirx_dcc_done   (ohssirx_dcc_done), 
                                     .ojtag_clkdr_out_chain(ojtag_clkdr_out_chain), 
@@ -231,13 +232,13 @@ assign  aib69 = NC_AIB69;
                                     .ored_idataselb_out_chain2(), 
                                     .ored_shift_en_out_chain1(), 
                                     .ored_shift_en_out_chain2(), 
-                                    .osc_clkout         (),     
+                                    .osc_clkout         (osc_clkout),     
                                     .otxen_out_chain1   (), 
                                     .otxen_out_chain2   (),  //
                                     .por_aib_vcchssi_out(por_aib_vcchssi_out), 
                                     .por_aib_vccl_out   (por_aib_vccl_out), 
                                     .oaibdftdll2adjch   (oaibdftdll2adjch), 
-                                    .oaibdftdll2core    (),  //
+                                    .oaibdftdll2core    (oaibdftdll2core),  
                                     .oshared_direct_async_out(), 
                                     .ohssi_avmm1_data_in(), 
                                     .ohssi_avmm2_data_in(),  //

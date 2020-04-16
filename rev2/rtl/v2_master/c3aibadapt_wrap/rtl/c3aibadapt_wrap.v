@@ -294,16 +294,16 @@ module c3aibadapt_wrap
  );
 
     //List the detail bit assignment corresponding to the AIB spec 1.1
+    assign ms_tx_transfer_en = ms_sideband[78];
+    assign ms_rx_transfer_en = ms_sideband[75];
+    assign sl_rx_transfer_en = sl_sideband[70];
+    assign sl_tx_transfer_en = sl_sideband[64];
     wire ms_osc_transfer_en = ms_sideband[80];
-    wire ms_tx_transfer_en = ms_sideband[78];
-    wire ms_rx_transfer_en = ms_sideband[75];
     wire ms_rx_dll_lock = ms_sideband[74];
     wire ms_tx_dcc_cal_done = ms_sideband[68];
     wire sl_osc_transfer_en = sl_sideband[72]; 
-    wire sl_rx_transfer_en = sl_sideband[70];
     wire sl_rx_dll_dcc_lock_req = sl_sideband[69];
     wire sl_rx_dll_lock = sl_sideband[69];
-    wire sl_tx_transfer_en = sl_sideband[64];
     wire sl_tx_dll_dcc_lock_req = sl_sideband[63];
     wire sl_tx_dcc_cal_done = sl_sideband[31];
  
