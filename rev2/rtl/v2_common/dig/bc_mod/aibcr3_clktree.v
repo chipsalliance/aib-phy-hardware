@@ -89,7 +89,8 @@ parameter SKEW_DELAY     = 60   //min:20ps; typ :60ps; max:100ps
     wire clk_main, clk_l, clk_r;
 
     // Process-specific to meet insertion delay
-    b15cbf000ah1n80x5 buf_main_0 (.clkout(clk_main), .clk(clkin));
+	// Insert your process specific buffer cell here
+    bufclkprocspec1x1 buf_main_0 (.clkout(clk_main), .clk(clkin));
 
     assign lstrbclk_l_0 = clk_main;
     assign lstrbclk_l_1 = clk_main;

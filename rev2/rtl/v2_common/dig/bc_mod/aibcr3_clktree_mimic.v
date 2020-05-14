@@ -62,36 +62,37 @@ parameter SKEW_DELAY     = 60   //min:20ps; typ :60ps; max:100ps
     wire [23:0] dummy_out;
 
     // Process-specific to meet insertion delay
-    b15cbf000ah1n80x5 buf_main_0 (.clkout(clk_main), .clk(clkin));
+	// Insert your process specific buffer cell here
+    bufclkprocspec1x1 buf_main_0 (.clkout(clk_main), .clk(clkin));
 
     // These mimic buffx1 clock tree loads
     // Input cap of each of these should match that of BUFFX1 istrbclk_in0 input (2.6729fF)
     // Process-specific for now
-    b15inv020ah1n16x5  dummy_0     (.a(lstrbclk_l_0), .o1(dummy_out[0]));
-    b15inv020ah1n16x5  dummy_1     (.a(lstrbclk_l_1), .o1(dummy_out[1]));
-    b15inv020ah1n16x5  dummy_2     (.a(lstrbclk_l_2), .o1(dummy_out[2]));
-    b15inv020ah1n16x5  dummy_3     (.a(lstrbclk_l_3), .o1(dummy_out[3]));
-    b15inv020ah1n16x5  dummy_4     (.a(lstrbclk_l_4), .o1(dummy_out[4]));
-    b15inv020ah1n16x5  dummy_5     (.a(lstrbclk_l_5), .o1(dummy_out[5]));
-    b15inv020ah1n16x5  dummy_6     (.a(lstrbclk_l_6), .o1(dummy_out[6]));
-    b15inv020ah1n16x5  dummy_7     (.a(lstrbclk_l_7), .o1(dummy_out[7]));
-    b15inv020ah1n16x5  dummy_8     (.a(lstrbclk_l_8), .o1(dummy_out[8]));
-    b15inv020ah1n16x5  dummy_9     (.a(lstrbclk_l_9), .o1(dummy_out[9]));
-    b15inv020ah1n16x5  dummy_10    (.a(lstrbclk_l_10), .o1(dummy_out[10]));
-    b15inv020ah1n16x5  dummy_11    (.a(lstrbclk_l_11), .o1(dummy_out[11]));
+    bufclkprocspec1x5  dummy_0     (.a(lstrbclk_l_0), .o1(dummy_out[0]));
+    bufclkprocspec1x5  dummy_1     (.a(lstrbclk_l_1), .o1(dummy_out[1]));
+    bufclkprocspec1x5  dummy_2     (.a(lstrbclk_l_2), .o1(dummy_out[2]));
+    bufclkprocspec1x5  dummy_3     (.a(lstrbclk_l_3), .o1(dummy_out[3]));
+    bufclkprocspec1x5  dummy_4     (.a(lstrbclk_l_4), .o1(dummy_out[4]));
+    bufclkprocspec1x5  dummy_5     (.a(lstrbclk_l_5), .o1(dummy_out[5]));
+    bufclkprocspec1x5  dummy_6     (.a(lstrbclk_l_6), .o1(dummy_out[6]));
+    bufclkprocspec1x5  dummy_7     (.a(lstrbclk_l_7), .o1(dummy_out[7]));
+    bufclkprocspec1x5  dummy_8     (.a(lstrbclk_l_8), .o1(dummy_out[8]));
+    bufclkprocspec1x5  dummy_9     (.a(lstrbclk_l_9), .o1(dummy_out[9]));
+    bufclkprocspec1x5  dummy_10    (.a(lstrbclk_l_10), .o1(dummy_out[10]));
+    bufclkprocspec1x5  dummy_11    (.a(lstrbclk_l_11), .o1(dummy_out[11]));
 
-    b15inv020ah1n16x5  dummy_12    (.a(clk_main), .o1(dummy_out[12]));
-    b15inv020ah1n16x5  dummy_13    (.a(clk_main), .o1(dummy_out[13]));
-    b15inv020ah1n16x5  dummy_14    (.a(clk_main), .o1(dummy_out[14]));
-    b15inv020ah1n16x5  dummy_15    (.a(clk_main), .o1(dummy_out[15]));
-    b15inv020ah1n16x5  dummy_16    (.a(clk_main), .o1(dummy_out[16]));
-    b15inv020ah1n16x5  dummy_17    (.a(clk_main), .o1(dummy_out[17]));
-    b15inv020ah1n16x5  dummy_18    (.a(clk_main), .o1(dummy_out[18]));
-    b15inv020ah1n16x5  dummy_19    (.a(clk_main), .o1(dummy_out[19]));
-    b15inv020ah1n16x5  dummy_20    (.a(clk_main), .o1(dummy_out[20]));
-    b15inv020ah1n16x5  dummy_21    (.a(clk_main), .o1(dummy_out[21]));
-    b15inv020ah1n16x5  dummy_22    (.a(clk_main), .o1(dummy_out[22]));
-    b15inv020ah1n16x5  dummy_23    (.a(clk_main), .o1(dummy_out[23]));
+    bufclkprocspec1x5  dummy_12    (.a(clk_main), .o1(dummy_out[12]));
+    bufclkprocspec1x5  dummy_13    (.a(clk_main), .o1(dummy_out[13]));
+    bufclkprocspec1x5  dummy_14    (.a(clk_main), .o1(dummy_out[14]));
+    bufclkprocspec1x5  dummy_15    (.a(clk_main), .o1(dummy_out[15]));
+    bufclkprocspec1x5  dummy_16    (.a(clk_main), .o1(dummy_out[16]));
+    bufclkprocspec1x5  dummy_17    (.a(clk_main), .o1(dummy_out[17]));
+    bufclkprocspec1x5  dummy_18    (.a(clk_main), .o1(dummy_out[18]));
+    bufclkprocspec1x5  dummy_19    (.a(clk_main), .o1(dummy_out[19]));
+    bufclkprocspec1x5  dummy_20    (.a(clk_main), .o1(dummy_out[20]));
+    bufclkprocspec1x5  dummy_21    (.a(clk_main), .o1(dummy_out[21]));
+    bufclkprocspec1x5  dummy_22    (.a(clk_main), .o1(dummy_out[22]));
+    bufclkprocspec1x5  dummy_23    (.a(clk_main), .o1(dummy_out[23]));
 
     assign lstrbclk_l_0 = clk_main;
     assign lstrbclk_l_1 = clk_main;
