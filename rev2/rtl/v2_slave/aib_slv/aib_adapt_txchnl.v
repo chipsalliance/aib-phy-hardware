@@ -6,6 +6,7 @@ module aib_adapt_txchnl(
    output wire        ns_fwd_clk,
    // Inputs
    input              atpg_mode, 
+   input              txswap_en, 
    input              adapt_rstn, 
    input              m_wr_clk,
    input              m_ns_fwd_clk,
@@ -34,6 +35,7 @@ wire          loopback2, loopback3_reg, loopback3_fifo;
 wire          txrd_rstn, tx_fifo_ready, txfifo_wrclk, txwr_rstn;
 wire          loopbk2_3reg;
 wire          reg_clk, regmd_rstn;
+wire [77:0]   data_in_sel; 
 
 assign loopback2 = (r_tx_adapter_lpbk_mode[1:0] == 2'b01);
 assign loopback3_reg = (r_tx_adapter_lpbk_mode[1:0] == 2'b10);
@@ -44,6 +46,8 @@ assign dout[39:0]= loopback2 ? din[39:0] :
                    (r_tx_fifo_mode == 2'b11) ? reg_dout[39:0] : fifo_dout[39:0];
 
 assign reg_din[39:0]= loopback3_reg ? rx_reg_dout[39:0] : data_in[39:0];
+
+assign data_in_sel[77:0] = ((r_tx_fifo_mode == 2'b01) & txswap_en) ? {data_in[38:0], data_in[77:39]} : data_in[77:0];
 
 c3lib_mux2_ctn reg_clk_mux (
     .ck_out      (reg_clk),
@@ -80,7 +84,7 @@ aib_adapttxdp_txdp tx_datapath (
   .tx_fifo_testbus1	                  (),
   .tx_fifo_testbus2 	                  (), 
   // Inputs
-  .data_in                                (data_in),
+  .data_in                                (data_in_sel[77:0]),
   .r_tx_double_write	                  (r_tx_double_write),
   .r_tx_fifo_empty	                  (5'b0),
   .r_tx_fifo_mode	                  (r_tx_fifo_mode[1:0]),

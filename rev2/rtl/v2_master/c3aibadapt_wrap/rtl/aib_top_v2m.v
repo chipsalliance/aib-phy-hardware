@@ -23,6 +23,8 @@
 // 3) instantiated optimized aibcr3aux_top_master
 // 11/24/2019 changed microbump name to fit board layout
 // 11/25/2019 Need to pull out m_rxfifo_align_done
+// 4/22/2020  io_aib_aux74, 75 shrink to device_detect.
+//            io_aib_aux85, 87 shrink to por
 //-----------------------------------------------------------------------------
 
 module aib_top_v2m
@@ -114,10 +116,12 @@ module aib_top_v2m
    inout [95:0]                                                   m3_ch5_aib,
 // inout [95:0]                                                   io_aib_aux,
    
-   inout                                                          io_aib_aux74,
-   inout                                                          io_aib_aux75,
-   inout                                                          io_aib_aux85,
-   inout                                                          io_aib_aux87,
+// inout                                                          io_aib_aux74,
+// inout                                                          io_aib_aux75,
+   inout                                                          device_detect,
+// inout                                                          io_aib_aux85,
+// inout                                                          io_aib_aux87,
+   inout                                                          por,
 // inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
 
    //======================================================================================
@@ -255,35 +259,28 @@ module aib_top_v2m
        .i_test_clk_62m                  (1'b0),
        .i_test_c3adapt_scan_in          ({24{17'h0}}),
        .i_test_c3adapt_tcb_static_common({58'h0, i_test_scan_en, i_test_scan_mode}),
-       .i_jtag_rstb_in                  (i_jtag_rstb),  // Templated
-       .i_jtag_rstb_en_in               (i_jtag_rstb_en), // Templated
-       .i_jtag_clkdr_in                 (i_jtag_clkdr), // Templated
-       .i_jtag_clksel_in                (i_jtag_clksel), // Templated
-       .i_jtag_intest_in                (i_jtag_intest), // Templated
-       .i_jtag_mode_in                  (i_jtag_mode),  // Templated
-       .i_jtag_weakpdn_in               (i_jtag_weakpdn), // Templated
-       .i_jtag_weakpu_in                (i_jtag_weakpu), // Templated
-       .i_jtag_bs_scanen_in             (i_jtag_tx_scanen), // Templated
-       .i_jtag_bs_chain_in              (i_jtag_tdi), // Templated
-       .i_por_aib_vcchssi               (aibaux_por_vcchssi),    // Templated
-       .i_por_aib_vccl                  (aibaux_por_vccl));       // Templated
+       .i_jtag_rstb_in                  (i_jtag_rstb),  
+       .i_jtag_rstb_en_in               (i_jtag_rstb_en), 
+       .i_jtag_clkdr_in                 (i_jtag_clkdr), 
+       .i_jtag_clksel_in                (i_jtag_clksel), 
+       .i_jtag_intest_in                (i_jtag_intest), 
+       .i_jtag_mode_in                  (i_jtag_mode),  
+       .i_jtag_weakpdn_in               (i_jtag_weakpdn), 
+       .i_jtag_weakpu_in                (i_jtag_weakpu), 
+       .i_jtag_bs_scanen_in             (i_jtag_tx_scanen), 
+       .i_jtag_bs_chain_in              (i_jtag_tdi),
+       .i_por_aib_vcchssi               (aibaux_por_vcchssi),    
+       .i_por_aib_vccl                  (aibaux_por_vccl));               
 
 assign m_power_on_reset = aibaux_por_vcchssi;
 aibcr3aux_top_master aibcr3aux_top_master (
        .o_por_vcchssi                   (aibaux_por_vcchssi),
        .o_por_vccl                      (aibaux_por_vccl),
-     
-//     .oosc_clkout_dup                 (o_aibaux_osc_clk), 
-       .oosc_clkout_dup                 (), 
-       .oosc_clkout                     (aibaux_osc_clk),
-     
-       .aib_aux74                       (io_aib_aux74),
-       .aib_aux75                       (io_aib_aux75),
-       .aib_aux85                       (io_aib_aux85),
-       .aib_aux87                       (io_aib_aux87),
-     
-       .c4por_vccl_ovrd                 (m_por_ovrd),
-       .iosc_bypclk                     (i_osc_clk)
+       .osc_clkout                      (aibaux_osc_clk),
+       .device_detect                   (device_detect),
+       .por                             (por),
+       .m_por_ovrd                      (m_por_ovrd),
+       .i_osc_clk                       (i_osc_clk)
      ); 
     
 endmodule // aib_top

@@ -232,6 +232,7 @@ wire [2:0]       r_rx_phcomp_rd_delay;
 wire [2:0]       r_tx_phcomp_rd_delay;
 wire [1:0]       r_tx_adapter_lpbk_mode;
 wire [1:0]       r_tx_fifo_rd_clk_sel;
+wire [2:0]       rxswap_en, txswap_en;
 
 wire             rxfifo_wrclk;
 wire             adpt_rstn_sync_fsfwdclk, adpt_rstn_sync_fsrcvclk;
@@ -331,12 +332,13 @@ assign sl_data_fr_core[72:0] = {sl_osc_transfer_en,1'b0,sl_rx_transfer_en_s,sl_r
 aib_adapt_rxchnl aib_adapt_rxchnl(
    // Outputs
      .data_out(data_out[77:0]),
-     .rx_fifo_data_out(rx_fifo_data_out[79:0]),
+     .rx_fifo_data_out_sel(rx_fifo_data_out[79:0]),
      .reg_dout(reg_dout[39:0]),
      .align_done(m_rxfifo_align_done),
      .rxfifo_wrclk(rxfifo_wrclk),
    // Inputs
      .atpg_mode(1'b0),
+     .rxswap_en(rxswap_en[0]),
      .adapt_rstn(adpt_rstn),
      .din(din[39:0]),   //from io buffer
      .dout(dout[39:0]),  //loopback data from tx to io buffer
@@ -359,6 +361,7 @@ aib_adapt_txchnl aib_adapt_txchnl(
      .ns_fwd_clk(ns_fwd_clk),
    // Inputs
      .atpg_mode(1'b0),
+     .txswap_en(txswap_en[0]),
      .adapt_rstn(adpt_rstn),
      .m_wr_clk(m_wr_clk),
      .m_ns_fwd_clk(m_ns_fwd_clk),
@@ -532,6 +535,7 @@ aib_adapt_avmm aib_adapt_avmm   (
        .r_aib_dprio_ctrl_4                          (o_aib_dprio_ctrl_4[7:0]),
        .r_rx_double_write                           (r_tx_double_write),
        .r_rx_fifo_mode                              (r_tx_fifo_mode[1:0]),
+       .rxswap_en                                   (rxswap_en[2:0]),
        .r_rx_phcomp_rd_delay                        (r_tx_phcomp_rd_delay[2:0]),
        .r_rx_wm_en                                  (r_tx_wm_en),
        .r_rx_wr_adj_en                              (r_tx_wr_adj_en),
@@ -540,6 +544,7 @@ aib_adapt_avmm aib_adapt_avmm   (
        .r_rx_aib_lpbk_en                            (r_rx_aib_lpbk_en),
        .r_tx_double_read                            (r_rx_double_read),
        .r_tx_fifo_mode                              (r_rx_fifo_mode[1:0]),
+       .txswap_en                                   (txswap_en[2:0]),
        .r_rx_lpbk                                   (r_rx_lpbk),
        .r_tx_fifo_rd_clk_sel                        (r_tx_fifo_rd_clk_sel),
        .r_tx_phcomp_rd_delay                        (r_rx_phcomp_rd_delay[2:0]),

@@ -230,8 +230,8 @@ module aib_slv
 
 
 // Go to next Channel AIB
-    input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
-    output wire [12:0]                          o_aibdftdll2adjch,  // DCC/DLL observability Go to next channel 
+//  input  [12:0]                               i_aibdftdll2adjch, // DCC/DLL observability from previous channel
+//  output wire [12:0]                          o_aibdftdll2adjch,  // DCC/DLL observability Go to next channel 
     input   wire                      scan_clk,
     input   wire                      scan_enable,
     input   wire [19:0]               scan_in,
@@ -652,7 +652,8 @@ module aib_slv
                                     .ojtag_rx_scan_out_chain(o_jtag_bs_chain_out), 
                                     .por_aib_vcchssi_out(o_por_aib_vcchssi), 
                                     .por_aib_vccl_out   (o_por_aib_vccl), 
-                                    .oaibdftdll2adjch   (o_aibdftdll2adjch), 
+                               //   .oaibdftdll2adjch   (o_aibdftdll2adjch), 
+                                    .oaibdftdll2adjch   (), 
                                     .oaibdftdll2core    (aibdftdll2core[12:0]), 
                                     .ohssi_tx_data_in   (din[39:0]), 
                                     // Inouts
@@ -796,7 +797,8 @@ module aib_slv
                                     .por_aib_vcchssi    (i_por_aib_vcchssi), 
                                     .por_aib_vccl       (i_por_aib_vccl), 
                                     .r_aib_csr_ctrl_42  (aib_csr_ctrl_42[7:0]), 
-                                    .iaibdftdll2adjch   (i_aibdftdll2adjch),
+                            //      .iaibdftdll2adjch   (i_aibdftdll2adjch),
+                                    .iaibdftdll2adjch   (13'h0),
                                     .r_aib_csr_ctrl_40  (aib_csr_ctrl_40[7:0]), 
                                     .r_aib_csr_ctrl_36  (aib_csr_ctrl_36[7:0]), 
                                     .r_aib_csr_ctrl_43  (aib_csr_ctrl_43[7:0]), 

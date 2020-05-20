@@ -5,8 +5,6 @@
 ${V2COM_ROOT}/c3lib/rtl/defines/c3lib_dv_defines.sv
 ${V2COM_ROOT}/c3dfx/rtl/defines/c3dfx.vh
 ${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_aux_dual.v
-${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_aliasd.v
-${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_io_buffer.sv
 ${V2COM_ROOT}/aibcr3aux_lib/rtl/aib_osc_clk.sv
 
 ${V2S_ROOT}/aib_slv/aib_rstnsync.v

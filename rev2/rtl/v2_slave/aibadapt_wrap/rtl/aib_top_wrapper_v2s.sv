@@ -139,16 +139,8 @@ module aib_top_wrapper_v2s
    inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_unused_aib91,
 
 
-// inout [95:0]                                                   io_aib_aux,
-// inout [7:0]                                                    iopad_unused_aux95_88,
-   inout                                                          iopad_power_on_reset_r, //iopad_aib_aux[87] power on redundency from slave
-// inout                                                          iopad_unused_aux86,
-   inout                                                          iopad_power_on_reset,   //iopad_aib_aux[85] power on from slave.
-// inout [8:0]                                                    iopad_unused_aux84_76,
-   inout                                                          iopad_device_detect_r,  //iopad_aib_aux[75] device detect redundency to slave
-   inout                                                          iopad_device_detect,    //iopad_aib_aux[74] device detect to slave
-// inout [73:0]                                                   iopad_unused_aux73_0,
-// inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
+   inout                                                          por,  //iopad_aib_aux[85] power on from slave.
+   inout                                                          device_detect,    //iopad_aib_aux[74] device detect to slave
 
    //======================================================================================
    // Interface with AIB control block
@@ -657,10 +649,8 @@ assign                          LO = 1'b0;
 
     
 
-                    .io_aib_aux74                (iopad_device_detect),
-                    .io_aib_aux75                (iopad_device_detect_r),
-                    .io_aib_aux85                (iopad_power_on_reset),
-                    .io_aib_aux87                (iopad_power_on_reset_r),
+                    .device_detect               (device_detect),
+                    .por                         (por),
                     .i_osc_clk                   (i_osc_clk),  
 //                  .o_aibaux_osc_clk            (o_aibaux_osc_clk),      
                     .scan_clk                    (scan_clk),

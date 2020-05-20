@@ -23,6 +23,7 @@
 // 3) instantiated optimized aibcr3aux_top_master
 // 11/24/2019 changed microbump name to fit board layout
 // 11/25/2019 Need to pull out m_rxfifo_align_done
+// 04/22/2020 Shrink aux pad 74/75 and 85/87 to device_detect and por.
 //-----------------------------------------------------------------------------
 
 module aib_top_v2s
@@ -118,10 +119,12 @@ module aib_top_v2s
    inout [95:0]                                                   s3_ch5_aib,
 // inout [95:0]                                                   io_aib_aux,
    
-   inout                                                          io_aib_aux74,  //Device select pin
-   inout                                                          io_aib_aux75,  //Device select passive resundancy
-   inout                                                          io_aib_aux85,  //Power on Reset pin
-   inout                                                          io_aib_aux87,  //Power on reset passive redundancy pin
+// inout                                                          io_aib_aux74,  //Device select pin
+// inout                                                          io_aib_aux75,  //Device select passive resundancy
+   inout                                                          device_detect,
+// inout                                                          io_aib_aux85,  //Power on Reset pin
+// inout                                                          io_aib_aux87,  //Power on reset passive redundancy pin
+   inout                                                          por,
 // inout                                                          io_aux_bg_ext_2k, //connect to external 2k resistor, C4 bump
 
    //======================================================================================
@@ -189,8 +192,8 @@ module aib_top_v2s
     c3aibadapt_wrap_top_v2s u_c3aibadapt_wrap_top
       (/*AUTOINST*/
        // Outputs
-       .i_por_aib_vcchssi(m_power_on_reset), 
-       .i_por_aib_vccl(m_power_on_reset),
+       .i_por_aib_vcchssi(aibaux_por_vcchssi), 
+       .i_por_aib_vccl(aibaux_por_vccl),
 
        .fs_mac_rdy                      (fs_mac_rdy[TOTAL_CHNL_NUM-1:0]),
        .o_cfg_avmm_rdatavld             (o_cfg_avmm_rdatavld),
@@ -272,7 +275,7 @@ module aib_top_v2s
        .m_ns_fwd_div2_clk               (m_ns_fwd_div2_clk[TOTAL_CHNL_NUM-1:0]),
        .m_wr_clk                        (m_wr_clk[TOTAL_CHNL_NUM-1:0]),
        .data_in                         (data_in[TOTAL_CHNL_NUM*78-1:0]),
-       .i_osc_clk                       (i_osc_clk),        // Templated
+       .i_osc_clk                       (aibaux_osc_clk),        // Templated
 //     .i_chnl_ssr                      ({24{65'h0}}),
 //     .i_rx_pma_data                   ({24{40'h0}}),
        .m_ns_rcv_clk                    (m_ns_rcv_clk[TOTAL_CHNL_NUM-1:0]),
@@ -301,16 +304,18 @@ module aib_top_v2s
 aib_aux_dual  aib_aux_dual
    (
     // AIB IO Bidirectional 
-    .iopad_dev_dect(io_aib_aux74),
-    .iopad_dev_dectrdcy(io_aib_aux75),
-    .iopad_dev_por(io_aib_aux85),
-    .iopad_dev_porrdcy(io_aib_aux87),
+    .device_detect(device_detect),
+    .por(por),
 
-//    .device_detect_ms(ms_device_detect),
+//  .device_detect_ms(ms_device_detect),
+    .i_osc_clk(i_osc_clk),
     .m_i_por_ovrd(1'b0),
     .m_i_device_detect_ovrd(m_device_detect_ovrd),
     .m_o_power_on_reset(),
-    .m_o_device_detect(m_o_device_detect),
+    .m_o_device_detect(m_device_detect),
+    .o_por_vcchssi(aibaux_por_vcchssi),
+    .o_por_vccl(aibaux_por_vccl),
+    .osc_clkout(aibaux_osc_clk),
     .m_i_power_on_reset(m_power_on_reset),
     .ms_nsl(dual_mode_select)
     );
