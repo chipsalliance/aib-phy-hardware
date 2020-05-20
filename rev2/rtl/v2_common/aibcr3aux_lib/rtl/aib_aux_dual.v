@@ -3,115 +3,133 @@
 // ==========================================================================
 //
 // Module name    : aib_aux_channel
-// Description    : Behavioral model of aux channel
+// Description    : aux channel
 // Revision       : 1.0
+// 04/22/2020       Current implementation is slave only
 // ============================================================================
 //
 //
 module aib_aux_dual 
    (
     // AIB IO Bidirectional 
-    inout wire          iopad_dev_dect,
-    inout wire          iopad_dev_dectrdcy,
-    inout wire          iopad_dev_por,
-    inout wire          iopad_dev_porrdcy,
+    inout wire          device_detect, //Shrink aux74/75 due to limit microbump/C4 bump pin
+    inout wire          por,           //Shrink aux85/87 pin due to limit microbump/C4 bump pin
 
+    input               i_osc_clk,
     input               m_i_por_ovrd, //Master onlhy input, it overrides the por signal. For slave, it is tied to "0"
     input               m_i_device_detect_ovrd, //Slave only input, it overrides the device_detect signal. For Master, it is tied to "0"
     output wire         m_o_power_on_reset,
     output wire         m_o_device_detect,
+    output wire         o_por_vcchssi,
+    output wire         o_por_vccl,
+    output wire         osc_clkout,
     input               m_i_power_on_reset,
     input               ms_nsl //"1", this is a Master. "0", this is a Slave
     );
 
 
-aib_aliasd aliaspor ( .sig_red(iopad_dev_porrdcy), .sig_in(iopad_dev_por));
-aib_aliasd aliasdet ( .sig_red(iopad_dev_dectrdcy), .sig_in(iopad_dev_dect));
+wire device_detect_async_data_in = 1'b0;
+wire device_detect_async_data_out;
+wire device_detect_txen   = 1'b0;          //itxen 0: TX buffer 1: RX buffer
+wire [2:0] device_detect_rxen   = 3'b000;  //000 is rx buffer receiving enable
+wire device_detect_tx_sync_enable = 1'b0;  //idataselb_in0 0: async 1: sync
+wire device_detect_ddren  = 1'b0;          //0: SDR  1: DDR pin
+wire device_detect_weakpu = 1'b0;          //1: weak pull up 0: disable weak pull up
+wire device_detect_weakpd = 1'b1;          //1: weak pull down 0: disable weak pull down
 
-   wire device_detect_oe;
-   wire device_detect_ie;
-   
-   wire por_oe;
-   wire por_ie;
+wire por_async_data_in = m_i_power_on_reset;  //Async data in
+wire por_async_data_out;                      //Async data out
+wire por_txen   = 1'b1;                       //itxen 0: TX buffer 1: RX buffer
+wire [2:0] por_rxen   = 3'b010;               //000 is rx buffer receiving disable
+wire por_tx_sync_enable = 1'b0;
+wire por_ddren  = 1'b0;
+wire por_weakpu = 1'b1;
+wire por_weakpd = 1'b0;
 
-   wire device_detect_sl_main;
+assign m_o_device_detect = device_detect_async_data_out | m_i_device_detect_ovrd;
 
-   wire m_o_power_on_reset_main;
-
-   assign m_o_device_detect = device_detect_sl_main | m_i_device_detect_ovrd;
-
-   assign m_o_power_on_reset = m_o_power_on_reset_main & m_i_por_ovrd;
-   
-   assign device_detect_oe = (ms_nsl == 1'b1) ? 1'b1 : 1'b0;
-   assign device_detect_ie = !device_detect_oe;
-
-   assign por_oe = (ms_nsl == 1'b1) ? 1'b0 : 1'b1;
-   assign por_ie = !por_oe;
-
-	   aib_io_buffer u_device_detect 
-	     (
-	      // Tx Path
-	      .ilaunch_clk (1'b0),
-	      .irstb       (1'b1),
-	      .idat0       (1'b1),
-	      .idat1       (1'b1),
-	      .async_data  (1'b1),
-	      .oclkn       (),
-
-	      // Rx Path
-	      .iclkn       (1'b0),
-	      .inclk       (1'b0),
-	      .inclk_dist  (1'b0),
-	      .oclk        (),
-	      .oclk_b      (),
-	      .odat0       (),
-	      .odat1       (),
-	      .odat_async  (device_detect_sl_main),
-
-	      // Bidirectional Data 
-	      .io_pad      (iopad_dev_dect),
-
-	      // I/O configuration
-	      .async       (1'b1),
-	      .ddren       (1'b0),
-	      .txen        (device_detect_oe),
-	      .rxen        (device_detect_ie),
-	      .weaken      (device_detect_ie),
-	      .weakdir     (1'b0)
-	      );
-
-	   aib_io_buffer u_device_por 
-	     (
-	      // Tx Path
-	      .ilaunch_clk (1'b0),
-	      .irstb       (1'b1),
-	      .idat0       (m_i_power_on_reset),
-	      .idat1       (m_i_power_on_reset),
-	      .async_data  (m_i_power_on_reset),
-	      .oclkn       (),
-
-	      // Rx Path
-	      .iclkn       (1'b0),
-	      .inclk       (1'b0),
-	      .inclk_dist  (1'b0),
-	      .oclk        (),
-	      .oclk_b      (),
-	      .odat0       (),
-	      .odat1       (),
-	      .odat_async  (m_o_power_on_reset_main),
-
-	      // Bidirectional Data 
-	      .io_pad      (iopad_dev_por),
-
-	      // I/O configuration
-	      .async       (1'b1),
-	      .ddren       (1'b0),
-	      .txen        (por_oe),
-	      .rxen        (por_ie),
-	      .weaken      (por_ie),
-	      .weakdir     (1'b1)
-	      );
+assign o_por_vcchssi = m_i_power_on_reset;
+assign o_por_vccl = 1'b0;
+assign osc_clkout = i_osc_clk;
 
 
+wire v_hi = 1'b1;
+wire v_lo = 1'b0;
+aibcr3_buffx1_top  xdevice_detect ( .idata1_in1_jtag_out(),
+     .idata0_in1_jtag_out(), .async_dat_in1_jtag_out(),
+     .prev_io_shift_en(v_lo), .jtag_clkdr_outn(),
+     .por_aib_vccl(v_lo), .por_aib_vcchssi(v_lo),
+     .anlg_rstb(v_hi), .pd_data_aib(), .oclk_out(),
+     .oclkb_out(), .odat0_out(), .odat1_out(),
+     .odat_async_out(), .pd_data_out(),
+     .async_dat_in0(device_detect_async_data_in), .async_dat_in1(v_lo),
+     .iclkin_dist_in0(v_lo), .iclkin_dist_in1(v_lo),
+     .idata0_in0(v_lo), .idata0_in1(v_lo),
+     .idata1_in0(v_lo), .idata1_in1(v_lo),
+     .idataselb_in0(device_detect_tx_sync_enable), .idataselb_in1(v_lo),
+     .iddren_in0(device_detect_ddren), .iddren_in1(v_lo),
+     .ilaunch_clk_in0(v_lo), .ilaunch_clk_in1(v_lo),
+     .ilpbk_dat_in0(v_lo), .ilpbk_dat_in1(v_lo),
+     .ilpbk_en_in0(v_lo), .ilpbk_en_in1(v_lo),
+     .indrv_in0({v_lo,v_lo}), .indrv_in1({v_lo,
+      v_lo}), .ipdrv_in0({v_lo,v_lo}),
+     .ipdrv_in1({v_lo, v_lo}),
+     .irxen_in0(device_detect_rxen),
+     .irxen_in1(device_detect_rxen),
+     .istrbclk_in0(v_lo), .istrbclk_in1(v_lo),
+     .itxen_in0(device_detect_txen), .itxen_in1(v_lo),
+     .oclk_in1(v_lo), .odat_async_aib(device_detect_async_data_out),
+     .oclkb_in1(v_lo), .jtag_clksel(v_lo),
+     .odat0_in1(v_lo), .odat1_in1(v_lo),
+     .odat_async_in1(v_lo), .shift_en(v_lo),
+     .pd_data_in1(v_lo), .dig_rstb(v_hi),
+     .jtag_clkdr_out(), .jtag_intest(v_lo),
+     .odat1_aib(), .jtag_rx_scan_out(), .odat0_aib(),
+     .oclk_aib(), .last_bs_out(), .oclkb_aib(),
+     .jtag_clkdr_in(v_lo), .jtag_rstb_en(v_lo),
+     .jtag_mode_in(v_lo), .jtag_rstb(v_lo),
+     .jtag_tx_scan_in(v_lo),
+     .jtag_tx_scanen_in(v_lo), .last_bs_in(v_lo),
+     .iopad(device_detect), .oclkn(), .iclkn(v_lo),
+     .test_weakpu(device_detect_weakpu), .test_weakpd(device_detect_weakpd));
+
+
+aibcr3_buffx1_top  xdn_por ( .idata1_in1_jtag_out(),
+     .idata0_in1_jtag_out(), .async_dat_in1_jtag_out(),
+     .prev_io_shift_en(v_lo), .jtag_clkdr_outn(),
+     .por_aib_vccl(v_lo), .por_aib_vcchssi(v_lo),
+     .jtag_clksel(v_lo), .jtag_intest(v_lo),
+     .jtag_rstb_en(v_lo), .anlg_rstb(v_hi),
+     .pd_data_aib(), .oclk_out(), .oclkb_out(),
+     .odat0_out(), .odat1_out(), .odat_async_out(),
+     .pd_data_out(), .async_dat_in0(por_async_data_in),
+     .async_dat_in1(v_lo), .iclkin_dist_in0(v_lo),
+     .iclkin_dist_in1(v_lo), .idata0_in0(v_lo),
+     .idata0_in1(v_lo), .idata1_in0(v_lo),
+     .idata1_in1(v_lo), .idataselb_in0(por_tx_sync_enable),
+     .idataselb_in1(v_lo), .iddren_in0(por_ddren),
+     .iddren_in1(v_lo), .ilaunch_clk_in0(v_lo),
+     .ilaunch_clk_in1(v_lo), .ilpbk_dat_in0(v_lo),
+     .ilpbk_dat_in1(v_lo), .ilpbk_en_in0(v_lo),
+     .ilpbk_en_in1(v_lo), .indrv_in0({v_lo,
+     v_lo}), .indrv_in1({v_lo, v_lo}),
+     .ipdrv_in0({v_lo, v_lo}),
+     .ipdrv_in1({v_lo, v_lo}),
+     .irxen_in0(por_rxen), .irxen_in1({v_lo,
+     v_lo, v_lo}), .istrbclk_in0(v_lo),
+     .istrbclk_in1(v_lo), .itxen_in0(por_txen),
+     .itxen_in1(v_lo), .oclk_in1(v_lo),
+     .odat_async_aib(por_async_data_out), .oclkb_in1(v_lo),
+     .odat0_in1(v_lo), .odat1_in1(v_lo),
+     .odat_async_in1(v_lo), .shift_en(v_lo),
+     .pd_data_in1(v_lo), .dig_rstb(v_hi),
+     .jtag_clkdr_out(), .odat1_aib(),
+     .jtag_rx_scan_out(), .odat0_aib(),
+     .oclk_aib(), .last_bs_out(), .oclkb_aib(),
+     .jtag_clkdr_in(v_lo), .jtag_mode_in(v_lo),
+     .jtag_rstb(v_lo), .jtag_tx_scan_in(v_lo),
+     .jtag_tx_scanen_in(v_lo), .last_bs_in(v_lo),
+     .iopad(por), .oclkn(), .iclkn(v_lo),
+     .test_weakpu(por_weakpu), .test_weakpd(por_weakpd));
 
 endmodule // aib_aux_dual

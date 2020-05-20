@@ -10,53 +10,48 @@
 // 4. Redundancy is not supported
 // 5. Removed Xosc block
 // 6. Removed level shifter for por to 1.8v since it is not used.
+// 04/22/2020
+// 1. Shrink aux74/75 and aux85/87 to device_detect and por. 
+// 2. modify level shifter and power sequence for BC.
 `timescale 1ps / 1ps 
 
-module aibcr3aux_top_master ( 
-     o_por_vcchssi, o_por_vccl, 
-     oosc_clkout_dup, oosc_clkout,
-     aib_aux74,
-     aib_aux75, 
-     aib_aux85, 
-     aib_aux87, 
-     c4por_vccl_ovrd, 
-     iosc_bypclk
-     ); //vcc_aibcraux, vcca_aibcraux,
-     //vccl_aibcraux, vccr_aibcraux, vssl_aibcraux );
-
-wire vcc_aibcraux, vcca_aibcraux, vccl_aibcraux, vccr_aibcraux, vssl_aibcraux;
-
-output  o_por_vcchssi, o_por_vccl, oosc_clkout_dup, oosc_clkout;
-
-inout  aib_aux74, aib_aux75, aib_aux85, aib_aux87;
-
-
-input  c4por_vccl_ovrd, iosc_bypclk; 
-
-assign vccl_aibcr3aux = 1'b1;
-assign vcc_aibcr3aux  = 1'b1;
-assign vssl_aibcr3aux =1'b0;
+module aibcr3aux_top_master  
+   (
+    output wire  o_por_vcchssi,
+    output wire  o_por_vccl,
+    output wire  osc_clkout,
+    inout  wire  device_detect, //Shrink aux74/75 due to limit microbump/C4 bump pin
+    inout  wire  por,   //Shrink aux85/87 pin due to limit microbump/C4 bump pin
+    input        m_por_ovrd, 
+    input        i_osc_clk 
+     ); 
+     
+`ifdef LEVEL_SHIFTER_TEST
+wire   vccl_aibcr3aux;
+wire   vcc_aibcr3aux;
+`else
+wire   vccl_aibcr3aux = 1'b1;
+wire   vcc_aibcr3aux  = 1'b1;
+`endif
+wire   vssl_aibcr3aux =1'b0;
 
 //Changed instantiation to match with the schematic, Jennifer 05/04/18
-wire dn_por_in;
+wire por_out;     //After IO buffer
+wire por_out_vcc; //After level shifter
 aibcr3aux_pasred_baldwin xpasred (
-     .iopad_crdet(aib_aux74),
+     .iopad_crdet(device_detect),
      .vssl_aibcr3aux(vssl_aibcr3aux),
      .vccl_aibcr3aux(vccl_aibcr3aux),
-     .iopad_dn_por(aib_aux85),
-     .dn_por(dn_por_in));
-//assign o_por_vccl = ((~c4por_vccl_ovrd) | dn_por_in); The open source rev1 implementation.
-assign  o_por_vccl = (c4por_vccl_ovrd & dn_por_in); //Note, same polarity with dn_por_in; 12/9/2019
-//aibcr_aliasd aliasd_xrtl1 ( .rb(aib_aux85), .ra(aib_aux87));       //Reviewed by Designer
-aibcr3_aliasd aliasd4 ( .rb(aib_aux75), .ra(aib_aux74));
-assign osc_clkout = iosc_bypclk;
-assign oosc_clkout_dup = osc_clkout;
-assign oosc_clkout = osc_clkout;
+     .iopad_dn_por(por),
+     .dn_por(por_dummy));
+assign o_por_vcc = (m_por_ovrd & por_out_vcc); 
+assign osc_clkout = i_osc_clk;
+assign o_por_vcchssi = o_por_vcc;
+assign o_por_vccl = 1'b0;
 
-
-aibcr3aux_lvshift  xlvlshf1 ( .vssl_aibcr3aux(vssl_aibcr3aux),
+aibcr3_lvshift_vcc xlvlshf1 (
      .vccl_aibcr3aux(vccl_aibcr3aux), .vcc_aibcr3aux(vcc_aibcr3aux),
-     .out(o_por_vcchssi), .in(o_por_vccl));
+     .out(por_out_vcc), .in(por));  //Output go to AND gate to produce o_por_vccl
 
 endmodule
 

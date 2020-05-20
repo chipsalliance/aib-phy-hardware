@@ -131,10 +131,8 @@ module aib_top_wrapper_v2m
    inout  [TOTAL_CHNL_NUM-1:0]                                    iopad_unused_aib91,
 
 
-   inout                                                          iopad_power_on_reset_r, //iopad_aib_aux[87] power on redundency from slave
-   inout                                                          iopad_power_on_reset,   //iopad_aib_aux[85] power on from slave.
-   inout                                                          iopad_device_detect_r,  //iopad_aib_aux[75] device detect redundency to slave
-   inout                                                          iopad_device_detect,    //iopad_aib_aux[74] device detect to slave
+   inout                                                          por,   //iopad_aib_aux[85] power on from slave.
+   inout                                                          device_detect,    //iopad_aib_aux[74] device detect to slave
 
    //======================================================================================
 
@@ -602,10 +600,8 @@ assign                          LO = 1'b0;
 
     
 
-                    .io_aib_aux74                (iopad_device_detect),
-                    .io_aib_aux75                (iopad_device_detect_r),
-                    .io_aib_aux85                (iopad_power_on_reset),
-                    .io_aib_aux87                (iopad_power_on_reset_r),
+                    .device_detect               (device_detect),
+                    .por                         (por),
 	            .m_por_ovrd                  (m_por_ovrd),      
                     .i_osc_clk                   (i_osc_clk),  
 //                  .o_aibaux_osc_clk            (o_aibaux_osc_clk),      

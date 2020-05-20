@@ -5,7 +5,7 @@ ${V2COM_ROOT}/c3aibadapt_wrap/rtl/c3routing_chnl_edge.sv
 ${V2COM_ROOT}/c3aibadapt_wrap/rtl/c3routing_chnl_aib.sv
 ${V2COM_ROOT}/aibcr3aux_lib/rtl/aibcr3aux_top_master.v
 ${V2COM_ROOT}/aibcr3aux_lib/rtl/aibcr3aux_pasred_baldwin.v
-${V2COM_ROOT}/aibcr3aux_lib/rtl/aibcr3aux_lvshift.v
+${V2COM_ROOT}/aibcr3aux_lib/rtl/aibcr3_lvshift_vcc.v
 ${V2M_ROOT}/c3aibadapt_wrap/rtl/c3aibadapt_wrap_top.v
 ${V2M_ROOT}/c3aibadapt_wrap/rtl/aib_top_v2m.v
 ${V2M_ROOT}/c3aibadapt_wrap/rtl/aib_top_wrapper_v2m.sv
