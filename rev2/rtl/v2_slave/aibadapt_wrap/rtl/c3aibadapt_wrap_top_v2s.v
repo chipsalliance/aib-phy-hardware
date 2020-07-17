@@ -1871,7 +1871,6 @@ module c3aibadapt_wrap_top_v2s
                                            .o_red_shift_en_chain2(chnl_aib_red_shift_en_chain2[0]), // Templated
                                            .o_txen_chain1       (chnl_aib_txen_chain1[0]), // Templated
                                            .o_txen_chain2       (chnl_aib_txen_chain2[0]), // Templated
-                                           .o_osc_clk           (), // Templated
                                            .o_osc_clk           (chnl_aib_osc_clk[0]), // Templated
                                            .o_aibdftdll2adjch   (chnl_aib_dftdll2adjch_0[12:0]), // Templated
                                            .o_vccl              (chnl_aib_vccl[0]), // Templated
