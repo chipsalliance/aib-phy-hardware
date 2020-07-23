@@ -147,8 +147,8 @@ module aib_top_v2s
    // DFT signals
    input                                                          scan_clk,
    input                                                          scan_enable,
-   input [TOTAL_CHNL_NUM-1:0][19:0]                               scan_in,
-   input [TOTAL_CHNL_NUM-1:0][19:0]                               scan_out,
+   input  [TOTAL_CHNL_NUM-1:0][19:0]                              scan_in,
+   output [TOTAL_CHNL_NUM-1:0][19:0]                              scan_out,
    input                                                          i_scan_clk,
 // input                                                          i_test_clk_1g,  //1GHz free running direct accessed ATPG at speed clock.
 // input                                                          i_test_clk_125m,//Divided down from i_test_clk_1g. 
