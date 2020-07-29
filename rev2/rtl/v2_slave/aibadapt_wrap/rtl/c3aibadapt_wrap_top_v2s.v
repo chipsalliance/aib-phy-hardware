@@ -120,7 +120,32 @@ module c3aibadapt_wrap_top_v2s
    // DFT signals
    input                                                          scan_clk,
    input                                                          scan_enable,
-   input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+// input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+// Splitting scan_in into one dimensional array because of LVS limitation.
+   input  [19:0]                                                  scan_in_ch0,
+   input  [19:0]                                                  scan_in_ch1,
+   input  [19:0]                                                  scan_in_ch2,
+   input  [19:0]                                                  scan_in_ch3,
+   input  [19:0]                                                  scan_in_ch4,
+   input  [19:0]                                                  scan_in_ch5,
+   input  [19:0]                                                  scan_in_ch6,
+   input  [19:0]                                                  scan_in_ch7,
+   input  [19:0]                                                  scan_in_ch8,
+   input  [19:0]                                                  scan_in_ch9,
+   input  [19:0]                                                  scan_in_ch10,
+   input  [19:0]                                                  scan_in_ch11,
+   input  [19:0]                                                  scan_in_ch12,
+   input  [19:0]                                                  scan_in_ch13,
+   input  [19:0]                                                  scan_in_ch14,
+   input  [19:0]                                                  scan_in_ch15,
+   input  [19:0]                                                  scan_in_ch16,
+   input  [19:0]                                                  scan_in_ch17,
+   input  [19:0]                                                  scan_in_ch18,
+   input  [19:0]                                                  scan_in_ch19,
+   input  [19:0]                                                  scan_in_ch20,
+   input  [19:0]                                                  scan_in_ch21,
+   input  [19:0]                                                  scan_in_ch22,
+   input  [19:0]                                                  scan_in_ch23,
    output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
    input                                                          i_scan_clk, 
    input                                                          i_test_clk_125m,
@@ -582,7 +607,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[0]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[0][19:0]),
+                                    .scan_in            (scan_in_ch0[19:0]),
                                     .scan_out           (scan_out[0][19:0]),
                                     // Inouts
                                     .io_aib0            (io_aib_ch0[0]), // Templated
@@ -766,7 +791,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[1]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[1][19:0]),
+                                    .scan_in            (scan_in_ch1[19:0]),
                                     .scan_out           (scan_out[1][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[1]), // Templated
@@ -983,7 +1008,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[2]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[2][19:0]),
+                                    .scan_in            (scan_in_ch2[19:0]),
                                     .scan_out           (scan_out[2][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[2]), // Templated
@@ -1200,7 +1225,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[3]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[3][19:0]),
+                                    .scan_in            (scan_in_ch3[19:0]),
                                     .scan_out           (scan_out[3][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[3]), // Templated
@@ -1417,7 +1442,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[4]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[4][19:0]),
+                                    .scan_in            (scan_in_ch4[19:0]),
                                     .scan_out           (scan_out[4][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[4]), // Templated
@@ -1648,7 +1673,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[5]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[5][19:0]),
+                                    .scan_in            (scan_in_ch5[19:0]),
                                     .scan_out           (scan_out[5][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[5]), // Templated
@@ -2000,7 +2025,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[6]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[6][19:0]),
+                                    .scan_in            (scan_in_ch6[19:0]),
                                     .scan_out           (scan_out[6][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[6]), // Templated
@@ -2194,7 +2219,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[7]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[7][19:0]),
+                                    .scan_in            (scan_in_ch7[19:0]),
                                     .scan_out           (scan_out[7][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[7]), // Templated
@@ -2411,7 +2436,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[8]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[8][19:0]),
+                                    .scan_in            (scan_in_ch8[19:0]),
                                     .scan_out           (scan_out[8][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[8]), // Templated
@@ -2628,7 +2653,7 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[9]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[9][19:0]),
+                                    .scan_in            (scan_in_ch9[19:0]),
                                     .scan_out           (scan_out[9][19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[9]), // Templated
@@ -2845,7 +2870,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[10]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[10][19:0]),
+                                     .scan_in            (scan_in_ch10[19:0]),
                                      .scan_out           (scan_out[10][19:0]),
 
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[10]), // Templated
@@ -3076,7 +3101,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[11]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[11][19:0]),
+                                     .scan_in            (scan_in_ch11[19:0]),
                                      .scan_out           (scan_out[11][19:0]),
 
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[11]), // Templated
@@ -3377,7 +3402,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[12]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[12][19:0]),
+                                     .scan_in            (scan_in_ch12[19:0]),
                                      .scan_out           (scan_out[12][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[12]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[12]), // Templated
@@ -3570,7 +3595,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[13]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[13][19:0]),
+                                     .scan_in            (scan_in_ch13[19:0]),
                                      .scan_out           (scan_out[13][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[13]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[13]), // Templated
@@ -3786,7 +3811,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[14]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[14][19:0]),
+                                     .scan_in            (scan_in_ch14[19:0]),
                                      .scan_out           (scan_out[14][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[14]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[14]), // Templated
@@ -4002,7 +4027,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[15]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[15][19:0]),
+                                     .scan_in            (scan_in_ch15[19:0]),
                                      .scan_out           (scan_out[15][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[15]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[15]), // Templated
@@ -4218,7 +4243,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[16]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[16][19:0]),
+                                     .scan_in            (scan_in_ch16[19:0]),
                                      .scan_out           (scan_out[16][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[16]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[16]), // Templated
@@ -4448,7 +4473,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[17]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[17][19:0]),
+                                     .scan_in            (scan_in_ch17[19:0]),
                                      .scan_out           (scan_out[17][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[17]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[17]), // Templated
@@ -4748,7 +4773,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[18]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[18][19:0]),
+                                     .scan_in            (scan_in_ch18[19:0]),
                                      .scan_out           (scan_out[18][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[18]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[18]), // Templated
@@ -4941,7 +4966,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[19]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[19][19:0]),
+                                     .scan_in            (scan_in_ch19[19:0]),
                                      .scan_out           (scan_out[19][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[19]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[19]), // Templated
@@ -5157,7 +5182,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[20]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[20][19:0]),
+                                     .scan_in            (scan_in_ch20[19:0]),
                                      .scan_out           (scan_out[20][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[20]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[20]), // Templated
@@ -5373,7 +5398,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[21]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[21][19:0]),
+                                     .scan_in            (scan_in_ch21[19:0]),
                                      .scan_out           (scan_out[21][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[21]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[21]), // Templated
@@ -5589,7 +5614,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[22]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[22][19:0]),
+                                     .scan_in            (scan_in_ch22[19:0]),
                                      .scan_out           (scan_out[22][19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[22]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[22]), // Templated
@@ -5768,7 +5793,7 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (),                                     
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[23][19:0]),
+                                     .scan_in            (scan_in_ch23[19:0]),
                                      .scan_out           (scan_out[23][19:0]),
                                      
                                      /*AUTOINST*/
