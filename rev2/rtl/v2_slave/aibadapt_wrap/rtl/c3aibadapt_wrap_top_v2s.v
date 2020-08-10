@@ -120,8 +120,57 @@ module c3aibadapt_wrap_top_v2s
    // DFT signals
    input                                                          scan_clk,
    input                                                          scan_enable,
-   input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
-   output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
+// input [TOTAL_CHNL_NUM-1:0] [19:0]                              scan_in,
+// Splitting scan_in into one dimensional array because of LVS limitation.
+   input  [19:0]                                                  scan_in_ch0,
+   input  [19:0]                                                  scan_in_ch1,
+   input  [19:0]                                                  scan_in_ch2,
+   input  [19:0]                                                  scan_in_ch3,
+   input  [19:0]                                                  scan_in_ch4,
+   input  [19:0]                                                  scan_in_ch5,
+   input  [19:0]                                                  scan_in_ch6,
+   input  [19:0]                                                  scan_in_ch7,
+   input  [19:0]                                                  scan_in_ch8,
+   input  [19:0]                                                  scan_in_ch9,
+   input  [19:0]                                                  scan_in_ch10,
+   input  [19:0]                                                  scan_in_ch11,
+   input  [19:0]                                                  scan_in_ch12,
+   input  [19:0]                                                  scan_in_ch13,
+   input  [19:0]                                                  scan_in_ch14,
+   input  [19:0]                                                  scan_in_ch15,
+   input  [19:0]                                                  scan_in_ch16,
+   input  [19:0]                                                  scan_in_ch17,
+   input  [19:0]                                                  scan_in_ch18,
+   input  [19:0]                                                  scan_in_ch19,
+   input  [19:0]                                                  scan_in_ch20,
+   input  [19:0]                                                  scan_in_ch21,
+   input  [19:0]                                                  scan_in_ch22,
+   input  [19:0]                                                  scan_in_ch23,
+// output [TOTAL_CHNL_NUM-1:0] [19:0]                             scan_out,
+   output [19:0]                                                  scan_out_ch0,
+   output [19:0]                                                  scan_out_ch1,
+   output [19:0]                                                  scan_out_ch2,
+   output [19:0]                                                  scan_out_ch3,
+   output [19:0]                                                  scan_out_ch4,
+   output [19:0]                                                  scan_out_ch5,
+   output [19:0]                                                  scan_out_ch6,
+   output [19:0]                                                  scan_out_ch7,
+   output [19:0]                                                  scan_out_ch8,
+   output [19:0]                                                  scan_out_ch9,
+   output [19:0]                                                  scan_out_ch10,
+   output [19:0]                                                  scan_out_ch11,
+   output [19:0]                                                  scan_out_ch12,
+   output [19:0]                                                  scan_out_ch13,
+   output [19:0]                                                  scan_out_ch14,
+   output [19:0]                                                  scan_out_ch15,
+   output [19:0]                                                  scan_out_ch16,
+   output [19:0]                                                  scan_out_ch17,
+   output [19:0]                                                  scan_out_ch18,
+   output [19:0]                                                  scan_out_ch19,
+   output [19:0]                                                  scan_out_ch20,
+   output [19:0]                                                  scan_out_ch21,
+   output [19:0]                                                  scan_out_ch22,
+   output [19:0]                                                  scan_out_ch23,
    input                                                          i_scan_clk, 
    input                                                          i_test_clk_125m,
    input                                                          i_test_clk_1g, 
@@ -582,8 +631,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[0]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[0][19:0]),
-                                    .scan_out           (scan_out[0][19:0]),
+                                    .scan_in            (scan_in_ch0[19:0]),
+                                    .scan_out           (scan_out_ch0[19:0]),
                                     // Inouts
                                     .io_aib0            (io_aib_ch0[0]), // Templated
                                     .io_aib1            (io_aib_ch0[1]), // Templated
@@ -627,8 +676,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch0[44]), // Templated
                                     .io_aib45           (io_aib_ch0[45]), // Templated
                                     .io_aib46           (io_aib_ch0[46]), // Templated
-                                    .io_aib47           (io_aib_ch0[47]), // Templated
-                                    .io_aib48           (io_aib_ch0[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch0[49]), // Templated
                                     .io_aib5            (io_aib_ch0[5]), // Templated
                                     .io_aib50           (io_aib_ch0[50]), // Templated
@@ -636,7 +685,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch0[52]), // Templated
                                     .io_aib53           (io_aib_ch0[53]), // Templated
                                     .io_aib54           (io_aib_ch0[54]), // Templated
-                                    .io_aib55           (io_aib_ch0[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch0[56]), // Templated
                                     .io_aib57           (io_aib_ch0[57]), // Templated
                                     .io_aib58           (io_aib_ch0[58]), // Templated
@@ -644,14 +693,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch0[6]), // Templated
                                     .io_aib60           (io_aib_ch0[60]), // Templated
                                     .io_aib61           (io_aib_ch0[61]), // Templated
-                                    .io_aib62           (io_aib_ch0[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch0[63]), // Templated
                                     .io_aib64           (io_aib_ch0[64]), // Templated
                                     .io_aib65           (io_aib_ch0[65]), // Templated
                                     .io_aib66           (io_aib_ch0[66]), // Templated
                                     .io_aib67           (io_aib_ch0[67]), // Templated
-                                    .io_aib68           (io_aib_ch0[68]), // Templated
-                                    .io_aib69           (io_aib_ch0[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch0[7]), // Templated
                                     .io_aib70           (io_aib_ch0[70]), // Templated
                                     .io_aib71           (io_aib_ch0[71]), // Templated
@@ -766,8 +815,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[1]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[1][19:0]),
-                                    .scan_out           (scan_out[1][19:0]),
+                                    .scan_in            (scan_in_ch1[19:0]),
+                                    .scan_out           (scan_out_ch1[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[1]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[1]), // Templated
@@ -821,8 +870,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch1[44]), // Templated
                                     .io_aib45           (io_aib_ch1[45]), // Templated
                                     .io_aib46           (io_aib_ch1[46]), // Templated
-                                    .io_aib47           (io_aib_ch1[47]), // Templated
-                                    .io_aib48           (io_aib_ch1[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch1[49]), // Templated
                                     .io_aib5            (io_aib_ch1[5]), // Templated
                                     .io_aib50           (io_aib_ch1[50]), // Templated
@@ -830,7 +879,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch1[52]), // Templated
                                     .io_aib53           (io_aib_ch1[53]), // Templated
                                     .io_aib54           (io_aib_ch1[54]), // Templated
-                                    .io_aib55           (io_aib_ch1[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch1[56]), // Templated
                                     .io_aib57           (io_aib_ch1[57]), // Templated
                                     .io_aib58           (io_aib_ch1[58]), // Templated
@@ -838,14 +887,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch1[6]), // Templated
                                     .io_aib60           (io_aib_ch1[60]), // Templated
                                     .io_aib61           (io_aib_ch1[61]), // Templated
-                                    .io_aib62           (io_aib_ch1[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch1[63]), // Templated
                                     .io_aib64           (io_aib_ch1[64]), // Templated
                                     .io_aib65           (io_aib_ch1[65]), // Templated
                                     .io_aib66           (io_aib_ch1[66]), // Templated
                                     .io_aib67           (io_aib_ch1[67]), // Templated
-                                    .io_aib68           (io_aib_ch1[68]), // Templated
-                                    .io_aib69           (io_aib_ch1[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch1[7]), // Templated
                                     .io_aib70           (io_aib_ch1[70]), // Templated
                                     .io_aib71           (io_aib_ch1[71]), // Templated
@@ -983,8 +1032,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[2]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[2][19:0]),
-                                    .scan_out           (scan_out[2][19:0]),
+                                    .scan_in            (scan_in_ch2[19:0]),
+                                    .scan_out           (scan_out_ch2[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[2]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[2]), // Templated
@@ -1038,8 +1087,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch2[44]), // Templated
                                     .io_aib45           (io_aib_ch2[45]), // Templated
                                     .io_aib46           (io_aib_ch2[46]), // Templated
-                                    .io_aib47           (io_aib_ch2[47]), // Templated
-                                    .io_aib48           (io_aib_ch2[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch2[49]), // Templated
                                     .io_aib5            (io_aib_ch2[5]), // Templated
                                     .io_aib50           (io_aib_ch2[50]), // Templated
@@ -1047,7 +1096,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch2[52]), // Templated
                                     .io_aib53           (io_aib_ch2[53]), // Templated
                                     .io_aib54           (io_aib_ch2[54]), // Templated
-                                    .io_aib55           (io_aib_ch2[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch2[56]), // Templated
                                     .io_aib57           (io_aib_ch2[57]), // Templated
                                     .io_aib58           (io_aib_ch2[58]), // Templated
@@ -1055,14 +1104,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch2[6]), // Templated
                                     .io_aib60           (io_aib_ch2[60]), // Templated
                                     .io_aib61           (io_aib_ch2[61]), // Templated
-                                    .io_aib62           (io_aib_ch2[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch2[63]), // Templated
                                     .io_aib64           (io_aib_ch2[64]), // Templated
                                     .io_aib65           (io_aib_ch2[65]), // Templated
                                     .io_aib66           (io_aib_ch2[66]), // Templated
                                     .io_aib67           (io_aib_ch2[67]), // Templated
-                                    .io_aib68           (io_aib_ch2[68]), // Templated
-                                    .io_aib69           (io_aib_ch2[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch2[7]), // Templated
                                     .io_aib70           (io_aib_ch2[70]), // Templated
                                     .io_aib71           (io_aib_ch2[71]), // Templated
@@ -1200,8 +1249,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[3]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[3][19:0]),
-                                    .scan_out           (scan_out[3][19:0]),
+                                    .scan_in            (scan_in_ch3[19:0]),
+                                    .scan_out           (scan_out_ch3[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[3]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[3]), // Templated
@@ -1255,8 +1304,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch3[44]), // Templated
                                     .io_aib45           (io_aib_ch3[45]), // Templated
                                     .io_aib46           (io_aib_ch3[46]), // Templated
-                                    .io_aib47           (io_aib_ch3[47]), // Templated
-                                    .io_aib48           (io_aib_ch3[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch3[49]), // Templated
                                     .io_aib5            (io_aib_ch3[5]), // Templated
                                     .io_aib50           (io_aib_ch3[50]), // Templated
@@ -1264,7 +1313,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch3[52]), // Templated
                                     .io_aib53           (io_aib_ch3[53]), // Templated
                                     .io_aib54           (io_aib_ch3[54]), // Templated
-                                    .io_aib55           (io_aib_ch3[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch3[56]), // Templated
                                     .io_aib57           (io_aib_ch3[57]), // Templated
                                     .io_aib58           (io_aib_ch3[58]), // Templated
@@ -1272,14 +1321,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch3[6]), // Templated
                                     .io_aib60           (io_aib_ch3[60]), // Templated
                                     .io_aib61           (io_aib_ch3[61]), // Templated
-                                    .io_aib62           (io_aib_ch3[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch3[63]), // Templated
                                     .io_aib64           (io_aib_ch3[64]), // Templated
                                     .io_aib65           (io_aib_ch3[65]), // Templated
                                     .io_aib66           (io_aib_ch3[66]), // Templated
                                     .io_aib67           (io_aib_ch3[67]), // Templated
-                                    .io_aib68           (io_aib_ch3[68]), // Templated
-                                    .io_aib69           (io_aib_ch3[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch3[7]), // Templated
                                     .io_aib70           (io_aib_ch3[70]), // Templated
                                     .io_aib71           (io_aib_ch3[71]), // Templated
@@ -1417,8 +1466,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[4]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[4][19:0]),
-                                    .scan_out           (scan_out[4][19:0]),
+                                    .scan_in            (scan_in_ch4[19:0]),
+                                    .scan_out           (scan_out_ch4[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[4]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[4]), // Templated
@@ -1472,8 +1521,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch4[44]), // Templated
                                     .io_aib45           (io_aib_ch4[45]), // Templated
                                     .io_aib46           (io_aib_ch4[46]), // Templated
-                                    .io_aib47           (io_aib_ch4[47]), // Templated
-                                    .io_aib48           (io_aib_ch4[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch4[49]), // Templated
                                     .io_aib5            (io_aib_ch4[5]), // Templated
                                     .io_aib50           (io_aib_ch4[50]), // Templated
@@ -1481,7 +1530,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch4[52]), // Templated
                                     .io_aib53           (io_aib_ch4[53]), // Templated
                                     .io_aib54           (io_aib_ch4[54]), // Templated
-                                    .io_aib55           (io_aib_ch4[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch4[56]), // Templated
                                     .io_aib57           (io_aib_ch4[57]), // Templated
                                     .io_aib58           (io_aib_ch4[58]), // Templated
@@ -1489,14 +1538,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch4[6]), // Templated
                                     .io_aib60           (io_aib_ch4[60]), // Templated
                                     .io_aib61           (io_aib_ch4[61]), // Templated
-                                    .io_aib62           (io_aib_ch4[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch4[63]), // Templated
                                     .io_aib64           (io_aib_ch4[64]), // Templated
                                     .io_aib65           (io_aib_ch4[65]), // Templated
                                     .io_aib66           (io_aib_ch4[66]), // Templated
                                     .io_aib67           (io_aib_ch4[67]), // Templated
-                                    .io_aib68           (io_aib_ch4[68]), // Templated
-                                    .io_aib69           (io_aib_ch4[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch4[7]), // Templated
                                     .io_aib70           (io_aib_ch4[70]), // Templated
                                     .io_aib71           (io_aib_ch4[71]), // Templated
@@ -1648,8 +1697,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[5]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[5][19:0]),
-                                    .scan_out           (scan_out[5][19:0]),
+                                    .scan_in            (scan_in_ch5[19:0]),
+                                    .scan_out           (scan_out_ch5[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[5]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[5]), // Templated
@@ -1703,8 +1752,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch5[44]), // Templated
                                     .io_aib45           (io_aib_ch5[45]), // Templated
                                     .io_aib46           (io_aib_ch5[46]), // Templated
-                                    .io_aib47           (io_aib_ch5[47]), // Templated
-                                    .io_aib48           (io_aib_ch5[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch5[49]), // Templated
                                     .io_aib5            (io_aib_ch5[5]), // Templated
                                     .io_aib50           (io_aib_ch5[50]), // Templated
@@ -1712,7 +1761,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch5[52]), // Templated
                                     .io_aib53           (io_aib_ch5[53]), // Templated
                                     .io_aib54           (io_aib_ch5[54]), // Templated
-                                    .io_aib55           (io_aib_ch5[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch5[56]), // Templated
                                     .io_aib57           (io_aib_ch5[57]), // Templated
                                     .io_aib58           (io_aib_ch5[58]), // Templated
@@ -1720,14 +1769,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch5[6]), // Templated
                                     .io_aib60           (io_aib_ch5[60]), // Templated
                                     .io_aib61           (io_aib_ch5[61]), // Templated
-                                    .io_aib62           (io_aib_ch5[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch5[63]), // Templated
                                     .io_aib64           (io_aib_ch5[64]), // Templated
                                     .io_aib65           (io_aib_ch5[65]), // Templated
                                     .io_aib66           (io_aib_ch5[66]), // Templated
                                     .io_aib67           (io_aib_ch5[67]), // Templated
-                                    .io_aib68           (io_aib_ch5[68]), // Templated
-                                    .io_aib69           (io_aib_ch5[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch5[7]), // Templated
                                     .io_aib70           (io_aib_ch5[70]), // Templated
                                     .io_aib71           (io_aib_ch5[71]), // Templated
@@ -2000,8 +2049,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[6]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[6][19:0]),
-                                    .scan_out           (scan_out[6][19:0]),
+                                    .scan_in            (scan_in_ch6[19:0]),
+                                    .scan_out           (scan_out_ch6[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[6]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[6]), // Templated
@@ -2055,8 +2104,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch6[44]), // Templated
                                     .io_aib45           (io_aib_ch6[45]), // Templated
                                     .io_aib46           (io_aib_ch6[46]), // Templated
-                                    .io_aib47           (io_aib_ch6[47]), // Templated
-                                    .io_aib48           (io_aib_ch6[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch6[49]), // Templated
                                     .io_aib5            (io_aib_ch6[5]), // Templated
                                     .io_aib50           (io_aib_ch6[50]), // Templated
@@ -2064,7 +2113,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch6[52]), // Templated
                                     .io_aib53           (io_aib_ch6[53]), // Templated
                                     .io_aib54           (io_aib_ch6[54]), // Templated
-                                    .io_aib55           (io_aib_ch6[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch6[56]), // Templated
                                     .io_aib57           (io_aib_ch6[57]), // Templated
                                     .io_aib58           (io_aib_ch6[58]), // Templated
@@ -2072,14 +2121,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch6[6]), // Templated
                                     .io_aib60           (io_aib_ch6[60]), // Templated
                                     .io_aib61           (io_aib_ch6[61]), // Templated
-                                    .io_aib62           (io_aib_ch6[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch6[63]), // Templated
                                     .io_aib64           (io_aib_ch6[64]), // Templated
                                     .io_aib65           (io_aib_ch6[65]), // Templated
                                     .io_aib66           (io_aib_ch6[66]), // Templated
                                     .io_aib67           (io_aib_ch6[67]), // Templated
-                                    .io_aib68           (io_aib_ch6[68]), // Templated
-                                    .io_aib69           (io_aib_ch6[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch6[7]), // Templated
                                     .io_aib70           (io_aib_ch6[70]), // Templated
                                     .io_aib71           (io_aib_ch6[71]), // Templated
@@ -2194,8 +2243,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[7]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[7][19:0]),
-                                    .scan_out           (scan_out[7][19:0]),
+                                    .scan_in            (scan_in_ch7[19:0]),
+                                    .scan_out           (scan_out_ch7[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[7]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[7]), // Templated
@@ -2249,8 +2298,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch7[44]), // Templated
                                     .io_aib45           (io_aib_ch7[45]), // Templated
                                     .io_aib46           (io_aib_ch7[46]), // Templated
-                                    .io_aib47           (io_aib_ch7[47]), // Templated
-                                    .io_aib48           (io_aib_ch7[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch7[49]), // Templated
                                     .io_aib5            (io_aib_ch7[5]), // Templated
                                     .io_aib50           (io_aib_ch7[50]), // Templated
@@ -2258,7 +2307,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch7[52]), // Templated
                                     .io_aib53           (io_aib_ch7[53]), // Templated
                                     .io_aib54           (io_aib_ch7[54]), // Templated
-                                    .io_aib55           (io_aib_ch7[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch7[56]), // Templated
                                     .io_aib57           (io_aib_ch7[57]), // Templated
                                     .io_aib58           (io_aib_ch7[58]), // Templated
@@ -2266,14 +2315,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch7[6]), // Templated
                                     .io_aib60           (io_aib_ch7[60]), // Templated
                                     .io_aib61           (io_aib_ch7[61]), // Templated
-                                    .io_aib62           (io_aib_ch7[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch7[63]), // Templated
                                     .io_aib64           (io_aib_ch7[64]), // Templated
                                     .io_aib65           (io_aib_ch7[65]), // Templated
                                     .io_aib66           (io_aib_ch7[66]), // Templated
                                     .io_aib67           (io_aib_ch7[67]), // Templated
-                                    .io_aib68           (io_aib_ch7[68]), // Templated
-                                    .io_aib69           (io_aib_ch7[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch7[7]), // Templated
                                     .io_aib70           (io_aib_ch7[70]), // Templated
                                     .io_aib71           (io_aib_ch7[71]), // Templated
@@ -2411,8 +2460,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[8]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[8][19:0]),
-                                    .scan_out           (scan_out[8][19:0]),
+                                    .scan_in            (scan_in_ch8[19:0]),
+                                    .scan_out           (scan_out_ch8[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[8]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[8]), // Templated
@@ -2466,8 +2515,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch8[44]), // Templated
                                     .io_aib45           (io_aib_ch8[45]), // Templated
                                     .io_aib46           (io_aib_ch8[46]), // Templated
-                                    .io_aib47           (io_aib_ch8[47]), // Templated
-                                    .io_aib48           (io_aib_ch8[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch8[49]), // Templated
                                     .io_aib5            (io_aib_ch8[5]), // Templated
                                     .io_aib50           (io_aib_ch8[50]), // Templated
@@ -2475,7 +2524,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch8[52]), // Templated
                                     .io_aib53           (io_aib_ch8[53]), // Templated
                                     .io_aib54           (io_aib_ch8[54]), // Templated
-                                    .io_aib55           (io_aib_ch8[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch8[56]), // Templated
                                     .io_aib57           (io_aib_ch8[57]), // Templated
                                     .io_aib58           (io_aib_ch8[58]), // Templated
@@ -2483,14 +2532,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch8[6]), // Templated
                                     .io_aib60           (io_aib_ch8[60]), // Templated
                                     .io_aib61           (io_aib_ch8[61]), // Templated
-                                    .io_aib62           (io_aib_ch8[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch8[63]), // Templated
                                     .io_aib64           (io_aib_ch8[64]), // Templated
                                     .io_aib65           (io_aib_ch8[65]), // Templated
                                     .io_aib66           (io_aib_ch8[66]), // Templated
                                     .io_aib67           (io_aib_ch8[67]), // Templated
-                                    .io_aib68           (io_aib_ch8[68]), // Templated
-                                    .io_aib69           (io_aib_ch8[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch8[7]), // Templated
                                     .io_aib70           (io_aib_ch8[70]), // Templated
                                     .io_aib71           (io_aib_ch8[71]), // Templated
@@ -2628,8 +2677,8 @@ module c3aibadapt_wrap_top_v2s
                                     .o_por_aib_vccl     (aib_por_vccl[9]), // Templated
                                     .scan_clk           (scan_clk),
                                     .scan_enable        (scan_enable),
-                                    .scan_in            (scan_in[9][19:0]),
-                                    .scan_out           (scan_out[9][19:0]),
+                                    .scan_in            (scan_in_ch9[19:0]),
+                                    .scan_out           (scan_out_ch9[19:0]),
 
 //                                    .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[9]), // Templated
 //                                    .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[9]), // Templated
@@ -2683,8 +2732,8 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib44           (io_aib_ch9[44]), // Templated
                                     .io_aib45           (io_aib_ch9[45]), // Templated
                                     .io_aib46           (io_aib_ch9[46]), // Templated
-                                    .io_aib47           (io_aib_ch9[47]), // Templated
-                                    .io_aib48           (io_aib_ch9[48]), // Templated
+                                    .io_aib47(), // Templated
+                                    .io_aib48(), // Templated
                                     .io_aib49           (io_aib_ch9[49]), // Templated
                                     .io_aib5            (io_aib_ch9[5]), // Templated
                                     .io_aib50           (io_aib_ch9[50]), // Templated
@@ -2692,7 +2741,7 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib52           (io_aib_ch9[52]), // Templated
                                     .io_aib53           (io_aib_ch9[53]), // Templated
                                     .io_aib54           (io_aib_ch9[54]), // Templated
-                                    .io_aib55           (io_aib_ch9[55]), // Templated
+                                    .io_aib55(), // Templated
                                     .io_aib56           (io_aib_ch9[56]), // Templated
                                     .io_aib57           (io_aib_ch9[57]), // Templated
                                     .io_aib58           (io_aib_ch9[58]), // Templated
@@ -2700,14 +2749,14 @@ module c3aibadapt_wrap_top_v2s
                                     .io_aib6            (io_aib_ch9[6]), // Templated
                                     .io_aib60           (io_aib_ch9[60]), // Templated
                                     .io_aib61           (io_aib_ch9[61]), // Templated
-                                    .io_aib62           (io_aib_ch9[62]), // Templated
+                                    .io_aib62(), // Templated
                                     .io_aib63           (io_aib_ch9[63]), // Templated
                                     .io_aib64           (io_aib_ch9[64]), // Templated
                                     .io_aib65           (io_aib_ch9[65]), // Templated
                                     .io_aib66           (io_aib_ch9[66]), // Templated
                                     .io_aib67           (io_aib_ch9[67]), // Templated
-                                    .io_aib68           (io_aib_ch9[68]), // Templated
-                                    .io_aib69           (io_aib_ch9[69]), // Templated
+                                    .io_aib68(), // Templated
+                                    .io_aib69(), // Templated
                                     .io_aib7            (io_aib_ch9[7]), // Templated
                                     .io_aib70           (io_aib_ch9[70]), // Templated
                                     .io_aib71           (io_aib_ch9[71]), // Templated
@@ -2845,8 +2894,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[10]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[10][19:0]),
-                                     .scan_out           (scan_out[10][19:0]),
+                                     .scan_in            (scan_in_ch10[19:0]),
+                                     .scan_out           (scan_out_ch10[19:0]),
 
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[10]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[10]), // Templated
@@ -2900,8 +2949,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch10[44]), // Templated
                                      .io_aib45          (io_aib_ch10[45]), // Templated
                                      .io_aib46          (io_aib_ch10[46]), // Templated
-                                     .io_aib47          (io_aib_ch10[47]), // Templated
-                                     .io_aib48          (io_aib_ch10[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch10[49]), // Templated
                                      .io_aib5           (io_aib_ch10[5]), // Templated
                                      .io_aib50          (io_aib_ch10[50]), // Templated
@@ -2909,7 +2958,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch10[52]), // Templated
                                      .io_aib53          (io_aib_ch10[53]), // Templated
                                      .io_aib54          (io_aib_ch10[54]), // Templated
-                                     .io_aib55          (io_aib_ch10[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch10[56]), // Templated
                                      .io_aib57          (io_aib_ch10[57]), // Templated
                                      .io_aib58          (io_aib_ch10[58]), // Templated
@@ -2917,14 +2966,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch10[6]), // Templated
                                      .io_aib60          (io_aib_ch10[60]), // Templated
                                      .io_aib61          (io_aib_ch10[61]), // Templated
-                                     .io_aib62          (io_aib_ch10[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch10[63]), // Templated
                                      .io_aib64          (io_aib_ch10[64]), // Templated
                                      .io_aib65          (io_aib_ch10[65]), // Templated
                                      .io_aib66          (io_aib_ch10[66]), // Templated
                                      .io_aib67          (io_aib_ch10[67]), // Templated
-                                     .io_aib68          (io_aib_ch10[68]), // Templated
-                                     .io_aib69          (io_aib_ch10[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch10[7]), // Templated
                                      .io_aib70          (io_aib_ch10[70]), // Templated
                                      .io_aib71          (io_aib_ch10[71]), // Templated
@@ -3076,8 +3125,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[11]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[11][19:0]),
-                                     .scan_out           (scan_out[11][19:0]),
+                                     .scan_in            (scan_in_ch11[19:0]),
+                                     .scan_out           (scan_out_ch11[19:0]),
 
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[11]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[11]), // Templated
@@ -3131,8 +3180,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch11[44]), // Templated
                                      .io_aib45          (io_aib_ch11[45]), // Templated
                                      .io_aib46          (io_aib_ch11[46]), // Templated
-                                     .io_aib47          (io_aib_ch11[47]), // Templated
-                                     .io_aib48          (io_aib_ch11[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch11[49]), // Templated
                                      .io_aib5           (io_aib_ch11[5]), // Templated
                                      .io_aib50          (io_aib_ch11[50]), // Templated
@@ -3140,7 +3189,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch11[52]), // Templated
                                      .io_aib53          (io_aib_ch11[53]), // Templated
                                      .io_aib54          (io_aib_ch11[54]), // Templated
-                                     .io_aib55          (io_aib_ch11[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch11[56]), // Templated
                                      .io_aib57          (io_aib_ch11[57]), // Templated
                                      .io_aib58          (io_aib_ch11[58]), // Templated
@@ -3148,14 +3197,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch11[6]), // Templated
                                      .io_aib60          (io_aib_ch11[60]), // Templated
                                      .io_aib61          (io_aib_ch11[61]), // Templated
-                                     .io_aib62          (io_aib_ch11[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch11[63]), // Templated
                                      .io_aib64          (io_aib_ch11[64]), // Templated
                                      .io_aib65          (io_aib_ch11[65]), // Templated
                                      .io_aib66          (io_aib_ch11[66]), // Templated
                                      .io_aib67          (io_aib_ch11[67]), // Templated
-                                     .io_aib68          (io_aib_ch11[68]), // Templated
-                                     .io_aib69          (io_aib_ch11[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch11[7]), // Templated
                                      .io_aib70          (io_aib_ch11[70]), // Templated
                                      .io_aib71          (io_aib_ch11[71]), // Templated
@@ -3377,8 +3426,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[12]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[12][19:0]),
-                                     .scan_out           (scan_out[12][19:0]),
+                                     .scan_in            (scan_in_ch12[19:0]),
+                                     .scan_out           (scan_out_ch12[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[12]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[12]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[12]), // Templated
@@ -3431,8 +3480,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch12[44]), // Templated
                                      .io_aib45          (io_aib_ch12[45]), // Templated
                                      .io_aib46          (io_aib_ch12[46]), // Templated
-                                     .io_aib47          (io_aib_ch12[47]), // Templated
-                                     .io_aib48          (io_aib_ch12[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch12[49]), // Templated
                                      .io_aib5           (io_aib_ch12[5]), // Templated
                                      .io_aib50          (io_aib_ch12[50]), // Templated
@@ -3440,7 +3489,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch12[52]), // Templated
                                      .io_aib53          (io_aib_ch12[53]), // Templated
                                      .io_aib54          (io_aib_ch12[54]), // Templated
-                                     .io_aib55          (io_aib_ch12[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch12[56]), // Templated
                                      .io_aib57          (io_aib_ch12[57]), // Templated
                                      .io_aib58          (io_aib_ch12[58]), // Templated
@@ -3448,14 +3497,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch12[6]), // Templated
                                      .io_aib60          (io_aib_ch12[60]), // Templated
                                      .io_aib61          (io_aib_ch12[61]), // Templated
-                                     .io_aib62          (io_aib_ch12[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch12[63]), // Templated
                                      .io_aib64          (io_aib_ch12[64]), // Templated
                                      .io_aib65          (io_aib_ch12[65]), // Templated
                                      .io_aib66          (io_aib_ch12[66]), // Templated
                                      .io_aib67          (io_aib_ch12[67]), // Templated
-                                     .io_aib68          (io_aib_ch12[68]), // Templated
-                                     .io_aib69          (io_aib_ch12[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch12[7]), // Templated
                                      .io_aib70          (io_aib_ch12[70]), // Templated
                                      .io_aib71          (io_aib_ch12[71]), // Templated
@@ -3570,8 +3619,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[13]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[13][19:0]),
-                                     .scan_out           (scan_out[13][19:0]),
+                                     .scan_in            (scan_in_ch13[19:0]),
+                                     .scan_out           (scan_out_ch13[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[13]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[13]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[13]), // Templated
@@ -3624,8 +3673,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch13[44]), // Templated
                                      .io_aib45          (io_aib_ch13[45]), // Templated
                                      .io_aib46          (io_aib_ch13[46]), // Templated
-                                     .io_aib47          (io_aib_ch13[47]), // Templated
-                                     .io_aib48          (io_aib_ch13[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch13[49]), // Templated
                                      .io_aib5           (io_aib_ch13[5]), // Templated
                                      .io_aib50          (io_aib_ch13[50]), // Templated
@@ -3633,7 +3682,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch13[52]), // Templated
                                      .io_aib53          (io_aib_ch13[53]), // Templated
                                      .io_aib54          (io_aib_ch13[54]), // Templated
-                                     .io_aib55          (io_aib_ch13[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch13[56]), // Templated
                                      .io_aib57          (io_aib_ch13[57]), // Templated
                                      .io_aib58          (io_aib_ch13[58]), // Templated
@@ -3641,14 +3690,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch13[6]), // Templated
                                      .io_aib60          (io_aib_ch13[60]), // Templated
                                      .io_aib61          (io_aib_ch13[61]), // Templated
-                                     .io_aib62          (io_aib_ch13[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch13[63]), // Templated
                                      .io_aib64          (io_aib_ch13[64]), // Templated
                                      .io_aib65          (io_aib_ch13[65]), // Templated
                                      .io_aib66          (io_aib_ch13[66]), // Templated
                                      .io_aib67          (io_aib_ch13[67]), // Templated
-                                     .io_aib68          (io_aib_ch13[68]), // Templated
-                                     .io_aib69          (io_aib_ch13[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch13[7]), // Templated
                                      .io_aib70          (io_aib_ch13[70]), // Templated
                                      .io_aib71          (io_aib_ch13[71]), // Templated
@@ -3786,8 +3835,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[14]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[14][19:0]),
-                                     .scan_out           (scan_out[14][19:0]),
+                                     .scan_in            (scan_in_ch14[19:0]),
+                                     .scan_out           (scan_out_ch14[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[14]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[14]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[14]), // Templated
@@ -3840,8 +3889,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch14[44]), // Templated
                                      .io_aib45          (io_aib_ch14[45]), // Templated
                                      .io_aib46          (io_aib_ch14[46]), // Templated
-                                     .io_aib47          (io_aib_ch14[47]), // Templated
-                                     .io_aib48          (io_aib_ch14[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch14[49]), // Templated
                                      .io_aib5           (io_aib_ch14[5]), // Templated
                                      .io_aib50          (io_aib_ch14[50]), // Templated
@@ -3849,7 +3898,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch14[52]), // Templated
                                      .io_aib53          (io_aib_ch14[53]), // Templated
                                      .io_aib54          (io_aib_ch14[54]), // Templated
-                                     .io_aib55          (io_aib_ch14[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch14[56]), // Templated
                                      .io_aib57          (io_aib_ch14[57]), // Templated
                                      .io_aib58          (io_aib_ch14[58]), // Templated
@@ -3857,14 +3906,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch14[6]), // Templated
                                      .io_aib60          (io_aib_ch14[60]), // Templated
                                      .io_aib61          (io_aib_ch14[61]), // Templated
-                                     .io_aib62          (io_aib_ch14[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch14[63]), // Templated
                                      .io_aib64          (io_aib_ch14[64]), // Templated
                                      .io_aib65          (io_aib_ch14[65]), // Templated
                                      .io_aib66          (io_aib_ch14[66]), // Templated
                                      .io_aib67          (io_aib_ch14[67]), // Templated
-                                     .io_aib68          (io_aib_ch14[68]), // Templated
-                                     .io_aib69          (io_aib_ch14[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch14[7]), // Templated
                                      .io_aib70          (io_aib_ch14[70]), // Templated
                                      .io_aib71          (io_aib_ch14[71]), // Templated
@@ -4002,8 +4051,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[15]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[15][19:0]),
-                                     .scan_out           (scan_out[15][19:0]),
+                                     .scan_in            (scan_in_ch15[19:0]),
+                                     .scan_out           (scan_out_ch15[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[15]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[15]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[15]), // Templated
@@ -4056,8 +4105,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch15[44]), // Templated
                                      .io_aib45          (io_aib_ch15[45]), // Templated
                                      .io_aib46          (io_aib_ch15[46]), // Templated
-                                     .io_aib47          (io_aib_ch15[47]), // Templated
-                                     .io_aib48          (io_aib_ch15[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch15[49]), // Templated
                                      .io_aib5           (io_aib_ch15[5]), // Templated
                                      .io_aib50          (io_aib_ch15[50]), // Templated
@@ -4065,7 +4114,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch15[52]), // Templated
                                      .io_aib53          (io_aib_ch15[53]), // Templated
                                      .io_aib54          (io_aib_ch15[54]), // Templated
-                                     .io_aib55          (io_aib_ch15[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch15[56]), // Templated
                                      .io_aib57          (io_aib_ch15[57]), // Templated
                                      .io_aib58          (io_aib_ch15[58]), // Templated
@@ -4073,14 +4122,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch15[6]), // Templated
                                      .io_aib60          (io_aib_ch15[60]), // Templated
                                      .io_aib61          (io_aib_ch15[61]), // Templated
-                                     .io_aib62          (io_aib_ch15[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch15[63]), // Templated
                                      .io_aib64          (io_aib_ch15[64]), // Templated
                                      .io_aib65          (io_aib_ch15[65]), // Templated
                                      .io_aib66          (io_aib_ch15[66]), // Templated
                                      .io_aib67          (io_aib_ch15[67]), // Templated
-                                     .io_aib68          (io_aib_ch15[68]), // Templated
-                                     .io_aib69          (io_aib_ch15[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch15[7]), // Templated
                                      .io_aib70          (io_aib_ch15[70]), // Templated
                                      .io_aib71          (io_aib_ch15[71]), // Templated
@@ -4218,8 +4267,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[16]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[16][19:0]),
-                                     .scan_out           (scan_out[16][19:0]),
+                                     .scan_in            (scan_in_ch16[19:0]),
+                                     .scan_out           (scan_out_ch16[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[16]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[16]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[16]), // Templated
@@ -4272,8 +4321,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch16[44]), // Templated
                                      .io_aib45          (io_aib_ch16[45]), // Templated
                                      .io_aib46          (io_aib_ch16[46]), // Templated
-                                     .io_aib47          (io_aib_ch16[47]), // Templated
-                                     .io_aib48          (io_aib_ch16[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch16[49]), // Templated
                                      .io_aib5           (io_aib_ch16[5]), // Templated
                                      .io_aib50          (io_aib_ch16[50]), // Templated
@@ -4281,7 +4330,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch16[52]), // Templated
                                      .io_aib53          (io_aib_ch16[53]), // Templated
                                      .io_aib54          (io_aib_ch16[54]), // Templated
-                                     .io_aib55          (io_aib_ch16[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch16[56]), // Templated
                                      .io_aib57          (io_aib_ch16[57]), // Templated
                                      .io_aib58          (io_aib_ch16[58]), // Templated
@@ -4289,14 +4338,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch16[6]), // Templated
                                      .io_aib60          (io_aib_ch16[60]), // Templated
                                      .io_aib61          (io_aib_ch16[61]), // Templated
-                                     .io_aib62          (io_aib_ch16[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch16[63]), // Templated
                                      .io_aib64          (io_aib_ch16[64]), // Templated
                                      .io_aib65          (io_aib_ch16[65]), // Templated
                                      .io_aib66          (io_aib_ch16[66]), // Templated
                                      .io_aib67          (io_aib_ch16[67]), // Templated
-                                     .io_aib68          (io_aib_ch16[68]), // Templated
-                                     .io_aib69          (io_aib_ch16[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch16[7]), // Templated
                                      .io_aib70          (io_aib_ch16[70]), // Templated
                                      .io_aib71          (io_aib_ch16[71]), // Templated
@@ -4448,8 +4497,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[17]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[17][19:0]),
-                                     .scan_out           (scan_out[17][19:0]),
+                                     .scan_in            (scan_in_ch17[19:0]),
+                                     .scan_out           (scan_out_ch17[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[17]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[17]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[17]), // Templated
@@ -4502,8 +4551,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch17[44]), // Templated
                                      .io_aib45          (io_aib_ch17[45]), // Templated
                                      .io_aib46          (io_aib_ch17[46]), // Templated
-                                     .io_aib47          (io_aib_ch17[47]), // Templated
-                                     .io_aib48          (io_aib_ch17[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch17[49]), // Templated
                                      .io_aib5           (io_aib_ch17[5]), // Templated
                                      .io_aib50          (io_aib_ch17[50]), // Templated
@@ -4511,7 +4560,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch17[52]), // Templated
                                      .io_aib53          (io_aib_ch17[53]), // Templated
                                      .io_aib54          (io_aib_ch17[54]), // Templated
-                                     .io_aib55          (io_aib_ch17[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch17[56]), // Templated
                                      .io_aib57          (io_aib_ch17[57]), // Templated
                                      .io_aib58          (io_aib_ch17[58]), // Templated
@@ -4519,14 +4568,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch17[6]), // Templated
                                      .io_aib60          (io_aib_ch17[60]), // Templated
                                      .io_aib61          (io_aib_ch17[61]), // Templated
-                                     .io_aib62          (io_aib_ch17[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch17[63]), // Templated
                                      .io_aib64          (io_aib_ch17[64]), // Templated
                                      .io_aib65          (io_aib_ch17[65]), // Templated
                                      .io_aib66          (io_aib_ch17[66]), // Templated
                                      .io_aib67          (io_aib_ch17[67]), // Templated
-                                     .io_aib68          (io_aib_ch17[68]), // Templated
-                                     .io_aib69          (io_aib_ch17[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch17[7]), // Templated
                                      .io_aib70          (io_aib_ch17[70]), // Templated
                                      .io_aib71          (io_aib_ch17[71]), // Templated
@@ -4748,8 +4797,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[18]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[18][19:0]),
-                                     .scan_out           (scan_out[18][19:0]),
+                                     .scan_in            (scan_in_ch18[19:0]),
+                                     .scan_out           (scan_out_ch18[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[18]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[18]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[18]), // Templated
@@ -4802,8 +4851,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch18[44]), // Templated
                                      .io_aib45          (io_aib_ch18[45]), // Templated
                                      .io_aib46          (io_aib_ch18[46]), // Templated
-                                     .io_aib47          (io_aib_ch18[47]), // Templated
-                                     .io_aib48          (io_aib_ch18[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch18[49]), // Templated
                                      .io_aib5           (io_aib_ch18[5]), // Templated
                                      .io_aib50          (io_aib_ch18[50]), // Templated
@@ -4811,7 +4860,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch18[52]), // Templated
                                      .io_aib53          (io_aib_ch18[53]), // Templated
                                      .io_aib54          (io_aib_ch18[54]), // Templated
-                                     .io_aib55          (io_aib_ch18[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch18[56]), // Templated
                                      .io_aib57          (io_aib_ch18[57]), // Templated
                                      .io_aib58          (io_aib_ch18[58]), // Templated
@@ -4819,14 +4868,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch18[6]), // Templated
                                      .io_aib60          (io_aib_ch18[60]), // Templated
                                      .io_aib61          (io_aib_ch18[61]), // Templated
-                                     .io_aib62          (io_aib_ch18[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch18[63]), // Templated
                                      .io_aib64          (io_aib_ch18[64]), // Templated
                                      .io_aib65          (io_aib_ch18[65]), // Templated
                                      .io_aib66          (io_aib_ch18[66]), // Templated
                                      .io_aib67          (io_aib_ch18[67]), // Templated
-                                     .io_aib68          (io_aib_ch18[68]), // Templated
-                                     .io_aib69          (io_aib_ch18[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch18[7]), // Templated
                                      .io_aib70          (io_aib_ch18[70]), // Templated
                                      .io_aib71          (io_aib_ch18[71]), // Templated
@@ -4941,8 +4990,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[19]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[19][19:0]),
-                                     .scan_out           (scan_out[19][19:0]),
+                                     .scan_in            (scan_in_ch19[19:0]),
+                                     .scan_out           (scan_out_ch19[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[19]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[19]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[19]), // Templated
@@ -4995,8 +5044,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch19[44]), // Templated
                                      .io_aib45          (io_aib_ch19[45]), // Templated
                                      .io_aib46          (io_aib_ch19[46]), // Templated
-                                     .io_aib47          (io_aib_ch19[47]), // Templated
-                                     .io_aib48          (io_aib_ch19[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch19[49]), // Templated
                                      .io_aib5           (io_aib_ch19[5]), // Templated
                                      .io_aib50          (io_aib_ch19[50]), // Templated
@@ -5004,7 +5053,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch19[52]), // Templated
                                      .io_aib53          (io_aib_ch19[53]), // Templated
                                      .io_aib54          (io_aib_ch19[54]), // Templated
-                                     .io_aib55          (io_aib_ch19[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch19[56]), // Templated
                                      .io_aib57          (io_aib_ch19[57]), // Templated
                                      .io_aib58          (io_aib_ch19[58]), // Templated
@@ -5012,14 +5061,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch19[6]), // Templated
                                      .io_aib60          (io_aib_ch19[60]), // Templated
                                      .io_aib61          (io_aib_ch19[61]), // Templated
-                                     .io_aib62          (io_aib_ch19[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch19[63]), // Templated
                                      .io_aib64          (io_aib_ch19[64]), // Templated
                                      .io_aib65          (io_aib_ch19[65]), // Templated
                                      .io_aib66          (io_aib_ch19[66]), // Templated
                                      .io_aib67          (io_aib_ch19[67]), // Templated
-                                     .io_aib68          (io_aib_ch19[68]), // Templated
-                                     .io_aib69          (io_aib_ch19[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch19[7]), // Templated
                                      .io_aib70          (io_aib_ch19[70]), // Templated
                                      .io_aib71          (io_aib_ch19[71]), // Templated
@@ -5157,8 +5206,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[20]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[20][19:0]),
-                                     .scan_out           (scan_out[20][19:0]),
+                                     .scan_in            (scan_in_ch20[19:0]),
+                                     .scan_out           (scan_out_ch20[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[20]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[20]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[20]), // Templated
@@ -5211,8 +5260,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch20[44]), // Templated
                                      .io_aib45          (io_aib_ch20[45]), // Templated
                                      .io_aib46          (io_aib_ch20[46]), // Templated
-                                     .io_aib47          (io_aib_ch20[47]), // Templated
-                                     .io_aib48          (io_aib_ch20[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch20[49]), // Templated
                                      .io_aib5           (io_aib_ch20[5]), // Templated
                                      .io_aib50          (io_aib_ch20[50]), // Templated
@@ -5220,7 +5269,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch20[52]), // Templated
                                      .io_aib53          (io_aib_ch20[53]), // Templated
                                      .io_aib54          (io_aib_ch20[54]), // Templated
-                                     .io_aib55          (io_aib_ch20[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch20[56]), // Templated
                                      .io_aib57          (io_aib_ch20[57]), // Templated
                                      .io_aib58          (io_aib_ch20[58]), // Templated
@@ -5228,14 +5277,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch20[6]), // Templated
                                      .io_aib60          (io_aib_ch20[60]), // Templated
                                      .io_aib61          (io_aib_ch20[61]), // Templated
-                                     .io_aib62          (io_aib_ch20[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch20[63]), // Templated
                                      .io_aib64          (io_aib_ch20[64]), // Templated
                                      .io_aib65          (io_aib_ch20[65]), // Templated
                                      .io_aib66          (io_aib_ch20[66]), // Templated
                                      .io_aib67          (io_aib_ch20[67]), // Templated
-                                     .io_aib68          (io_aib_ch20[68]), // Templated
-                                     .io_aib69          (io_aib_ch20[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch20[7]), // Templated
                                      .io_aib70          (io_aib_ch20[70]), // Templated
                                      .io_aib71          (io_aib_ch20[71]), // Templated
@@ -5373,8 +5422,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[21]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[21][19:0]),
-                                     .scan_out           (scan_out[21][19:0]),
+                                     .scan_in            (scan_in_ch21[19:0]),
+                                     .scan_out           (scan_out_ch21[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[21]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[21]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[21]), // Templated
@@ -5427,8 +5476,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch21[44]), // Templated
                                      .io_aib45          (io_aib_ch21[45]), // Templated
                                      .io_aib46          (io_aib_ch21[46]), // Templated
-                                     .io_aib47          (io_aib_ch21[47]), // Templated
-                                     .io_aib48          (io_aib_ch21[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch21[49]), // Templated
                                      .io_aib5           (io_aib_ch21[5]), // Templated
                                      .io_aib50          (io_aib_ch21[50]), // Templated
@@ -5436,7 +5485,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch21[52]), // Templated
                                      .io_aib53          (io_aib_ch21[53]), // Templated
                                      .io_aib54          (io_aib_ch21[54]), // Templated
-                                     .io_aib55          (io_aib_ch21[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch21[56]), // Templated
                                      .io_aib57          (io_aib_ch21[57]), // Templated
                                      .io_aib58          (io_aib_ch21[58]), // Templated
@@ -5444,14 +5493,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch21[6]), // Templated
                                      .io_aib60          (io_aib_ch21[60]), // Templated
                                      .io_aib61          (io_aib_ch21[61]), // Templated
-                                     .io_aib62          (io_aib_ch21[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch21[63]), // Templated
                                      .io_aib64          (io_aib_ch21[64]), // Templated
                                      .io_aib65          (io_aib_ch21[65]), // Templated
                                      .io_aib66          (io_aib_ch21[66]), // Templated
                                      .io_aib67          (io_aib_ch21[67]), // Templated
-                                     .io_aib68          (io_aib_ch21[68]), // Templated
-                                     .io_aib69          (io_aib_ch21[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch21[7]), // Templated
                                      .io_aib70          (io_aib_ch21[70]), // Templated
                                      .io_aib71          (io_aib_ch21[71]), // Templated
@@ -5589,8 +5638,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (aib_por_vccl[22]), // Templated
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[22][19:0]),
-                                     .scan_out           (scan_out[22][19:0]),
+                                     .scan_in            (scan_in_ch22[19:0]),
+                                     .scan_out           (scan_out_ch22[19:0]),
 //                                     .o_red_idataselb_out_chain1(aib_red_idataselb_chain1[22]), // Templated
 //                                     .o_red_idataselb_out_chain2(aib_red_idataselb_chain2[22]), // Templated
 //                                     .o_red_shift_en_out_chain1(aib_red_shift_en_chain1[22]), // Templated
@@ -5643,8 +5692,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch22[44]), // Templated
                                      .io_aib45          (io_aib_ch22[45]), // Templated
                                      .io_aib46          (io_aib_ch22[46]), // Templated
-                                     .io_aib47          (io_aib_ch22[47]), // Templated
-                                     .io_aib48          (io_aib_ch22[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch22[49]), // Templated
                                      .io_aib5           (io_aib_ch22[5]), // Templated
                                      .io_aib50          (io_aib_ch22[50]), // Templated
@@ -5652,7 +5701,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch22[52]), // Templated
                                      .io_aib53          (io_aib_ch22[53]), // Templated
                                      .io_aib54          (io_aib_ch22[54]), // Templated
-                                     .io_aib55          (io_aib_ch22[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch22[56]), // Templated
                                      .io_aib57          (io_aib_ch22[57]), // Templated
                                      .io_aib58          (io_aib_ch22[58]), // Templated
@@ -5660,14 +5709,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch22[6]), // Templated
                                      .io_aib60          (io_aib_ch22[60]), // Templated
                                      .io_aib61          (io_aib_ch22[61]), // Templated
-                                     .io_aib62          (io_aib_ch22[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch22[63]), // Templated
                                      .io_aib64          (io_aib_ch22[64]), // Templated
                                      .io_aib65          (io_aib_ch22[65]), // Templated
                                      .io_aib66          (io_aib_ch22[66]), // Templated
                                      .io_aib67          (io_aib_ch22[67]), // Templated
-                                     .io_aib68          (io_aib_ch22[68]), // Templated
-                                     .io_aib69          (io_aib_ch22[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch22[7]), // Templated
                                      .io_aib70          (io_aib_ch22[70]), // Templated
                                      .io_aib71          (io_aib_ch22[71]), // Templated
@@ -5768,8 +5817,8 @@ module c3aibadapt_wrap_top_v2s
                                      .o_por_aib_vccl    (),                                     
                                      .scan_clk           (scan_clk),
                                      .scan_enable        (scan_enable),
-                                     .scan_in            (scan_in[23][19:0]),
-                                     .scan_out           (scan_out[23][19:0]),
+                                     .scan_in            (scan_in_ch23[19:0]),
+                                     .scan_out           (scan_out_ch23[19:0]),
                                      
                                      /*AUTOINST*/
                                      // Outputs
@@ -5862,8 +5911,8 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib44          (io_aib_ch23[44]), // Templated
                                      .io_aib45          (io_aib_ch23[45]), // Templated
                                      .io_aib46          (io_aib_ch23[46]), // Templated
-                                     .io_aib47          (io_aib_ch23[47]), // Templated
-                                     .io_aib48          (io_aib_ch23[48]), // Templated
+                                     .io_aib47(), // Templated
+                                     .io_aib48(), // Templated
                                      .io_aib49          (io_aib_ch23[49]), // Templated
                                      .io_aib5           (io_aib_ch23[5]), // Templated
                                      .io_aib50          (io_aib_ch23[50]), // Templated
@@ -5871,7 +5920,7 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib52          (io_aib_ch23[52]), // Templated
                                      .io_aib53          (io_aib_ch23[53]), // Templated
                                      .io_aib54          (io_aib_ch23[54]), // Templated
-                                     .io_aib55          (io_aib_ch23[55]), // Templated
+                                     .io_aib55(), // Templated
                                      .io_aib56          (io_aib_ch23[56]), // Templated
                                      .io_aib57          (io_aib_ch23[57]), // Templated
                                      .io_aib58          (io_aib_ch23[58]), // Templated
@@ -5879,14 +5928,14 @@ module c3aibadapt_wrap_top_v2s
                                      .io_aib6           (io_aib_ch23[6]), // Templated
                                      .io_aib60          (io_aib_ch23[60]), // Templated
                                      .io_aib61          (io_aib_ch23[61]), // Templated
-                                     .io_aib62          (io_aib_ch23[62]), // Templated
+                                     .io_aib62(), // Templated
                                      .io_aib63          (io_aib_ch23[63]), // Templated
                                      .io_aib64          (io_aib_ch23[64]), // Templated
                                      .io_aib65          (io_aib_ch23[65]), // Templated
                                      .io_aib66          (io_aib_ch23[66]), // Templated
                                      .io_aib67          (io_aib_ch23[67]), // Templated
-                                     .io_aib68          (io_aib_ch23[68]), // Templated
-                                     .io_aib69          (io_aib_ch23[69]), // Templated
+                                     .io_aib68(), // Templated
+                                     .io_aib69(), // Templated
                                      .io_aib7           (io_aib_ch23[7]), // Templated
                                      .io_aib70          (io_aib_ch23[70]), // Templated
                                      .io_aib71          (io_aib_ch23[71]), // Templated
