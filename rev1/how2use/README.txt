@@ -54,12 +54,22 @@ How to run:
 1) cd sim_dcc
 2) make
 
+sim_dcc_static: This test show how DCC works in static mode. FSM of DCC is bypassed in this mode. User can
+overwrite DCC static value manually.
+
 sim_mod2mod: This test show how master model works with slave model.
 How to run:
 1) cd sim_mod2mod
 2) ./runsim
 3) ./simv
 
-sim_sl2ms_lpbk: This test shows how open source IP connect to Stratix 10 MAIB channel in loopback test.
+The followings are three loopback mode tests.
+sim_sl2ms_lpbk (2e 1x): This test shows how open source IP connect to Stratix 10 MAIB channel in loopback test.
 VCS/Cadence/Modelsim simulators run scripts are provided. See README.txt for detail.
 
+
+sim_sl2ms_lpbk_1e (1e): This test shows how open source IP connect to Stratix 10 MAIB channel in loopback test.
+VCS/Cadence/Modelsim simulators run scripts are provided.
+
+sim_sl2ms_lpbk_2e (2e 2x): This test shows how open source IP connect to Stratix 10 MAIB channel in PRE-FIFO loopback test.
+VCS/Cadence/Modelsim simulators run scripts are provided.
