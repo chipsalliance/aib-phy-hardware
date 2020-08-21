@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) 2019 Intel Corporation. 
+// // Copyright (C) 2019 Intel Corporation. 
+// //
 // ==========================================================================
-// Module name    : aib_sm
-// Description    : state machine of reset and calibration
-// Revision       : 1.0
+// // Module name    : aib_sm
+// // Description    : state machine of reset and calibration
+// // Revision       : 1.1
+// //
 // ============================================================================
 //
 module aib_sm 
@@ -617,7 +619,7 @@ always @(*)
  begin
       case (msrxcal_curst)
       ms_wait_rx_xfer_req:   begin
-                   if (is_master &  ms_osc_transfer_alive & (sl_tx_dcc_dll_lock_req_sync | ms_rx_dcc_dll_lock_req_sync))
+                   if (is_master &  ms_osc_transfer_alive & (sl_tx_dcc_dll_lock_req_sync & ms_rx_dcc_dll_lock_req_sync))
                     msrxcal_nxst  = ms_wait_remt_tx_dcc_cal_done;
                    else
                     msrxcal_nxst = ms_wait_rx_xfer_req;
