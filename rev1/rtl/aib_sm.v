@@ -507,7 +507,7 @@ always @(*)
  begin
       case (msrxcal_curst)
       ms_wait_rx_xfer_req:   begin
-                   if (is_master &  ms_osc_transfer_alive & (sl_tx_dcc_dll_lock_req_sync | ms_rx_dcc_dll_lock_req_sync))
+                   if (is_master &  ms_osc_transfer_alive & (sl_tx_dcc_dll_lock_req_sync & ms_rx_dcc_dll_lock_req_sync))
                     msrxcal_nxst  = ms_wait_remt_tx_dcc_cal_done;
                    else
                     msrxcal_nxst = ms_wait_rx_xfer_req;
