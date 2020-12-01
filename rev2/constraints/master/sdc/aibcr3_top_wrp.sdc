@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2019 Blue Cheetah Analog Design, Inc.
-# Copyright (c) 2019 Ayar Labs, Inc.
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 set aib_map(aib46) [list aib46 q1 r0 11 t 0 aib61 true xaibcr3_top/xtxdatapath_tx/xdirect_out1]
 set aib_map(aib0) [list aib0 q1 r0 10 t 2 aib46 true xaibcr3_top/xrxdatapath_rx/xpoutp0]
@@ -99,10 +104,50 @@ set aib_map(aib74) [list aib74 q4 r1 9 t 91 aib90 false xaibcr3_top/xtxdatapath_
 set aib_map(aib73) [list aib73 q4 r1 10 t 93 aib74 false xaibcr3_top/xtxdatapath_tx/xasyncrx1]
 set aib_map(aib50) [list aib50 q4 r1 11 t 95 aib73 false xaibcr3_top/xrxdatapath_rx/xdirect_out3]
 
+#=============================================================================
+## Copyright (c) 2017 Ayar Labs, Inc.
+## All Rights Reserved.
+##
+## Notice: All information contained herein is, and remains the the property
+## of Ayar Labs, Inc.
+##
+## The information contained herein is confidential and proprietary information
+## of Ayar Labs, Inc. and its licensors, if any, and is subject to applicable
+## non-disclosure agreement with Ayar Labs, Inc. Dissemination of information,
+## use of this material, or reproduction of this material is strictly forbidden
+## unless prior written permission is obtained from Ayar Labs, Inc.
+##
+## THESE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+## OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+## MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR NONINFRINGEMENT,
+## ALL OF WHICH ARE SPECIFICALLY DISCLAIMED. IN NO EVENT WILL AYAR LABS, INC.
+## BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+## CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+## THESE MATERIALS OR THE USE THEREOF.
+##
+## This notice shall be included in its entirety on all copies made from this
+## file
+##
+##=============================================================================
 
-###################################################
+#=========================================================================
+# Constraints file
+#-------------------------------------------------------------------------
+#
+# This file contains various constraints for your chip including the
+# target clock period, the capacitive load of output pins, and any
+# input/output delay constraints.
+
+#-----------------------------------------------------------------------------
+# Set Units
+#-----------------------------------------------------------------------------
 set_units -capacitance 1.0pF
 set_units -time 1.0ns
+
+#-----------------------------------------------------------------------------
+# Variables
+#-----------------------------------------------------------------------------
+# Cycling through modes only Base constraints from Jumbo, no changes to the constraints yet; Need more info
 
 # user mode 1 is dcc_en = 0, user mode 2 is dcc_en = 1
 echo "=============================================================================="
@@ -221,6 +266,9 @@ if {$scan_en} {
 
     create_clock -name sr_clk_in   -period $clk_period [get_ports aib83]
     create_clock -name sr_clk_n_in -period $clk_period -waveform "  [expr $clk_period/2] $clk_period " [get_ports aib82]
+    
+    #create_clock -name pma_aib_tx_clk   -period $clk_period [get_ports ihssi_pma_aib_tx_clk]
+    #create_clock -name pma_aib_tx_clk_n -period $clk_period -waveform "  [expr $clk_period/2] $clk_period " [get_ports ihssi_pma_aib_tx_clk]
 
 # Generated clocks DCC output DCC_Helper output
 if {$scan_en} {
@@ -248,10 +296,10 @@ for {set pnum 0} {$pnum < 2} {incr pnum} {
       set_max_delay -from tx_clk -to $alias_hier(dll_interpolator_$pnum)/sp[$i] [expr 3*$clk_period]
       set_max_delay -from tx_clk -to $alias_hier(dll_interpolator_$pnum)/sn[$i] [expr 3*$clk_period]
       for {set bkind 0} {$bkind < $Nbk} {incr bkind} {
-         set_data_check -hold -from $alias_hier(dll_dly_$pnum)/bk[$bkind] \
+        set_data_check -hold -from $alias_hier(dll_dly_$pnum)/bk[$bkind] \
             -to $alias_hier(dll_interpolator_$pnum)/sp[$i] [expr -$clk_period/2 + 0.1]
-         set_data_check -setup -from $alias_hier(dll_dly_$pnum)/bk[$bkind] \
-	    -to $alias_hier(dll_interpolator_$pnum)/sp[$i] [expr $clk_period/2 - 0.1]
+        set_data_check -setup -from $alias_hier(dll_dly_$pnum)/bk[$bkind] \
+            -to $alias_hier(dll_interpolator_$pnum)/sp[$i] [expr $clk_period/2 - 0.1]
       }
    }
 }
@@ -270,15 +318,15 @@ if {$dcc_en} {
       -master_clock adapt2aib_clk -duty_cycle 50 \
       -source [get_pins $alias_hier(dlyline_full_ff)/clk] \
       [get_pins $alias_hier(dlyline_full_ff)/q]
-    create_generated_clock -name dcc_1time_measure_clk -add -multiply_by 1 \
+  create_generated_clock -name dcc_1time_measure_clk -add -multiply_by 1 \
       -master_clock adapt2aib_clk -duty_cycle 50 \
       -source [get_pins $alias_hier(mindly_full_ff)/clk] \
-        [get_pins $alias_hier(mindly_full_ff)/q]
+      [get_pins $alias_hier(mindly_full_ff)/q]
 
   # BCA: Data-to-data checks to support fine and coarse delay controls arriving synchronously
   # with respect to each other for the DCC
   set lens [list full half]
-    foreach len $len`s {
+    foreach len $lens {
         for {set i 0} {$i < $Nsp} {incr i} {
           set_max_delay -from adapt2aib_clk -to $alias_hier(dcc_dly_${len}_intp)/sp[$i] [expr 3*$clk_period]
           set_max_delay -from adapt2aib_clk -to $alias_hier(dcc_dly_${len}_intp)/sn[$i] [expr 3*$clk_period]
@@ -341,6 +389,28 @@ set_false_path -from $sdr_clk_domain  -to [concat $jtag_clk_domain $scan_clk_dom
 set_false_path -through [get_ports r_aib_csr_ctrl*]
 set_false_path -through [get_ports r_aib_dprio_ctrl*]
 
+# False path full delay line control signals
+# Interpolator sn/sp paths
+set dcc_full_interps [list \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I0/I57/x142 \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I1/x142 \
+]
+foreach full_interp $dcc_full_interps {
+    set_false_path -to $full_interp/sn[*]
+    set_false_path -to $full_interp/sp[*]
+}
+# Delay line bk paths
+set dcc_full_dlylines [list \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I0/I58/I10 \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I0/I58/I9 \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I0/I58/I1 \
+    xaibcr3_top/xrxdatapath_rx/x1591/I82/I0/I0/I0/I58/I8 \
+]
+foreach dcc_full_dlyline $dcc_full_dlylines {
+    set_false_path -to $dcc_full_dlyline/bk[*]
+}
+
+############
 # Case Analysis of scan pin (note that they are active low)
 set_case_analysis [expr !$scan_en] [get_ports iatpg_scan_mode_n]
 set_case_analysis [expr !$scan_en] [get_ports iatpg_scan_shift_n]
@@ -361,6 +431,7 @@ set_case_analysis 0 [get_ports r_aib_csr_ctrl_18[2]]
 
 # jtag_clksel 1 activates the jtag mode
 set_case_analysis $jtag_en [get_ports jtag_clksel]
+#####################################
 
 # Disable redundancy mode
 for {set i 0} {$i < 8} {incr i} {
@@ -371,7 +442,6 @@ for {set i 0} {$i < 8} {incr i} {
 
 set buffs [filter libcell [find / -libcell aibcr3_buffx1_top] [find / -instance *]]
 foreach buff $buffs {
-    # BCA: We have set_case_anlysis 0 shift_en at the buffx1_top level, so this isn't needed
     if {$jtag_en} { set_mode jtag_en $buff
     } else { set_mode functional $buff }
 
@@ -385,6 +455,12 @@ foreach buff $buffs {
     # BCA - to make consistent with PAR1, changing -$strb_to_dist... to +$strb_to_dist...
     set_data_check -hold -rise_from $buff/istrbclk_in0 \
         -rise_to $buff/iclkin_dist_in0 $strb_to_dist_max_early_skew
+
+    # No timing paths should end at buffer iopad
+    set_false_path -to $buff/iopad
+
+    # Ignore paths from aib88, which is the redundant SDR clock, because no redundancy support
+    set_false_path -from aib88 -to $buff/iclkin_dist_in0
 }
 
 
@@ -572,6 +648,10 @@ foreach_in_collection aib_ports [get_ports aib*] {
 set_dont_touch [get_nets -segments -of_objects [get_pins xaibcr3_top/xtxdatapath_tx/x982/x46/buf_main_0/clkout]]
 set_dont_touch [get_nets -segments -of_objects [get_pins xaibcr3_top/xtxdatapath_tx/x982/x41/buf_main_0/clkout]]
 set_dont_touch [get_nets -segments -of_objects [get_pins xaibcr3_top/xrxdatapath_rx/xclktree/buf_main_0/clkout]]
+
+# Constrain feedthrough paths. Goal is 30MHz JTAG frequency in 24-channel design
+set_max_delay 0.6 -from [get_ports ijtag_clkdr_in_chain] \
+    -to [get_ports ojtag_clkdr_out_chain]
 
 #-----------------------------------------------------------------------------
 # DRV constraints

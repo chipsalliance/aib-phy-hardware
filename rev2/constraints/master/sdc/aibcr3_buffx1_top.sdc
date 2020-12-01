@@ -1,9 +1,63 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2019 Blue Cheetah Analog Design, Inc.
-# Copyright (c) 2019 Ayar Labs, Inc.
 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#=============================================================================
+## Copyright (c) 2017 Ayar Labs, Inc.
+## All Rights Reserved.
+##
+## Notice: All information contained herein is, and remains the the property
+## of Ayar Labs, Inc.
+##
+## The information contained herein is confidential and proprietary information
+## of Ayar Labs, Inc. and its licensors, if any, and is subject to applicable
+## non-disclosure agreement with Ayar Labs, Inc. Dissemination of information,
+## use of this material, or reproduction of this material is strictly forbidden
+## unless prior written permission is obtained from Ayar Labs, Inc.
+##
+## THESE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+## OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+## MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR NONINFRINGEMENT,
+## ALL OF WHICH ARE SPECIFICALLY DISCLAIMED. IN NO EVENT WILL AYAR LABS, INC.
+## BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+## CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+## THESE MATERIALS OR THE USE THEREOF.
+##
+## This notice shall be included in its entirety on all copies made from this
+## file
+##
+##=============================================================================
+
+#=========================================================================
+# Constraints file
+#-------------------------------------------------------------------------
+#
+# This file contains various constraints for your chip including the
+# target clock period, the capacitive load of output pins, and any
+# input/output delay constraints.
+
+#-----------------------------------------------------------------------------
+# Set Units
+#-----------------------------------------------------------------------------
 set_units -capacitance 1.0pF
 set_units -time 1.0ns
+
+#-----------------------------------------------------------------------------
+# Variables
+#-----------------------------------------------------------------------------
+
+echo "=============================================================================="
+echo "Reading SDC file..."
+echo "=============================================================================="
+echo "Clk Period = " $clk_period
+echo "JTAG en = " $jtag_en
+echo "Shift en = " $shift_en
+echo "=============================================================================="
 
 # Clock periods (in ns)
 set jtag_clk_period     33.33
@@ -23,6 +77,10 @@ set int_dly          0.25
 # Because odat*_aib / odat*_in1 connected together by abutment, delays must be matched
 set odat_red_dly_min    0.1
 set odat_red_dly_max    [expr $clk_period - $int_dly]
+
+#-----------------------------------------------------------------------------
+# Helper Functions
+#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 # Clock Definitions
@@ -64,11 +122,6 @@ set_clock_uncertainty $clk_uncertainty [get_clocks]
 #-----------------------------------------------------------------------------
 set txdig_loc x3/x1/x1
 set ddrmux_loc $txdig_loc/ddrmux/mx/process_cell
-
-# The tool said it didn't do anything with this, and indeed it doesn't make sense for this to be here -
-# the mux is not a sequential element, so setting a multicyle path to it wouldn't do anything.
-#set_multicycle_path -setup 2 -to $ddrmux_loc/a
-#set_multicycle_path -setup 2 -to $ddrmux_loc/b
 
 # Original constraints could have violated hold window, so adding in a minimum delay constraint as well.
 # Mux margin is applied equally to both the setup and hold constraints
