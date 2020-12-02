@@ -1,9 +1,51 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2019 Blue Cheetah Analog Design, Inc.
-# Copyright (c) 2019 Ayar Labs, Inc.
 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#=============================================================================
+## Copyright (c) 2017 Ayar Labs, Inc.
+## All Rights Reserved.
+##
+## Notice: All information contained herein is, and remains the the property
+## of Ayar Labs, Inc.
+##
+## The information contained herein is confidential and proprietary information
+## of Ayar Labs, Inc. and its licensors, if any, and is subject to applicable
+## non-disclosure agreement with Ayar Labs, Inc. Dissemination of information,
+## use of this material, or reproduction of this material is strictly forbidden
+## unless prior written permission is obtained from Ayar Labs, Inc.
+##
+## THESE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+## OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+## MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR NONINFRINGEMENT,
+## ALL OF WHICH ARE SPECIFICALLY DISCLAIMED. IN NO EVENT WILL AYAR LABS, INC.
+## BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+## CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+## THESE MATERIALS OR THE USE THEREOF.
+##
+## This notice shall be included in its entirety on all copies made from this
+## file
+##
+##=============================================================================
+
+
+##################### CHECK for DC shell or Fishtail ##########################
+
+#-----------------------------------------------------------------------------
+# Set Units
+#-----------------------------------------------------------------------------
 set_units -capacitance 1.0pF
 set_units -time 1.0ns
+
+#-----------------------------------------------------------------------------
+# Variables
+#-----------------------------------------------------------------------------
+# Cycling through modes only Base constraints, no changes to the constraints yet; Need more info
 
 # user mode 1 is dcc_en = 0, user mode 2 is dcc_en = 1
 echo "=============================================================================="
@@ -25,6 +67,8 @@ proc get_driving_pin {pin} {
 
 # Comments indicated this should be at 250MHz
 set SCAN_CLK_PERIOD         [expr $clk_period * 4.0]
+set jtag_clk_period     33.33
+#set scan_clk_period     20.0
 
 # BCA: No clock will be running at full 1GHz during JTAG
 if {$jtag_en} {
@@ -38,7 +82,8 @@ set RX_FR_WORD_CLK_PERIOD   $clk_period
 # It appears that the clocks that are left don't use this
 set TX_HR_WORD_CLK_PERIOD   [expr $clk_period * 2.0]
 set RX_HR_WORD_CLK_PERIOD   [expr $clk_period * 2.0]
-set CFG_AVMM_CLK_PERIOD     3.6
+#125MHz clock frequency
+set CFG_AVMM_CLK_PERIOD     [expr $clk_period * 8.0]
 
 set clk_uncertainty 0.050
 
@@ -66,15 +111,12 @@ create_clock [get_ports i_osc_clk] -name i_aib_tx_sr_clk -period $AIB_OSC_PERIOD
 ########################
 # SR clock in
 ########################
-# BCA: Removed redundancy constraints
 create_clock [get_ports io_aib83] -name i_aib_rx_sr_clk -period $AIB_OSC_PERIOD
-# BCA: We need to make sure that the aibcr3_buffx1_top lib includes arcs from iclkn to oclkb_out in order
-# to support the below statement, especially if we are deleting generated clocks from within the libs.
-create_clock [get_ports io_aib82] -name i_aib_rx_sr_clk_n -period $AIB_OSC_PERIOD -waveform " [expr $AIB_OSC_PERIOD/2] $AIB_OSC_PERIOD "
+create_clock [get_ports io_aib82] -name i_aib_rx_sr_clk_n -period $AIB_OSC_PERIOD \
+    -waveform " [expr $AIB_OSC_PERIOD/2] $AIB_OSC_PERIOD "
 
-create_generated_clock -name aib_tx_sr_clk_in_div2_m -divide_by 2 -add \
-  -master_clock i_aib_tx_sr_clk \
-  -source [get_pin xaibcr3_top_wrp/ohssi_tx_sr_clk_in] \
+create_generated_clock -name aib_tx_sr_clk_in_div2_m -divide_by 2  \
+   -source [get_pin xaibcr3_top_wrp/ohssi_tx_sr_clk_in] \
   [get_pins c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckdiv2_sr_tx_sr_clk/CLK_DIV_2.uu_c3dfx_tcm_div2/clk_out]
 
 create_generated_clock -name aib_tx_sr_clk_in_div2 -divide_by 1 -add \
@@ -83,9 +125,8 @@ create_generated_clock -name aib_tx_sr_clk_in_div2 -divide_by 1 -add \
   [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckdiv2_sr_tx_sr_clk/o_clk"]]
 
 # BCA: Master clock is actually the oscillator clock, despite the naming.  Verified correct master.
-create_generated_clock -name aib_tx_sr_clk_in_div4_m -divide_by 4 -add \
-  -master_clock i_aib_tx_sr_clk \
-  -source [get_pins xaibcr3_top_wrp/ohssi_tx_sr_clk_in] \
+create_generated_clock -name aib_tx_sr_clk_in_div4_m -divide_by 4  \
+   -source [get_pins xaibcr3_top_wrp/ohssi_tx_sr_clk_in] \
           [get_pins c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckdiv4_sr_tx_sr_clk/CLK_DIV_4.uu_c3dfx_tcm_div4/clk_out]
 
 create_generated_clock -name aib_tx_sr_clk_in_div4 -divide_by 1 -add \
@@ -93,10 +134,9 @@ create_generated_clock -name aib_tx_sr_clk_in_div4 -divide_by 1 -add \
   -source [get_pins c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckdiv4_sr_tx_sr_clk/CLK_DIV_4.uu_c3dfx_tcm_div4/clk_out] \
   [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckdiv4_sr_tx_sr_clk/o_clk"]]
 
-create_generated_clock -name aib_tx_sr_clk_in_div1 -divide_by 1 -add \
-  -master_clock i_aib_tx_sr_clk  \
-  -source [get_pin xaibcr3_top_wrp/ohssi_tx_sr_clk_in] \
-  [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckmux2_tx_sr_clk_in/uu_c3dfx_tcm/o_clk"]]
+create_generated_clock -name aib_tx_sr_clk_in_div1 -divide_by 1  \
+  -source [get_pin xaibcr3_top_wrp/osc_clkin] \
+   [get_pin xaibcr3_top_wrp/ohssi_tx_sr_clk_in] 
 
 ########################
 # Sampling clock
@@ -105,12 +145,9 @@ create_generated_clock -name aib_tx_sr_clk_in_div1 -divide_by 1 -add \
     # create_clock [get_ports io_aib48] -name i_aib_sclk_r -period $SCLK_PERIOD
     create_clock [get_ports io_aib58] -name i_aib_sclk -period $SCLK_PERIOD
 
-# BCA: This clock currently is not propagating in jtag mode, but appears to propagate in other modes.  Likely OK then.
-# Note: This one seems to end up with infinite transition time in the lib - maybe we can get rid of this generated
-# clock entirely since it is div 1?
-create_generated_clock -name aib_sclk_div1 -divide_by 1 -add -master_clock i_aib_sclk  \
-  -source [get_pin xaibcr3_top_wrp/ohssi_pld_sclk] \
-  [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_rxchnl/rxclk_ctl/tcm_ckmux2_rx_fifo_sclk/uu_c3dfx_tcm/o_clk"]]
+create_generated_clock -name aib_sclk_div1 -divide_by 1   \
+   -source /designs/c3aibadapt_wrap/instances_seq/xaibcr3_top_wrp/pins_in/aib58 \
+  [get_pin xaibcr3_top_wrp/ohssi_pld_sclk]
 
 ########################
 # Half-rate clocks
@@ -118,17 +155,17 @@ create_generated_clock -name aib_sclk_div1 -divide_by 1 -add -master_clock i_aib
 
 set clkname i_rx_pma_div2_clk
 create_clock [get_ports $clkname] -name $clkname -period $RX_HR_WORD_CLK_PERIOD
-
-# BCA: Phase comp clocks are half-rate
 set clkname i_rx_elane_clk
 create_clock [get_ports $clkname] -name $clkname -period $RX_HR_WORD_CLK_PERIOD
 set clkname i_tx_elane_clk
 create_clock [get_ports $clkname] -name $clkname -period $TX_HR_WORD_CLK_PERIOD
 
 
+
 ########################
 # Full-rate clocks
 ########################
+# BCA: Phase comp clocks are Full-rate
 set clkname i_tx_pma_clk
 create_clock [get_ports $clkname] -name $clkname -period $TX_FR_WORD_CLK_PERIOD
 
@@ -146,16 +183,15 @@ create_clock [get_ports io_aib42] -name tx_transfer_clk_n -period $TX_FR_WORD_CL
    -waveform " [expr $TX_FR_WORD_CLK_PERIOD/2] $TX_FR_WORD_CLK_PERIOD "
 
 # Model output transfer clock
-create_generated_clock -name tx_transfer_clk_out -divide_by 1 -add -master_clock tx_transfer_clk \
+create_generated_clock -name tx_transfer_clk_out -divide_by 1   \
     -source [get_pin xaibcr3_top_wrp/ohssi_tx_transfer_clk] \
     [get_port o_tx_transfer_clk]
 
-# BCA: Removed because this path is combinational in our design
-create_generated_clock -name tx_transfer_div1_clk -divide_by 1 -add -master_clock tx_transfer_clk \
-    -source [get_pin xaibcr3_top_wrp/ohssi_tx_transfer_clk] \
-    [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_txchnl/txclk_ctl/tcm_clkmux2_tx_fifo_wr_clk_mux1/uu_c3dfx_tcm/o_clk"]]
+create_generated_clock -name tx_transfer_div1_clk -divide_by 1   \
+    -source /designs/c3aibadapt_wrap/instances_seq/xaibcr3_top_wrp/pins_in/aib43 \
+     [get_pin xaibcr3_top_wrp/ohssi_tx_transfer_clk]
 
-create_generated_clock -name tx_transfer_div2_clk_m -divide_by 2 -add -master_clock tx_transfer_clk \
+create_generated_clock -name tx_transfer_div2_clk_m -divide_by 2   \
     -source [get_pin xaibcr3_top_wrp/ohssi_tx_transfer_clk] \
     [get_pins c3aibadapt/adapt_txchnl/txclk_ctl/tcm_ckdiv2_tx_transfer/CLK_DIV_2.uu_c3dfx_tcm_div2/clk_out]
 
@@ -182,9 +218,8 @@ create_clock [get_ports $clkname] -name $clkname -period $CFG_AVMM_CLK_PERIOD
 ########################
 #AVMM Usr clocks
 ########################
-create_generated_clock -name aib_rx_sr_clk_in_avmm1_clk_m -divide_by 8 -add \
-  -master_clock i_aib_rx_sr_clk_n \
-  -source [get_pin xaibcr3_top_wrp/ohssi_sr_clk_in] \
+create_generated_clock -name aib_rx_sr_clk_in_avmm1_clk_m -divide_by 8  \
+   -source [get_pin c3aibadapt/adapt_avmm/avmm1/adapt_avmm1clk_ctl/tcm_ckdiv8_avmm_clock_avmm_clk_int/CLK_DIV_8.uu_c3dfx_tcm_div8/clk_in] \
   [get_pin c3aibadapt/adapt_avmm/avmm1/adapt_avmm1clk_ctl/tcm_ckdiv8_avmm_clock_avmm_clk_int/CLK_DIV_8.uu_c3dfx_tcm_div8/clk_out]
 
 create_generated_clock -name aib_rx_sr_clk_in_avmm1_clk -divide_by 1 -add \
@@ -192,16 +227,18 @@ create_generated_clock -name aib_rx_sr_clk_in_avmm1_clk -divide_by 1 -add \
   -source [get_pin c3aibadapt/adapt_avmm/avmm1/adapt_avmm1clk_ctl/tcm_ckdiv8_avmm_clock_avmm_clk_int/CLK_DIV_8.uu_c3dfx_tcm_div8/clk_out] \
   [get_driving_pin [get_pin c3aibadapt/adapt_avmm/avmm1/adapt_avmm1clk_ctl/tcm_ckdiv8_avmm_clock_avmm_clk_int/o_clk]]
 
-create_generated_clock -name aib_rx_sr_clk_in_div1 -divide_by 1 -add \
-  -master_clock i_aib_rx_sr_clk_n  \
-  -source [get_pin xaibcr3_top_wrp/ohssi_sr_clk_in] \
-  [get_driving_pin [get_pins * -hier -filter "full_name =~ c3aibadapt/adapt_sr/adapt_srclk_ctl/tcm_ckmux2_sr_rx_osc_clk/uu_c3dfx_tcm/o_clk"]]
+create_generated_clock -name aib_rx_sr_clk_in_div1 -divide_by 1  \
+  -source /designs/c3aibadapt_wrap/instances_seq/xaibcr3_top_wrp/pins_in/aib82 \
+    [get_pin xaibcr3_top_wrp/ohssi_sr_clk_in]
 
 
 #### disable all signals crossing clocks.
 set all_adpt_clocks [get_object_name [all_clocks]]
 
 # BCA: Removing redundancy constraints
+#####################################
+#Clock Grouping
+#####################################
 set_clock_groups -asynchronous -name ASYNC_GRP                             \
    -group {i_aib_rx_sr_clk i_aib_rx_sr_clk_n aib_rx_sr_clk_in_avmm1_clk_m aib_rx_sr_clk_in_avmm1_clk aib_rx_sr_clk_in_div1} \
   -group {i_aib_tx_sr_clk aib_tx_sr_clk_in_div1 aib_tx_sr_clk_in_div2_m aib_tx_sr_clk_in_div2 aib_tx_sr_clk_in_div4_m aib_tx_sr_clk_in_div4} \
@@ -217,6 +254,7 @@ set_clock_groups -asynchronous -name ASYNC_GRP                             \
 set_clock_groups -logically_exclusive -group [get_clocks aib_tx_sr_clk_in_div1] -group [get_clocks aib_tx_sr_clk_in_div2]
 set_clock_groups -logically_exclusive -group [get_clocks aib_tx_sr_clk_in_div1] -group [get_clocks aib_tx_sr_clk_in_div4]
 set_clock_groups -logically_exclusive -group [get_clocks aib_tx_sr_clk_in_div2] -group [get_clocks aib_tx_sr_clk_in_div4]
+#####################################
 
 # internal_clk1 and internal_clk2 select lines
 
@@ -237,7 +275,6 @@ foreach_in_collection q_pin $sel_q_pins {
 
 # BCA: Additional case analysis must be done to make FIFO mode work properly (i.e., not have excessive hold time constraints applied by the tools)
 set_case_analysis 1 [get_pins c3aibadapt/adapt_rxchnl/rxclk_ctl/cmn_clkmux2_rx_fifo_wr_clk3/c3lib_ckmux4_gate/ck_mux_3/sel]
-
 set_case_analysis 0 [get_pins c3aibadapt/adapt_avmm/avmm1/adapt_avmm1_config/adapt_usr_csr/r_dprio3_rx_fifo_wr_clk_sel_reg[2]/q]
 set_case_analysis 1 [get_pins c3aibadapt/adapt_avmm/avmm1/adapt_avmm1_config/adapt_usr_csr/r_dprio3_rx_fifo_wr_clk_sel_reg[1]/q]
 set_case_analysis 0 [get_pins c3aibadapt/adapt_avmm/avmm1/adapt_avmm1_config/adapt_usr_csr/r_dprio3_rx_fifo_wr_clk_sel_reg[0]/q]
@@ -256,7 +293,7 @@ set_false_path -through [get_pin c3aibadapt/adapt_avmm/avmm1/adapt_avmm1_config/
 ########################
 
 # Osc-related clock
-create_clock [get_ports i_jtag_clkdr_in] -name tck_jtag_clkdr_in -period $SCAN_CLK_PERIOD
+create_clock [get_ports i_jtag_clkdr_in] -name tck_jtag_clkdr_in -period $jtag_clk_period
 
 # Create scan clocks when in scan mode
 if {$scan_en} {
@@ -512,6 +549,7 @@ foreach_in_collection aib_ports [get_ports io_aib*] {
 }
 # Prevent buffering of this net that directly connects between PAR2 and PAR3 ports
 set_dont_touch [get_nets -segments o_osc_clk]
+set_dont_touch [get_nets -segments i_por_aib_vccl]
 
 # Genus changes the logical function of sl_sideband[72] if it is not protected
 set_dont_touch sl_sideband[72]
@@ -582,27 +620,53 @@ set_input_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -min 2.0 [get_port
 set_input_delay -clock [get_clocks i_rx_pma_clk] -add_delay -min 2.0 [get_ports {i_test_c3adapt_scan_in[8]}]
 set_false_path -hold -through  [get_ports {i_test_c3adapt_scan_in[*]}]
 
+########################################
+# Input & Output Delays
+########################################
+# Intel spec is 800ps of external delay
+set external_delay 0.8
+
 # BCA: Phasecomp IO delays
-set_input_delay -clock [get_clocks i_rx_elane_clk] -add_delay -max [expr $RX_HR_WORD_CLK_PERIOD * 0.8] [get_ports i_rx_elane_data*]
+set_input_delay -clock [get_clocks i_rx_elane_clk] -add_delay -max $external_delay [get_ports i_rx_elane_data*]
 set_input_delay -clock [get_clocks i_rx_elane_clk] -add_delay -min 0 [get_ports i_rx_elane_data*]
 
-set_output_delay -clock [get_clocks i_tx_elane_clk] -add_delay -max [expr $TX_HR_WORD_CLK_PERIOD * 0.8] [get_ports o_tx_elane_data*]
+set_output_delay -clock [get_clocks i_tx_elane_clk] -add_delay -max $external_delay [get_ports o_tx_elane_data*]
 set_output_delay -clock [get_clocks i_tx_elane_clk] -add_delay -min 0 [get_ports o_tx_elane_data*]
 
 # Input/output delays on cfg_avmm* ports
+set avmm_external_delay [expr $CFG_AVMM_CLK_PERIOD - 0.3]
+
 set_input_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -max [expr $CFG_AVMM_CLK_PERIOD/2] [get_ports i_cfg_avmm*]
 set_input_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -min 0 [get_ports i_cfg_avmm*]
 
-set_output_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -max [expr $CFG_AVMM_CLK_PERIOD/2] [get_ports o_cfg_avmm*]
+set_output_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -max $avmm_external_delay [get_ports o_cfg_avmm*]
 set_output_delay -clock [get_clocks i_cfg_avmm_clk] -add_delay -min 0 [get_ports o_cfg_avmm*]
 
-# Contrain max from input AVMM to output AVMM direct feedthrough ports to 200ps
+# Jtag IO delays
+set_input_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -max $external_delay [get_ports {i_jtag_bs_chain_in i_jtag_bs_scanen_in i_jtag_weakpdn_in i_jtag_weakpu_in i_jtag_mode_in i_jtag_intest_in i_jtag_clksel_in}]
+set_input_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -min 0 [get_ports {i_jtag_bs_chain_in i_jtag_bs_scanen_in i_jtag_weakpdn_in i_jtag_weakpu_in i_jtag_mode_in i_jtag_intest_in i_jtag_clksel_in}]
+
+# Give JTAG feedthrough paths 350ps (after 50ps uncertainty) when they are acting as outputs rather than feedthroughs
+set jtag_external_delay [expr $jtag_clk_period - 0.4]
+set_output_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -max $jtag_external_delay [get_ports o_jtag_last_bs_chain_out]
+set_output_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -min 0 [get_ports o_jtag_last_bs_chain_out]
+
+set_output_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -max $jtag_external_delay [get_ports o_jtag_clkdr_out]
+set_output_delay -clock [get_clocks tck_jtag_clkdr_in] -add_delay -min 0 [get_ports o_jtag_clkdr_out]
+
+# Contrain max from input AVMM to output AVMM direct feedthrough ports to 150ps
 # Direction of the clock propagation, need to set min and max
-set_max_delay [expr $CFG_AVMM_CLK_PERIOD/2 + 0.45] -from [get_ports i_cfg_avmm*] -to [get_ports o_adpt_cfg*]
+set_max_delay [expr $CFG_AVMM_CLK_PERIOD/2 + 0.15] -from [get_ports i_cfg_avmm*] -to [get_ports o_adpt_cfg*]
 set_min_delay 0.05 -from [get_ports i_cfg_avmm*] -to [get_ports o_adpt_cfg*]
 # Opposite direction of the clock propagation, just set the max to be as small as possible
-# BCA: Relaxed this by 100ps since we only have 2 channels in series.
-set_max_delay [expr $CFG_AVMM_CLK_PERIOD/2 + 0.2] -from [get_ports i_adpt_cfg*] -to [get_ports o_cfg_avmm*]
+set_max_delay [expr $avmm_external_delay + 0.15] -from [get_ports i_adpt_cfg*] \
+    -to [get_ports o_cfg_avmm*]
+
+# Constrain JTAG feedthrough paths to 250ps (after 50ps uncertainty)
+set_max_delay [expr $jtag_external_delay + 0.3] -from [get_ports i_jtag_last_bs_chain_in] \
+    -to [get_ports o_jtag_last_bs_chain_out]
+set_max_delay [expr $jtag_external_delay + 0.3] -from [get_ports i_jtag_clkdr_in] \
+    -to [get_ports o_jtag_clkdr_out]
 
 # Input / output data
 set_input_delay -clock [get_clocks i_rx_pma_clk] -add_delay -max        [expr $RX_FR_WORD_CLK_PERIOD/2] [get_ports i_rx_pma_data[*]]
@@ -623,7 +687,7 @@ set_false_path -to [get_ports o_chnl_ssr[*]]
 
 # BCA: These are asynchronous, essentially DC signals, so just make sure they have a constraint.
 set_max_delay 1.0 -to [get_ports sl_sideband*]
-set_max_delay 1.0 -to [get_ports ms_sideband*]
+set_max_delay 1.4 -to [get_ports ms_sideband*]
 
 ########################
 ### Set clock uncertainty
@@ -640,15 +704,22 @@ set_input_transition -max 0.100 [all_inputs]
 set_input_transition -min 0.001 [all_inputs]
 set_input_transition -max 0.100 [all_inputs]
 
-set_max_transition 0.100 [all_inputs]
+#set_max_transition 0.100 [all_inputs]
 set_max_capacitance 0.010 [all_inputs]
 # Set defaults for signals we care less about to be a lot higher
 set_max_capacitance 0.30 [concat [get_ports i_jtag_*] [get_ports i_aibdftdll2adjch[*]]]
 set_max_transition 0.100 [concat [get_ports i_jtag_*] [get_ports i_aibdftdll2adjch[*]]]
 
 # Make sure all output transitions are < 40 ps given a pin load of 20 fF
-set_max_transition 0.100 [all_outputs]
+#set_max_transition 0.100 [all_outputs]
 set_load -pin_load 0.020 [all_outputs]
 # Non critical outputs transitions
 set_max_transition 0.100 [concat [get_ports o_jtag_*] [get_ports o_aibdftdll2adjch[*]]]
 
+
+#Added on 02/072020
+set_max_transition 0.1 [remove_from_collection [all_input]  [get_ports {i_adpt_cfg* i_cfg_avmm*}]]
+set_max_transition 0.300 [get_ports {i_adpt_cfg* i_cfg_avmm*}]
+
+set_max_transition 0.1 [remove_from_collection [all_outputs] [get_ports {o_adpt_cfg* o_cfg_avmm*}]]
+set_max_transition 0.300 [get_ports {o_adpt_cfg* o_cfg_avmm*}]
