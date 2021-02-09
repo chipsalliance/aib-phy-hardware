@@ -1,0 +1,12 @@
+# ####################################################################
+# tb files 
+# ####################################################################
++incdir+../tb
++incdir+../interface
++incdir+../test/task
++incdir+../test/test_cases
+#../../rtl/emib/aliasv.sv
+#../../rtl/emib/emib_ch.sv
+../interface/dut_if_mac_ch.sv
+../interface/avalon_mm_if.sv
+../tb/top_tb_ch.sv

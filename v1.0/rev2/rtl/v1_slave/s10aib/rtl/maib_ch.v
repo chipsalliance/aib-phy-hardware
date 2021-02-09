@@ -12,7 +12,7 @@ inout  wire [95:0]  iopad_aib,
 input  wire [79:0]  tx_parallel_data,     // This name mapped to quartus generated user interface signals. connect to pld_tx_fabric_data_in
 output wire [79:0]  rx_parallel_data,     // This name mapped to quartus generated user interface signals. connect to pld_rx_fabric_data_out
 input  wire         tx_coreclkin, // This name mapped to quartus generated user interface signals.connect to pld_tx_clk1_dcm. Half of m_fs_fwd_clk 
-output wire         tx_clkout, // This name mapped to quartus generated user interface signals.connect to pld_pcs_tx_clk_out1_dcm.m_fs_rvc_div2_clk
+output wire         tx_clkout, // This name mapped to quartus generated user interface signals.connect to pld_pcs_tx_clk_out1_dcm.
 input  wire         rx_coreclkin, // This name mapped to quartus generated user interface signals.connect to pld_rx_clk1_dcm. 
                                   // Also connect to pld_pma_coreclkin_rowclk which go to iopad_ns_rcv_clk.
 output wire         rx_clkout, // connect to pld_pcs_rx_clk_out1_dcm. 1GHz. Available to MAC. Half of m_fs_fwd_clk.

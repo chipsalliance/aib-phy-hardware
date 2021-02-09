@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+export RTL_ROOT="$(pwd)/../../rtl"
+export V1M_ROOT="$RTL_ROOT"
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS  -f ../flist/ms.cf -l compile_ms1.log
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps -f ../flist/tb_rtl_ch.cf -l compile_tb.log
+
+vcs -debug_acc+all -full64 +lint=TFIPC-L +error+100 +lint=PCWM  -top top_tb -l vcs.log

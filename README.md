@@ -37,3 +37,27 @@ Main directory structure is below.  Read the README.txt files in the subdirector
         ├── v2_master
         └── v2_slave
 
+## Version 2.0 (rev1)
+Feb. 09, 2021, Version 2.0 (Initial release of the AIB 2.0 Model and DV)
+Previous revision 1.0 and revision 2.0 pushed down to version 1.0.
+Main directory structure is below.  Read the README.txt files in the subdirectories for details.
+
+```aib_phy_hardware
+├── docs
+│   └── archive
+├── v1.0
+│   ├── rev1             -- Previous rev1
+│   │   ├── aib_lib
+│   │   ├── how2use
+│   │   ├── maib_rtl
+│   │   ├── ndsimslv
+│   │   └── rtl
+│   └── rev2             -- Previous rev2 as above
+│       ├── constraints
+│       ├── dv
+│       └── rtl
+└── v2.0
+    └── rev1             -- AIB model for AIB 2.0 Specification
+        ├── dv           -- System Verilog Verification Suite
+        └── rtl          -- Behavior RTL model
+
