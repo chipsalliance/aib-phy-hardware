@@ -18,6 +18,7 @@ module aib_adapttxdp_fifo
     (
     input  wire                wr_rst_n,    // Write Domain Active low Reset
     input  wire                wr_clk,     // Write Domain Clock
+    input  wire                m_gen2_mode,
     input  wire [4*DWIDTH-1:0] data_in,    // Write Data In
     input  wire                rd_rst_n,    // Read Domain Active low Reset
     input  wire                rd_clk,     // Read Domain Clock
@@ -26,6 +27,7 @@ module aib_adapttxdp_fifo
     input  wire [AWIDTH-1:0]   r_empty,    // FIFO empty threshold
     input  wire [AWIDTH-1:0]   r_full,     // FIFO full threshold
     input  wire                r_wm_en,    // mark enable
+    input  wire [4:0]          r_mkbit,    // Configurable marker bit
     input  wire [1:0]          r_fifo_mode,     // FIFO Mode: 4:1 2:1 1:1 Reg mode 
     input  wire [3:0]          r_phcomp_rd_delay,  // Programmable read and write pointer gap in phase comp mode
     
@@ -96,14 +98,49 @@ assign phcomp_mode =  ~ register_mode;
 always @ * begin
    if (r_wm_en) begin
       if (r_fifo_mode == FIFO_4X)
+        if (r_mkbit[4]) 
+          wr_data ={{              1'b1, data_in[318:240]}, 
+                    {              1'b0, data_in[238:160]}, 
+                    {              1'b0, data_in[158:80]}, 
+                    {              1'b0, data_in[78:0]}};               //bit 79
+        else if (r_mkbit[3])
           wr_data ={{data_in[319], 1'b1, data_in[317:240]}, 
                     {data_in[239], 1'b0, data_in[237:160]}, 
                     {data_in[159], 1'b0, data_in[157:80]}, 
-                    {data_in[79],  1'b0, data_in[77:0]}};
+                    {data_in[79],  1'b0, data_in[77:0]}};               //bit 78
+        else if (r_mkbit[2])
+          wr_data ={{data_in[319:318], 1'b1, data_in[316:240]}, 
+                    {data_in[239:238], 1'b0, data_in[236:160]}, 
+                    {data_in[159:158], 1'b0, data_in[156:80]}, 
+                    {data_in[79:78],   1'b0, data_in[76:0]}};            //bit 77
+        else if (r_mkbit[1])          
+          wr_data ={{data_in[319:317], 1'b1, data_in[315:240]}, 
+                    {data_in[239:237], 1'b0, data_in[235:160]}, 
+                    {data_in[159:157], 1'b0, data_in[155:80]}, 
+                    {data_in[79:77],   1'b0, data_in[75:0]}};            //bit 76
+        else wr_data = data_in;
       else if (r_fifo_mode == FIFO_2X)
-          wr_data = {160'h0,
+        if (r_mkbit[4]) 
+          wr_data ={ 160'h0,
+                    {              1'b1, data_in[157:80]},
+                    {              1'b0, data_in[78:0]}}; 
+        else if (r_mkbit[3])
+          wr_data ={ 160'h0,
                     {data_in[159], 1'b1, data_in[157:80]},
                     {data_in[79],  1'b0, data_in[77:0]}};
+        else if (r_mkbit[2])
+          wr_data ={ 160'h0,
+                    {data_in[159:158], 1'b1, data_in[156:80]},
+                    {data_in[79:78],   1'b0, data_in[76:0]}};
+        else if (r_mkbit[1])
+          wr_data ={ 160'h0,
+                    {data_in[159:157], 1'b1, data_in[155:80]},
+                    {data_in[79:77],   1'b0, data_in[75:0]}};
+        else if (r_mkbit[0] & ~m_gen2_mode)
+          wr_data ={ 160'h0, 80'h0,
+                    {1'b1, data_in[78:40], 1'b0, data_in[38:0]}};
+        else 
+          wr_data = data_in;
       else
           wr_data = data_in;
    end else  wr_data = data_in;

@@ -10,6 +10,7 @@ output wire                     wa_error,
 output wire [3:0]               wa_error_cnt,
    // Inputs
 input wire                      atpg_mode,
+input wire                      m_gen2_mode,
 input wire                      adapt_rstn,
 input wire  [79:0]	        din,   //from io buffer
 input wire                      m_rd_clk, 
@@ -17,15 +18,19 @@ input wire                      rxfifo_wrclk,
 input wire  [1:0]		r_rx_fifo_mode,		        
 input wire  [3:0]		r_rx_phcomp_rd_delay,	        
 input wire 			r_rx_wa_en,		                     
+input wire                      r_rxswap_en,
+input wire  [4:0]               r_rx_mkbit,
 input wire 			r_rx_dbi_en		                     
    );
 
-wire [79:0]  dbi_dout;
+wire [79:0]  dbi_dout, rx_fifo_data_out_sel;
 wire [319:0] rx_fifo_data_out;
 wire         rxwr_rstn, rxrd_rstn;
 
-assign data_out_f =  rx_fifo_data_out;
+assign data_out_f =  {rx_fifo_data_out[319:80], rx_fifo_data_out_sel};
 assign data_out   =  dbi_dout;
+
+assign rx_fifo_data_out_sel[79:0] =((r_rx_fifo_mode==2'b01) & r_rxswap_en & ~m_gen2_mode) ? {rx_fifo_data_out[79], rx_fifo_data_out[38:0], rx_fifo_data_out[39], rx_fifo_data_out[78:40]} : rx_fifo_data_out[79:0];
 
 aib_adaptrxdbi_rxdp rx_dbi (
     .rst_n(rxwr_rstn),
@@ -57,8 +62,10 @@ aib_adaptrxdp_fifo rxdp_fifo(
     .r_pfull              (5'b11111),
     .r_empty              (5'b0),
     .r_full               (5'b11111),
+    .m_gen2_mode          (m_gen2_mode),
     .r_fifo_mode          (r_rx_fifo_mode[1:0]),
     .r_phcomp_rd_delay    (r_rx_phcomp_rd_delay),
+    .r_mkbit              (r_rx_mkbit),
     .r_wa_en              (r_rx_wa_en));
 
 

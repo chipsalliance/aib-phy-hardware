@@ -227,6 +227,10 @@ wire   [3:0]   csr_rx_phcomp_rd_delay={1'b0,rx_adapt_0[26:24]}; //RX phase compe
 wire           csr_tx_dbi_en=tx_adapt_0[1];          //TX DBI enable
 wire           csr_rx_dbi_en=rx_adapt_0[1];          //RX DBI enable
 wire   [1:0]   csr_lpbk_mode=tx_adapt_1[15:14];   //2'b00 no loopback. 2'b01 farside loopback. 2'b10 nearside loopback
+wire           csr_rxswap_en=rx_adapt_0[0];       //Switch Upper/Lower 39 bit in FIFO2x mode in Gen1 mode
+wire           csr_txswap_en=tx_adapt_0[0];       //Switch Upper/Lower 39 bit in FIFO2x mode in Gen1 mode
+wire   [4:0]   csr_rx_mkbit=rx_adapt_1[7:3];      //Marker bit position of 79:76
+wire   [4:0]   csr_tx_mkbit=tx_adapt_0[20:16];    //Marker bit position of 79:76
 
 
 
@@ -238,6 +242,7 @@ assign dig_rstb =   i_conf_done;
 aib_adapt_2doto aib_adapt (
       .atpg_mode(1'b0),
       .dual_mode_select(dual_mode_select),
+      .m_gen2_mode(m_gen2_mode),
       .data_out_f(data_out_f), //to mac
       .data_out(data_out), //to mac
       .data_in(data_in),  //from mac
@@ -315,6 +320,10 @@ aib_adapt_2doto aib_adapt (
      .csr_tx_fifo_mode(csr_tx_fifo_mode),
      .csr_rx_wa_en(csr_rx_wa_en),
      .csr_tx_wm_en(csr_tx_wm_en),
+     .csr_rx_mkbit(csr_rx_mkbit),
+     .csr_tx_mkbit(csr_tx_mkbit),
+     .csr_rxswap_en(csr_rxswap_en),
+     .csr_txswap_en(csr_txswap_en),
      .csr_tx_phcomp_rd_delay(csr_tx_phcomp_rd_delay),
      .csr_rx_phcomp_rd_delay(csr_rx_phcomp_rd_delay),
      .csr_tx_dbi_en(csr_tx_dbi_en),

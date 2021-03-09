@@ -31,6 +31,8 @@ module aib_adaptrxdp_async_fifo
     input  wire [AWIDTH-1:0] r_full,     // FIFO full threshold
     input  wire	[1:0]	     r_fifo_mode, 	// FIFO double write mode
     input  wire              r_wa_en,    // word alignment enable
+    input  wire              m_gen2_mode, //AIB2.0 Gen2 or Gen1 mode
+    input  wire [4:0]        r_mkbit,     //Configurable marker bit (79:76 plus 39)
     
     
     output wire [DWIDTH*4-1:0] rd_data,    // Read Data Out 
@@ -163,7 +165,7 @@ aib_adaptrxdp_fifo_ptr
    assign wr_full_comb   = (wr_numdata >= r_full) ? 1'b1 : 1'b0;
    assign wr_pfull_comb  = (wr_numdata >= r_pfull) ? 1'b1 : 1'b0;
 
-   assign wm_bit  = wr_data[78];
+   assign wm_bit  = |({wr_data[79:76], wr_data[39]} & r_mkbit[4:0]);
 
    assign wa_lock_int = (r_fifo_mode == FIFO_4X) ? ((wm_history==12'h111) ? 1'b1: 1'b0) :
                         (r_fifo_mode == FIFO_2X) ? ((wm_history[5:0]==6'h15)? 1'b1: 1'b0): 
@@ -185,29 +187,41 @@ aib_adaptrxdp_fifo_ptr
    end
 
 
-   always @ * begin
+   always @(posedge wr_clk)  begin
      case (r_fifo_mode)
-       FIFO_1X:  wd0 = wr_data;
-       REG_MOD:  wd0 = wr_data;
+       FIFO_1X:  begin 
+                   wd0 <= wr_data;
+                  {wd1,wd2,wd3} <= 240'h0;
+                 end
+       REG_MOD:  begin
+                   wd0 <= wr_data;
+                  {wd1,wd2,wd3} <= 240'h0;
+                 end
        FIFO_2X:  case (wr_cnt[0])
-                   1'b0: wd0 = wr_data;
-                   1'b1: wd1 = wr_data;
+                   1'b0: begin 
+                           if (m_gen2_mode) wd0 <= wr_data;
+                           else wd0[39:0] <= wr_data[39:0];
+                         end
+                   1'b1: begin 
+                           if (m_gen2_mode) wd1 <= wr_data;
+                           else wd0[79:40] <= wr_data[39:0]; 
+                         end
                  endcase
        FIFO_4X:  case(wr_cnt)
-                   2'b00: wd0 = wr_data;
-                   2'b01: wd1 = wr_data;
-                   2'b10: wd2 = wr_data;
-                   2'b11: wd3 = wr_data;
+                   2'b00: wd0 <= wr_data;
+                   2'b01: wd1 <= wr_data;
+                   2'b10: wd2 <= wr_data;
+                   2'b11: wd3 <= wr_data;
                  endcase
      endcase
   end
 
   assign full_wr_data = {wd3, wd2, wd1, wd0}; 
 
-  always @ * begin
-      if (r_fifo_mode == FIFO_4X) full_wr_en = wr_en & (wr_cnt == 2'b11);
-      else if (r_fifo_mode == FIFO_2X) full_wr_en = wr_en & (wr_cnt[0] == 1'b1);
-      else                           full_wr_en = wr_en;
+  always @(posedge wr_clk)  begin
+      if (r_fifo_mode == FIFO_4X) full_wr_en <= wr_en & (wr_cnt == 2'b11);
+      else if (r_fifo_mode == FIFO_2X) full_wr_en <= wr_en & (wr_cnt[0] == 1'b1);
+      else                           full_wr_en <= wr_en;
    end
    //********************************************************************
    // READ CLOCK DOMAIN: Generate Fifo Number of Data Present

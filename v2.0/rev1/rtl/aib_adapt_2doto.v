@@ -10,6 +10,7 @@
 module aib_adapt_2doto (
 
 input          dual_mode_select,
+input          m_gen2_mode,
 input          atpg_mode,
 //MAC data interface
 output [319:0] data_out_f,            //FIFO read data to mac
@@ -99,6 +100,10 @@ input  [1:0]   csr_rx_fifo_mode,
 input  [1:0]   csr_tx_fifo_mode,                 
 input          csr_rx_wa_en,
 input          csr_tx_wm_en,
+input  [4:0]   csr_rx_mkbit,
+input  [4:0]   csr_tx_mkbit,
+input          csr_txswap_en,
+input          csr_rxswap_en,
 input  [3:0]   csr_tx_phcomp_rd_delay,
 input  [3:0]   csr_rx_phcomp_rd_delay,
 input          csr_tx_dbi_en,
@@ -228,14 +233,18 @@ aib_adapt_rxchnl aib_adapt_rxchnl(
      .rxfifo_wrclk(rx_wr_clk),
      .m_rd_clk(m_rd_clk),
      .atpg_mode(atpg_mode),
+     .m_gen2_mode(m_gen2_mode),
      .adapt_rstn(adpt_rstn),
      .r_rx_fifo_mode(csr_rx_fifo_mode),
      .r_rx_phcomp_rd_delay(csr_rx_phcomp_rd_delay),
      .r_rx_wa_en(csr_rx_wa_en),
+     .r_rx_mkbit(csr_rx_mkbit),
+     .r_rxswap_en(csr_rxswap_en),
      .r_rx_dbi_en(csr_rx_dbi_en),
      .wa_error(wa_error),
      .wa_error_cnt(wa_error_cnt)
    );
+
 assign aibio_dout = tx_adapt_dout;
 aib_adapt_txchnl aib_adapt_txchnl(
    // Outputs
@@ -243,6 +252,7 @@ aib_adapt_txchnl aib_adapt_txchnl(
    //.ns_fwd_clk(ns_fwd_clk),
    // Inputs
      .atpg_mode(atpg_mode),
+     .m_gen2_mode(m_gen2_mode),
      .adapt_rstn(adpt_rstn),
      .m_wr_clk(tx_wr_clk),
      .m_ns_fwd_clk(tx_rd_clk),  //This includes reg mode clock during loopback.
@@ -251,6 +261,8 @@ aib_adapt_txchnl aib_adapt_txchnl(
      .r_tx_fifo_mode(csr_tx_fifo_mode),
      .r_tx_phcomp_rd_delay(csr_tx_phcomp_rd_delay),
      .r_tx_wm_en(csr_tx_wm_en),
+     .r_tx_mkbit(csr_tx_mkbit),
+     .r_txswap_en(csr_txswap_en),
      .r_tx_dbi_en(csr_tx_dbi_en)
    );
 

@@ -23,7 +23,6 @@ ${V1M_ROOT}/aib_adaptrxdp_async_fifo.v
 ${V1M_ROOT}/aib_adaptrxdp_fifo.v
 ${V1M_ROOT}/aib_adaptrxdp_fifo_ptr.v
 ${V1M_ROOT}/aib_adaptrxdp_fifo_ram.v
-${V1M_ROOT}/aib_adaptrxdp_rxdp.v
 ${V1M_ROOT}/aib_adapttxdbi_txdp.v
 ${V1M_ROOT}/aib_adapttxdp_async_fifo.v
 ${V1M_ROOT}/aib_adapttxdp_fifo.v

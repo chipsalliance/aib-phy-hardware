@@ -7,6 +7,7 @@ module aib_adapt_txchnl(
    // Inputs
    input              atpg_mode, 
    input              adapt_rstn, 
+   input              m_gen2_mode,
    input              m_wr_clk,
    input              m_ns_fwd_clk,  
    input [319:0]      data_in_f,   //FIFO mode 
@@ -14,11 +15,13 @@ module aib_adapt_txchnl(
    input              r_tx_dbi_en,
    input [1:0]        r_tx_fifo_mode, 
    input [3:0]        r_tx_phcomp_rd_delay,
-   input              r_tx_wm_en 
+   input              r_txswap_en,
+   input              r_tx_wm_en,
+   input  [4:0]       r_tx_mkbit
    );
 
 wire         fifo_empty, fifo_full;
-wire [79:0]  fifo_dout, merge_dout;
+wire [79:0]  fifo_dout, merge_dout, data_in_f_sel;
 wire         txrd_rstn, txfifo_wrclk, txwr_rstn;
 
 //Mux for bypass mode data and fifo data
@@ -35,6 +38,9 @@ aib_adapttxdbi_txdp txdbi
 
   );
     
+assign data_in_f_sel[79:0] = ((r_tx_fifo_mode == 2'b01) & r_txswap_en & ~m_gen2_mode) ? 
+                              {data_in_f[79], data_in_f[38:0], data_in_f[39],data_in_f[78:40]} : data_in_f[79:0];
+
 
 aib_adapttxdp_fifo txdp_fifo (
   // Outputs
@@ -44,7 +50,7 @@ aib_adapttxdp_fifo txdp_fifo (
   .fifo_pfull                             (),
   .fifo_pempty                            (),
   // Inputs
-  .data_in                                (data_in_f[319:0]),
+  .data_in                                ({data_in_f[319:80], data_in_f_sel[79:0]}),
   .r_empty	                          (5'b0),
   .r_fifo_mode	                          (r_tx_fifo_mode[1:0]),
   .r_full	                          (5'b11111),
@@ -52,7 +58,9 @@ aib_adapttxdp_fifo txdp_fifo (
   .r_pfull	                          (5'b11111),
   .r_phcomp_rd_delay	                  (r_tx_phcomp_rd_delay),
 
+  .m_gen2_mode                            (m_gen2_mode),
   .r_wm_en		                  (r_tx_wm_en),
+  .r_mkbit                                (r_tx_mkbit),
   .wr_clk	                          (m_wr_clk),
   .wr_rst_n                               (txwr_rstn),
   .rd_clk	                          (m_ns_fwd_clk),

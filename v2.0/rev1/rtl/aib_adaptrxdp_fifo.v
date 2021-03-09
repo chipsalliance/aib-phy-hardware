@@ -27,9 +27,11 @@ module aib_adaptrxdp_fifo
     input  wire [AWIDTH-1:0] r_pfull,    // FIFO partially full threshold
     input  wire [AWIDTH-1:0] r_empty,    // FIFO empty threshold
     input  wire [AWIDTH-1:0] r_full,     // FIFO full threshold
+    input  wire              m_gen2_mode,
     input  wire [1:0]        r_fifo_mode,     // FIFO Mode: Phase-comp, BaseR RM, Interlaken, Register Mode
     input  wire [3:0]        r_phcomp_rd_delay,  // Programmable read and write pointer gap in phase comp mode
     input  wire		     r_wa_en,		 // Word-align enable
+    input  wire [4:0]        r_mkbit,            // Configurable marker bit
     
     
     output wire [4*DWIDTH-1:0] fifo_dout,    // Read Data Out
@@ -126,6 +128,8 @@ aib_adaptrxdp_async_fifo
    .r_empty	      (r_empty[ASYNC_FIFO_AWIDTH-1:0]),	     // FIFO empty threshold   
    .r_full	      (r_full[ASYNC_FIFO_AWIDTH-1:0]),	     // FIFO full threshold   
    .r_fifo_mode       (r_fifo_mode),
+   .m_gen2_mode       (m_gen2_mode),
+   .r_mkbit           (r_mkbit),
    .wr_empty          (wr_empty),              // FIFO Empty
    .wr_pempty         (wr_pempty),            // FIFO Partial Empty
    .wr_full           (wr_full),                // FIFO Full
