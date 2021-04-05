@@ -31,16 +31,24 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
  
         for (i_m1=0; i_m1<24; i_m1++) begin
             avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0600_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0043);      
-            avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h60a8_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0023);      
+            avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h60a4_0000);
             avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h31c}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h320}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h324}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h328}, 4'hf, 32'h0000_0000);
 
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
             avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0043);
-            avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60a8_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0023);
+            avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60a4_0000);
             avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
         end
       join
 
@@ -48,6 +56,8 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
       sl1_tx_fifo_mode = 2'b01;
       ms1_rx_fifo_mode = 2'b01;
       sl1_rx_fifo_mode = 2'b01;
+      ms1_tx_markbit   = 5'b00100;
+      sl1_tx_markbit   = 5'b00100;
 
       run_for_n_pkts_ms1 = 40;
       run_for_n_pkts_sl1 = 40;

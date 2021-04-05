@@ -1,28 +1,4 @@
-    .iopad_tx(m1_iopad_rx),
-    .iopad_rx(m1_iopad_tx),
-    .iopad_ns_rcv_clkb(m1_iopad_fs_rcv_clkb), 
-    .iopad_ns_rcv_clk(m1_iopad_fs_rcv_clk),
-    .iopad_ns_fwd_clk(m1_iopad_fs_fwd_clk), 
-    .iopad_ns_fwd_clkb(m1_iopad_fs_fwd_clkb),
-    .iopad_ns_sr_clk(m1_iopad_fs_sr_clk), 
-    .iopad_ns_sr_clkb(m1_iopad_fs_sr_clkb),
-    .iopad_ns_sr_load(m1_iopad_fs_sr_load), 
-    .iopad_ns_sr_data(m1_iopad_fs_sr_data),
-    .iopad_ns_mac_rdy(m1_iopad_fs_mac_rdy), 
-    .iopad_ns_adapter_rstn(m1_iopad_fs_adapter_rstn),
-    .iopad_spare1(m1_iopad_spare1), 
-    .iopad_spare0(m1_iopad_spare0),
-    .iopad_fs_rcv_clkb(m1_iopad_ns_rcv_clkb), 
-    .iopad_fs_rcv_clk(m1_iopad_ns_rcv_clk),
-    .iopad_fs_fwd_clkb(m1_iopad_ns_fwd_clkb), 
-    .iopad_fs_fwd_clk(m1_iopad_ns_fwd_clk),
-    .iopad_fs_sr_clkb(m1_iopad_ns_sr_clkb), 
-    .iopad_fs_sr_clk(m1_iopad_ns_sr_clk),
-    .iopad_fs_sr_load(m1_iopad_ns_sr_load), 
-    .iopad_fs_sr_data(m1_iopad_ns_sr_data),
-    .iopad_fs_mac_rdy(m1_iopad_ns_mac_rdy), 
-    .iopad_fs_adapter_rstn(m1_iopad_ns_adapter_rstn),
-
+    .iopad_aib(s1_iopad_aib),
     //IO pads, AUX channel
 //  .iopad_device_detect(device_detect),
 //  .iopad_device_detect_copy(device_detectrdcy),
@@ -42,6 +18,7 @@
 
     .m_wr_clk(intf_s1.m_wr_clk),
     .m_rd_clk(intf_s1.m_rd_clk),
+    .tclk_phy(),
 
     .ns_adapter_rstn(intf_s1.ns_adapter_rstn),
     .ns_mac_rdy(intf_s1.ns_mac_rdy),
@@ -58,12 +35,10 @@
     .sl_rx_transfer_en(intf_s1.sl_rx_transfer_en),
     .sr_ms_tomac(intf_s1.ms_sideband),
     .sr_sl_tomac(intf_s1.sl_sideband),
-    .m_rxfifo_align_done(intf_s1.m_rxfifo_align_done),
-    .wa_error(intf_s1.wa_error),
-    .wa_error_cnt(intf_s1.wa_error_cnt),
+    .m_rx_align_done(intf_s1.m_rx_align_done),
     .dual_mode_select(1'b0),
     .m_gen2_mode(1'b1),
-    .por(por),
+    .por(intf_s1.por),
     .i_osc_clk(1'b1),   //Only for master mode
 
     //AVMM interface
@@ -100,6 +75,15 @@
     .jtag_weakpu(1'b0),
     .jtag_tx_scanen_in(1'b0),
     .scan_in(1'b0),
+//ATPG
+    .i_scan_clk(1'b0),
+    .i_scan_clk_500m(1'b0),
+    .i_scan_clk_1000m(1'b0),
+    .i_scan_en(1'b0),
+    .i_scan_mode(1'b0),
+    .i_scan_din(200'b0),
+    .i_scan_dout(),
+
 
 //Redundancy control signals
 //`include "redundancy_ctrl_sim.vh"
@@ -109,7 +93,5 @@
     .sl_external_cntl_57_32(26'b0),
 
     .ms_external_cntl_4_0(5'b0),
-    .ms_external_cntl_65_8(58'b0),
+    .ms_external_cntl_65_8(58'b0)
 
-    .vccl_aib(1'b1),
-    .vssl_aib(1'b0) 

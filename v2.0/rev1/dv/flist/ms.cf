@@ -31,6 +31,7 @@ ${V1M_ROOT}/aib_adapttxdp_fifo_ram.v
 ${V1M_ROOT}/aib_adapt_2doto.v
 ${V1M_ROOT}/aib_avmm_rdl_intf.sv
 ${V1M_ROOT}/aib_avmm_adapt_csr.v
+${V1M_ROOT}/aib_avmm_io_csr.v
 ${V1M_ROOT}/aib_avmm.v
 ${V1M_ROOT}/aib_channel.v
 ${V1M_ROOT}/aib_model_top.v

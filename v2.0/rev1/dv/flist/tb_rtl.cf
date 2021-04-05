@@ -4,8 +4,9 @@
 +incdir+../tb
 +incdir+../interface
 +incdir+../test/task
-#../../rtl/emib/aliasv.sv
-#../../rtl/emib/emib.sv
+../emib/aliasv.sv
+../emib/emib_ch.sv
+../emib/emib.sv
 ../interface/dut_if_mac.sv
 ../interface/avalon_mm_if.sv
 ../tb/top_tb.sv

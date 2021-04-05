@@ -41,9 +41,7 @@ interface dut_if_mac #(parameter DWIDTH = 40, parameter TOTAL_CHNL_NUM = 24)
     logic [TOTAL_CHNL_NUM-1:0]            ms_rx_transfer_en;
     logic [TOTAL_CHNL_NUM-1:0]            sl_tx_transfer_en;
     logic [TOTAL_CHNL_NUM-1:0]            sl_rx_transfer_en;
-    logic [TOTAL_CHNL_NUM-1:0]            m_rxfifo_align_done; 
-    logic [TOTAL_CHNL_NUM-1:0]            wa_error; 
-    logic [TOTAL_CHNL_NUM*4-1:0]          wa_error_cnt; 
+    logic [TOTAL_CHNL_NUM-1:0]            m_rx_align_done; 
 
     genvar                       i;
 

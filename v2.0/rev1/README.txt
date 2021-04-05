@@ -1,5 +1,5 @@
 README.txt
-Feb. 09, 2021
+April. 05, 2021
 
 ============================================================
 ============================================================
@@ -18,6 +18,12 @@ Included in this package are:
 ===========================================================
 Revision history:
 Version 1.0: Initial release
+04/05/2021: Changelist
+1) Modified AIB model ports. The microbump names changed.
+2) Changed default marker bit position from bit 78 to bit 77
+3) Modified adaptor FIFO reset sequence.
+4) Added redundancy test.
+5) Added ncsim simulation support
 
 ============================================================
 Files included:
@@ -30,7 +36,7 @@ README.txt           - This file
 
 rev1
 ├── dv
-│   ├── emib                    -- Holding place for future development
+│   ├── emib                    -- Connection files for Leader and Follower chiplets
 │   ├── flist                   -- File lists for compilation
 │   │   ├── ms.cf               -- File list for RTL
 │   │   ├── tb_rtl.cf           -- File list for 24 channel + AUX DV files
@@ -65,7 +71,8 @@ rev1
 │           ├── fifo4x_test_ch.inc  -- Test single channle FIFO 4X mode
 │           ├── fifo4x_test.inc     -- Test 24 channle FIFO 4X mode
 │           ├── reg_test_ch.inc     -- Test single channle register mode
-│           └── reg_test.inc        -- Test 24 channle register mode
+│           |── reg_test.inc        -- Test 24 channle register mode
+│           |── redundancy_ch.inc   -- Test single channel redunduncy repair
 └── rtl                          -- AIB 2.0 RTL model
     ├── aib_adapt_2doto.v        -- Dual mode aib adapter top level
     ├── aib_adapt_rxchnl.v

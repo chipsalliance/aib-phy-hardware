@@ -40,8 +40,6 @@ module aib_adaptrxdp_fifo
     output wire              fifo_pempty,       // FIFO partial empty
     output wire              fifo_pfull,        // FIFO partial full 
     output wire              fifo_full,         // FIFO full
-    output reg 		     wa_error,          // To SR, status reg
-    output reg  [3:0]	     wa_error_cnt,	// Go to status reg
     output wire              align_done
      );
    
@@ -75,8 +73,6 @@ wire [4*DWIDTH-1:0]	fifo_out;
 wire [4*DWIDTH-1:0]	data_in;
 reg  [4*DWIDTH-1:0]     data_out;
 
-reg                     wa_error_int;
-wire 			wr_en_int;
 wire 			rd_en_int;
 wire			wr_empty;
 wire			wr_pempty;
@@ -172,35 +168,6 @@ always @(negedge rd_rst_n or posedge rd_clk) begin
    end
 end
 
-//Word-align error detect
-
-always @* begin
-   if (r_wa_en && rd_en_reg) begin
-       if (r_fifo_mode == FIFO_2X)
-          wa_error_int = ~(data_out[158] & !data_out[58]);
-       else if (r_fifo_mode == FIFO_4X)
-          wa_error_int = ~(data_out[318] & !data_out[238] & !data_out[158] & !data_out[58]);
-       else wa_error_int = 1'b0;
-   end else wa_error_int = 1'b0;
-end
-
-
-// Sample and hold wa_error
-always @(negedge rd_rst_n or posedge rd_clk) begin
-   if (rd_rst_n == 1'b0) 
-     wa_error <= 1'b0;
-   else 
-     wa_error <= wa_error | wa_error_int;
-end   
-
-always @(negedge rd_rst_n or posedge rd_clk) begin
-   if (rd_rst_n == 1'b0) begin
-     wa_error_cnt <= 4'b0000;
-   end
-   else if (wa_error_cnt < 4'b1111 && wa_error_int) begin
-     wa_error_cnt 	<= wa_error_cnt + 1'b1;
-   end
-end   
 
 // Phase Comp FIFO mode Write/Read enable logic generation
 // Write Enable

@@ -71,7 +71,7 @@ always @( negedge  reset_n,  posedge clk)
          rx_0[23:16] <=  din[23:16]; 
       end
       if (we_rx_0[3]) begin 
-         rx_0[31:28] <=  din[31:28];
+         rx_0[31:24] <=  din[31:24];
       end
 end
 
@@ -90,7 +90,7 @@ always @( negedge  reset_n,  posedge clk)
          rx_1[23:16] <=  din[23:16];  
       end
       if (we_rx_1[3]) begin          
-         rx_1[31:28] <=  din[31:28];  
+         rx_1[31:24] <=  din[31:24];  
       end
 end
 
@@ -109,7 +109,7 @@ always @( negedge  reset_n,  posedge clk)
          tx_0[23:16] <=  din[23:16];  
       end
       if (we_tx_0[3]) begin          
-         tx_0[31:28] <=  din[31:28];  
+         tx_0[31:24] <=  din[31:24];  
       end
 end
 
@@ -129,7 +129,7 @@ always @( negedge  reset_n,  posedge clk)
          tx_1[23:16] <=  din[23:16];
       end
       if (we_tx_1[3]) begin
-         tx_1[31:28] <=  din[31:28];
+         tx_1[31:24] <=  din[31:24];
       end
 end
 

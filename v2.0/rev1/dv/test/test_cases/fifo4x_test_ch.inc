@@ -27,14 +27,26 @@
       avmm_if_m1.cfg_write(17'h208, 4'hf, 32'h0600_0000);
       avmm_if_s1.cfg_write(17'h208, 4'hf, 32'h0600_0000);
 
-      avmm_if_m1.cfg_write(17'h210, 4'hf, 32'h0000_0045);
-      avmm_if_s1.cfg_write(17'h210, 4'hf, 32'h0000_0045);
+      avmm_if_m1.cfg_write(17'h210, 4'hf, 32'h0000_0025);
+      avmm_if_s1.cfg_write(17'h210, 4'hf, 32'h0000_0025);
 
-      avmm_if_m1.cfg_write(17'h218, 4'hf, 32'h60c8_0000);
-      avmm_if_s1.cfg_write(17'h218, 4'hf, 32'h60c8_0000);
+      avmm_if_m1.cfg_write(17'h218, 4'hf, 32'h60c4_0000);
+      avmm_if_s1.cfg_write(17'h218, 4'hf, 32'h60c4_0000);
 
       avmm_if_m1.cfg_write(17'h21c, 4'hf, 32'h0000_0000);
       avmm_if_s1.cfg_write(17'h21c, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h31c, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h31c, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h320, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h320, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h324, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h324, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h328, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h328, 4'hf, 32'h0000_0000);
 
       ms1_tx_fifo_mode = 2'b10;
       sl1_tx_fifo_mode = 2'b10;
@@ -43,6 +55,8 @@
 
       run_for_n_pkts_ms1 = 40;
       run_for_n_pkts_sl1 = 40;
+      ms1_tx_markbit   = 5'b00100;
+      sl1_tx_markbit   = 5'b00100;
 
       $display("\n////////////////////////////////////////////////////////////////////////////");
       $display("%0t: Performing duts_wakeup", $time);

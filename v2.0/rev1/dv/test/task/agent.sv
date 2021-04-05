@@ -37,6 +37,13 @@
          intf_m1.m_por_ovrd = 1'b1;   
          intf_s1.m_device_detect_ovrd = 1'b0;
          intf_s1.i_m_power_on_reset = 1'b0;
+
+         intf_m1.data_in = {TOTAL_CHNL_NUM{80'b0}};
+         intf_s1.data_in = {TOTAL_CHNL_NUM{80'b0}};
+
+         intf_m1.data_in_f[319:0] = {TOTAL_CHNL_NUM{320'b0}};
+         intf_s1.data_in_f[319:0] = {TOTAL_CHNL_NUM{320'b0}};
+
          #100ns;
          intf_s1.i_m_power_on_reset = 1'b1;
          $display("\n////////////////////////////////////////////////////////////////////////////");
@@ -77,11 +84,6 @@
           intf_m1.ms_rx_dcc_dll_lock_req = {TOTAL_CHNL_NUM{1'b1}};
           intf_m1.ms_tx_dcc_dll_lock_req = {TOTAL_CHNL_NUM{1'b1}};
 
-          intf_m1.data_in = {TOTAL_CHNL_NUM{80'b0}};
-          intf_s1.data_in = {TOTAL_CHNL_NUM{80'b0}};
-
-          intf_m1.data_in_f[319:0] = {TOTAL_CHNL_NUM{320'b0}};
-          intf_s1.data_in_f[319:0] = {TOTAL_CHNL_NUM{320'b0}};
      end
   endtask
 
@@ -131,7 +133,7 @@
         while (pkts_gen < run_for_n_pkts_ms1) begin
             din = fifo_din(ms1_tx_fifo_mode);
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
-            exp_din = sb_data(din, ms1_tx_fifo_mode);
+            exp_din = sb_data(din, ms1_tx_fifo_mode, ms1_tx_markbit);
             $display ("[%t] ms1 expecting data[%d] = %x \n", $time, pkts_gen, exp_din);
             @(posedge intf_m1.m_wr_clk);
             intf_m1.data_in_f <=  din;
@@ -165,23 +167,50 @@
 
   endfunction
 
-  function [320*24-1:0] sb_data(input [320*24-1:0] din, input [1:0] fifo_mode);
+  function [320*24-1:0] sb_data(input [320*24-1:0] din, input [1:0] fifo_mode, input [4:0] markbit);
      integer i;
      begin
         case (fifo_mode)
           2'b00: sb_data =din;
           2'b01: begin
                    for (i=0; i<24; i++)
-                     sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
-                                               din[159+i*320], 1'b1, din[(i*320+157) -: 78],    
-                                               din[79+i*320],  1'b0, din[(i*320+77)  -: 78]};
+                   case (markbit) 
+                    5'b10000:  sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
+                                                         1'b1,           din[158+i*320], din[157+i*320], din[156+i*320], din[(i*320+155) -: 76],    
+                                                         1'b0,           din[78+i*320],  din[77+i*320],  din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b01000:  sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
+                                                         din[159+i*320], 1'b1,           din[157+i*320], din[156+i*320], din[(i*320+155) -: 76],                       
+                                                         din[79+i*320],  1'b0,           din[77+i*320],  din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b00100:  sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
+                                                         din[159+i*320], din[158+i*320], 1'b1,           din[156+i*320], din[(i*320+155) -: 76],                       
+                                                         din[79+i*320],  din[78+i*320],  1'b0,           din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b00010:  sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
+                                                         din[159+i*320], din[158+i*320], din[157+i*320], 1'b1,           din[(i*320+155) -: 76],                       
+                                                         din[79+i*320],  din[78+i*320],  din[77+i*320],  1'b0,           din[(i*320+75)  -: 76]};
+                    5'b00001:  sb_data[(i*320) +: 320] ={din[((i+1)*320-1) -: 240], 
+                                                         1'b1,           din[(78+i*320) -: 39],          1'b0,           din[(i*320+38)  -: 39]};
+                   endcase
                  end
           2'b10: begin
                    for (i=0; i<24; i++)
-                     sb_data[(i*320) +: 320] ={din[319 + i*320], 1'b1, din[(i*320+317) -: 78], 
-                                               din[239 + i*320], 1'b0, din[(i*320+237) -: 78],
-                                               din[159 + i*320], 1'b0, din[(i*320+157) -: 78],  
-                                               din[79 +  i*320], 1'b0, din[(i*320+77)  -: 78]};
+                   case (markbit) 
+                    5'b10000:  sb_data[(i*320) +: 320] ={1'b1,           din[318+i*320], din[317+i*320], din[316+i*320], din[(i*320+315) -: 76], 
+                                                         1'b0,           din[238+i*320], din[237+i*320], din[236+i*320], din[(i*320+235) -: 76],
+                                                         1'b0,           din[158+i*320], din[157+i*320], din[156+i*320], din[(i*320+155) -: 76],                       
+                                                         1'b0,           din[78+i*320],  din[77+i*320],  din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b01000:  sb_data[(i*320) +: 320] ={din[319+i*320], 1'b1,           din[317+i*320], din[316+i*320], din[(i*320+315) -: 76],        
+                                                         din[239+i*320], 1'b0,           din[237+i*320], din[236+i*320], din[(i*320+235) -: 76],
+                                                         din[159+i*320], 1'b0,           din[157+i*320], din[156+i*320], din[(i*320+155) -: 76], 
+                                                         din[79+i*320],  1'b0,           din[77+i*320],  din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b00100:  sb_data[(i*320) +: 320] ={din[319+i*320], din[318+i*320], 1'b1,           din[316+i*320], din[(i*320+315) -: 76],        
+                                                         din[239+i*320], din[238+i*320], 1'b0,           din[236+i*320], din[(i*320+235) -: 76],
+                                                         din[159+i*320], din[158+i*320], 1'b0,           din[156+i*320], din[(i*320+155) -: 76], 
+                                                         din[79+i*320],  din[78+i*320],  1'b0,           din[76+i*320],  din[(i*320+75)  -: 76]};
+                    5'b00010:  sb_data[(i*320) +: 320] ={din[319+i*320], din[318+i*320], din[317+i*320], 1'b1,           din[(i*320+315) -: 76],        
+                                                         din[239+i*320], din[238+i*320], din[237+i*320], 1'b0,           din[(i*320+235) -: 76],
+                                                         din[159+i*320], din[158+i*320], din[157+i*320], 1'b0,           din[(i*320+155) -: 76], 
+                                                         din[79+i*320],  din[78+i*320],  din[77+i*320],  1'b0,           din[(i*320+75)  -: 76]};
+                  endcase
                  end
           2'b11: sb_data ={24{320'h0}};
         endcase
@@ -247,9 +276,9 @@
      begin
         case (fifo_mode)
           2'b00:  din_rcv_vld = (data[79:0]  !== 0);
-          2'b01:  din_rcv_vld = (data[157:0] !== 0);
-          2'b10:  din_rcv_vld = (data[317:0] !== 0);
-          2'b11:  din_rcv_vld = (data[79:0]  !== 0);
+          2'b01:  din_rcv_vld = (data[155:0] !== 0); //For AIB Gen2, top 4 bit can be programmable marker bit.
+          2'b10:  din_rcv_vld = (data[315:0] !== 0); //For AIB Gen2, top 4 bit can be programmable marker bit.
+          2'b11:  din_rcv_vld = (data[79:0]  !== 0); //AIB1.0 TBD
         endcase
      end
 
@@ -289,7 +318,7 @@
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = fifo_din(sl1_tx_fifo_mode);
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
-            exp_din = sb_data(din, sl1_tx_fifo_mode);
+            exp_din = sb_data(din, sl1_tx_fifo_mode, sl1_tx_markbit);
             $display ("[%t] sl1 expecting data[%d] = %x \n", $time, pkts_gen, exp_din);
             @(posedge intf_s1.m_wr_clk);
             intf_s1.data_in_f <=  din;

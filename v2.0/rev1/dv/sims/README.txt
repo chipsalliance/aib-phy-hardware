@@ -21,3 +21,6 @@ Commands to run VCS test:
 ./simv
 ./run_compile     -- VCS for stack (24 channel + aux)
 ./simv
+
+Commands to run ncsim test
+./runnc.ch

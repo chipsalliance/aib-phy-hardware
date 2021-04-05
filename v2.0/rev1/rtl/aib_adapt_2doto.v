@@ -12,6 +12,9 @@ module aib_adapt_2doto (
 input          dual_mode_select,
 input          m_gen2_mode,
 input          atpg_mode,
+input          adapt_rstn,
+input          tx_fifo_rstn,
+input          rx_fifo_rstn,
 //MAC data interface
 output [319:0] data_out_f,            //FIFO read data to mac
 output [79:0]  data_out,              //register mode data to mac
@@ -68,9 +71,7 @@ output         sl_tx_dcc_cal_req,
 
 output [80:0]  ms_sideband,
 output [72:0]  sl_sideband,
-output         m_rxfifo_align_done,
-output         wa_error,
-output [3:0]   wa_error_cnt,
+output         m_rx_align_done,
 
 //SR interface with AIB IO
 
@@ -227,22 +228,21 @@ aib_adapt_rxchnl aib_adapt_rxchnl(
    // Outputs
      .data_out_f(rx_adapt_dout[319:0]),
      .data_out(data_out_int),
-     .align_done(m_rxfifo_align_done),
+     .align_done(m_rx_align_done),
    // Inputs
      .din(rx_adapt_din),   //from io buffer or near side loopback
      .rxfifo_wrclk(rx_wr_clk),
      .m_rd_clk(m_rd_clk),
      .atpg_mode(atpg_mode),
      .m_gen2_mode(m_gen2_mode),
-     .adapt_rstn(adpt_rstn),
+     .adapt_rstn(adapt_rstn),
+     .rx_fifo_rstn(rx_fifo_rstn),
      .r_rx_fifo_mode(csr_rx_fifo_mode),
      .r_rx_phcomp_rd_delay(csr_rx_phcomp_rd_delay),
      .r_rx_wa_en(csr_rx_wa_en),
      .r_rx_mkbit(csr_rx_mkbit),
      .r_rxswap_en(csr_rxswap_en),
-     .r_rx_dbi_en(csr_rx_dbi_en),
-     .wa_error(wa_error),
-     .wa_error_cnt(wa_error_cnt)
+     .r_rx_dbi_en(csr_rx_dbi_en)
    );
 
 assign aibio_dout = tx_adapt_dout;
@@ -254,6 +254,7 @@ aib_adapt_txchnl aib_adapt_txchnl(
      .atpg_mode(atpg_mode),
      .m_gen2_mode(m_gen2_mode),
      .adapt_rstn(adpt_rstn),
+     .tx_fifo_rstn(tx_fifo_rstn),
      .m_wr_clk(tx_wr_clk),
      .m_ns_fwd_clk(tx_rd_clk),  //This includes reg mode clock during loopback.
      .data_in_f(tx_adapt_din[319:0]),

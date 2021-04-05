@@ -7,6 +7,7 @@ module aib_adapt_txchnl(
    // Inputs
    input              atpg_mode, 
    input              adapt_rstn, 
+   input              tx_fifo_rstn, 
    input              m_gen2_mode,
    input              m_wr_clk,
    input              m_ns_fwd_clk,  
@@ -23,6 +24,7 @@ module aib_adapt_txchnl(
 wire         fifo_empty, fifo_full;
 wire [79:0]  fifo_dout, merge_dout, data_in_f_sel;
 wire         txrd_rstn, txfifo_wrclk, txwr_rstn;
+wire         txrd_fifo_rstn, txwr_fifo_rstn;
 
 //Mux for bypass mode data and fifo data
 assign merge_dout[79:0]= (r_tx_fifo_mode == 2'b11) ?  data_in[79:0] : fifo_dout[79:0];
@@ -62,9 +64,9 @@ aib_adapttxdp_fifo txdp_fifo (
   .r_wm_en		                  (r_tx_wm_en),
   .r_mkbit                                (r_tx_mkbit),
   .wr_clk	                          (m_wr_clk),
-  .wr_rst_n                               (txwr_rstn),
+  .wr_rst_n                               (txwr_fifo_rstn),
   .rd_clk	                          (m_ns_fwd_clk),
-  .rd_rst_n                               (txrd_rstn)
+  .rd_rst_n                               (txrd_fifo_rstn)
 );
 
 
@@ -77,12 +79,32 @@ aib_rstnsync txwr_rstnsync
 
    );
 
+aib_rstnsync txwr_fifo_rstnsync
+  (
+    .clk(m_wr_clk),               
+    .i_rst_n(tx_fifo_rstn),      
+    .scan_mode(atpg_mode),      
+    .sync_rst_n(txwr_fifo_rstn)
+
+   );
+
+
+
 aib_rstnsync txrd_rstnsync
   (
     .clk(m_ns_fwd_clk),                   // Destination clock of reset to be synced
     .i_rst_n(adapt_rstn),             // Asynchronous reset input
     .scan_mode(atpg_mode),            // Scan bypass for reset
     .sync_rst_n(txrd_rstn)            // Synchronized reset output
+
+   );
+
+aib_rstnsync txrd_fifo_rstnsync
+  (
+    .clk(m_ns_fwd_clk),                 
+    .i_rst_n(tx_fifo_rstn),            
+    .scan_mode(atpg_mode),          
+    .sync_rst_n(txrd_fifo_rstn)         
 
    );
 

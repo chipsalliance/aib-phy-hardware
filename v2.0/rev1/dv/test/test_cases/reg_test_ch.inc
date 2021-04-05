@@ -34,6 +34,18 @@
       avmm_if_m1.cfg_write(17'h21c, 4'hf, 32'h0000_0000);
       avmm_if_s1.cfg_write(17'h21c, 4'hf, 32'h0000_0000);
 
+      avmm_if_m1.cfg_write(17'h31c, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h31c, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h320, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h320, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h324, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h324, 4'hf, 32'h0000_0000);
+
+      avmm_if_m1.cfg_write(17'h328, 4'hf, 32'h0000_0000);
+      avmm_if_s1.cfg_write(17'h328, 4'hf, 32'h0000_0000);
+
       run_for_n_pkts_ms1 = 4;
       run_for_n_pkts_sl1 = 4;
 

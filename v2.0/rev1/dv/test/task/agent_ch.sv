@@ -26,18 +26,25 @@
          avmm_if_s1.writedata = '0;
          avmm_if_s1.byteenable = '0;
 
-
+         intf_s1.por = 1'b1;
          intf_s1.i_conf_done = 1'b0;
          intf_s1.ns_mac_rdy      = '0;
          intf_s1.ns_adapter_rstn = '0;
          intf_s1.sl_rx_dcc_dll_lock_req = '0;
          intf_s1.sl_tx_dcc_dll_lock_req = '0;
 
+         intf_m1.por = 1'b1;
          intf_m1.i_conf_done = 1'b0;
          intf_m1.ns_mac_rdy      = '0;
          intf_m1.ns_adapter_rstn = '0;
          intf_m1.ms_rx_dcc_dll_lock_req = '0;
          intf_m1.ms_tx_dcc_dll_lock_req = '0;
+
+         intf_m1.data_in[79:0] = 80'b0;
+         intf_s1.data_in[79:0] = 80'b0;
+         intf_m1.data_in_f[319:0] = 320'b0;
+         intf_s1.data_in_f[319:0] = 320'b0;
+
          #100ns;
 
          avmm_if_m1.rst_n = 1'b1;
@@ -52,15 +59,15 @@
   //     intf_s1.m_device_detect_ovrd = 1'b0;
   //     intf_s1.m_power_on_reset = 1'b0;
          #100ns;
-  //     intf_s1.m_power_on_reset = 1'b1;
+         intf_s1.por = 1'b0;
          $display("\n////////////////////////////////////////////////////////////////////////////");
-  //     $display("%0t: FPGA power_on_reset asserted", $time);
+         $display("%0t:  slave power on  de-asserted", $time);
          $display("////////////////////////////////////////////////////////////////////////////\n");
 
          #200ns;
-  //     intf_s1.m_power_on_reset = 1'b0;
+         intf_m1.por = 1'b0;
          $display("\n////////////////////////////////////////////////////////////////////////////");
-  //     $display("%0t: FPGA power_on_reset de-asserted", $time);
+         $display("%0t: master power_on_reset de-asserted", $time);
          $display("////////////////////////////////////////////////////////////////////////////\n");
     end
   endtask
@@ -83,10 +90,7 @@
           intf_m1.ms_rx_dcc_dll_lock_req = 1'b1;
           intf_m1.ms_tx_dcc_dll_lock_req = 1'b1;
 
-          intf_m1.data_in[79:0] = 80'b0;
-          intf_s1.data_in[79:0] = 80'b0;
-          intf_m1.data_in_f[319:0] = 320'b0;
-          intf_s1.data_in_f[319:0] = 320'b0;
+
      end
   endtask
 
@@ -134,9 +138,9 @@
         while (pkts_gen < run_for_n_pkts_ms1) begin
             din = fifo_din(ms1_tx_fifo_mode);
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
-            exp_din = sb_data(din, ms1_tx_fifo_mode);
+            exp_din = sb_data(din, ms1_tx_fifo_mode, ms1_tx_markbit);
             @(posedge intf_m1.m_wr_clk);
-            intf_m1.data_in_f[319:0] <=  din;
+            intf_m1.data_in_f[319:0] =  din;
             ms1_xmit_f_q.push_back(exp_din);
             pkts_gen++;
         end
@@ -158,13 +162,40 @@
 
   endfunction
 
-  function [319:0] sb_data(input [319:0] din, input [1:0] fifo_mode);
+  function [319:0] sb_data(input [319:0] din, input [1:0] fifo_mode, input [4:0] markbit);
      begin
         case (fifo_mode)
           2'b00: sb_data =din;
-          2'b01: sb_data ={din[319:160], din[159], 1'b1, din[157:80], din[79], 1'b0, din[77:0]};
-          2'b10: sb_data ={din[319], 1'b1, din[317:240], din[239], 1'b0, din[237:160],
-                           din[159], 1'b0, din[157:80],  din[79],  1'b0, din[77:0]};
+          2'b01: case (markbit)
+                   5'b10000: sb_data ={din[319:160], 1'b1,     din[158], din[157], din[156], din[155:80], 
+                                                     1'b0,     din[78],  din[77],  din[76],  din[75:0]}; 
+                   5'b01000: sb_data ={din[319:160], din[159], 1'b1,     din[157], din[156], din[155:80], 
+                                                     din[79],  1'b0,     din[77],  din[76],  din[75:0]}; 
+                   5'b00100: sb_data ={din[319:160], din[159], din[158], 1'b1,     din[156], din[155:80], 
+                                                     din[79],  din[78],  1'b0,     din[76],  din[75:0]}; 
+                   5'b00010: sb_data ={din[319:160], din[159], din[158], din[157], 1'b1,     din[155:80], 
+                                                     din[79],  din[78],  din[77],  1'b0,     din[75:0]}; 
+                   5'b00001: sb_data ={din[319:80],  1'b1,     din[78:40], 
+                                                     1'b0,     din[38:0]}; 
+                 endcase
+          2'b10: case (markbit)
+                   5'b10000: sb_data ={1'b1,     din[318], din[317], din[316], din[315:240], 
+                                       1'b0,     din[238], din[237], din[236], din[235:160],
+                                       1'b0,     din[158], din[157], din[156], din[155:80], 
+                                       1'b0,     din[78],  din[77],  din[76],  din[75:0]}; 
+                   5'b01000: sb_data ={din[319], 1'b1,     din[317], din[316], din[315:240], 
+                                       din[239], 1'b0,     din[237], din[236], din[235:160],
+                                       din[159], 1'b0,     din[157], din[156], din[155:80],
+                                       din[79],  1'b0,     din[77],  din[76],  din[75:0]};
+                   5'b00100: sb_data ={din[319], din[318], 1'b1,     din[316], din[315:240], 
+                                       din[239], din[238], 1'b0,     din[236], din[235:160],
+                                       din[159], din[158], 1'b0,     din[156], din[155:80],
+                                       din[79],  din[78],  1'b0,     din[76],  din[75:0]};
+                   5'b00010: sb_data ={din[319], din[318], din[317], 1'b1,     din[315:240], 
+                                       din[239], din[238], din[237], 1'b0,     din[235:160],
+                                       din[159], din[158], din[157], 1'b0,     din[155:80],
+                                       din[79],  din[78],  din[77],  1'b0,     din[75:0]};
+                   endcase
           2'b11: sb_data ={320'h0};
         endcase
      end
@@ -200,7 +231,7 @@
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = fifo_din(sl1_tx_fifo_mode);
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
-            exp_din = sb_data(din, sl1_tx_fifo_mode);
+            exp_din = sb_data(din, sl1_tx_fifo_mode, sl1_tx_markbit);
             @(posedge intf_s1.m_wr_clk);
             intf_s1.data_in_f[319:0] <=  din;
             sl1_xmit_f_q.push_back(exp_din);
@@ -264,9 +295,9 @@
      begin
         case (fifo_mode)
           2'b00:  din_rcv_vld = (data[79:0]  !== 0);
-          2'b01:  din_rcv_vld = (data[157:0] !== 0);
-          2'b10:  din_rcv_vld = (data[317:0] !== 0);
-          2'b11:  din_rcv_vld = (data[79:0]  !== 0); 
+          2'b01:  din_rcv_vld = (data[155:0] !== 0);   //For AIB Gen2, top 4 bit can be programmable marker bit
+          2'b10:  din_rcv_vld = (data[315:0] !== 0);   //For AIB Gen2, top 4 bit can be programmable marker bit
+          2'b11:  din_rcv_vld = (data[79:0]  !== 0);   //AIB1.0 TBD
         endcase
      end
 

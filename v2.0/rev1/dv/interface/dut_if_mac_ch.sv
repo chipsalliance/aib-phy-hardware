@@ -34,6 +34,7 @@ interface dut_if_mac_ch #(parameter DWIDTH = 40)
 //  logic                  m_device_detect;
 //  logic                  m_device_detect_ovrd;
 
+    logic                  por;
     logic                  i_conf_done;
     logic                  sl_rx_dcc_dll_lock_req;
     logic                  sl_tx_dcc_dll_lock_req;
@@ -45,9 +46,7 @@ interface dut_if_mac_ch #(parameter DWIDTH = 40)
     logic                  sl_rx_transfer_en;
     logic [81-1:0]         sr_ms_tomac;
     logic [73-1:0]         sr_sl_tomac; 
-    logic                  m_rxfifo_align_done;
-    logic                  wa_error;
-    logic [3:0]            wa_error_cnt;
+    logic                  m_rx_align_done;
 
     genvar                 i;
     wire  [79:0]           wf3,wf2,wf1,wf0;

@@ -34,6 +34,10 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
             avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0001);      
             avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h6080_0000);
             avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h31c}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h320}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h324}, 4'hf, 32'h0000_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h328}, 4'hf, 32'h0000_0000);
 
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
@@ -41,6 +45,10 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
             avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0001);
             avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h6080_0000);
             avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
         end
       join
 

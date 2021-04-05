@@ -71,18 +71,21 @@ bit [1023:0] status;
 
     // One channel Embedded Multi-Die Interconnect Bridge (EMIB) for future use.
 
-//  emib_ch dut_emib (
-//      `include "dut_emib_ch.inc"
-//     );
+    emib_ch dut_emib (
+       .m_aib(m1_iopad_aib),
+       .s_aib(s1_iopad_aib)
+       );
 
 
    //---------------------------------------------------------------------------
    // DUMP
    //---------------------------------------------------------------------------
+`ifdef VCS
    initial
    begin
      $vcdpluson;
    end
+`endif
 
    `include "test_ch.inc"
 endmodule 

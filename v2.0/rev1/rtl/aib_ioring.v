@@ -27,7 +27,7 @@ inout wire             iopad_spareo,        //spare1
 inout wire             iopad_sparee,        //spare0 
 inout wire             iopad_rxclkb,        //fs_rcv_clkb
 inout wire             iopad_rxclk,
-inout wire             iopad_rxfckb,        //fs_rcv_clkb
+inout wire             iopad_rxfckb,        //fs_fwd_clkb
 inout wire             iopad_rxfck,
 inout wire             iopad_srckb,         //fs_sr_clkb
 inout wire             iopad_srck,
@@ -38,7 +38,8 @@ inout wire             iopad_arstni,        //fs_adapter_rstn
 
 input          tx_launch_clk, //Clock for SDR/DDR data, output data clock,ns_fwd_clk_frmac
 output wire    fs_rvc_clk_tomac, //rxclki originally
-output wire    fs_fwd_clk_tomac, //rxfcki originally
+output wire    clkp, //rxfcki originally
+input  wire    clk_dll_out,
 input          ns_rvc_clk_frmac, //txfcko originally
 input          dig_rstb, //reset for io buffer
 input          iddren,
@@ -137,7 +138,7 @@ assign      txfcko = iddren ? tx_launch_clk : ~tx_launch_clk;
 assign rxclk_rstb = shift_en_rxclk ? dig_rstb  : vccl_aib;
 assign rxclkb_rstb = shift_en_rxclkb ? dig_rstb  : vccl_aib;
 
-assign fs_fwd_clk_tomac = rxfcki;
+assign clkp = rxfcki;
 
 assign fs_rvc_clk_tomac = rxclki;
 assign idat0_std = std_out;
@@ -156,8 +157,8 @@ assign idat0_stckb = ~sr_clk_out;
 //assign rx_distclk = rxclki;
 //assign rx_strbclk = rxclki;
 
-assign rx_distclk = rxfcki;
-assign rx_strbclk = rxfcki;
+assign rx_distclk = clk_dll_out;
+assign rx_strbclk = clk_dll_out;
 
 assign irxen_spareo[2:0] = shift_en_arstno ? {vssl_aib, vccl_aib,vssl_aib} : irxen[2:0];
 assign itxen_spareo = shift_en_arstno ?  vccl_aib : vssl_aib;

@@ -10,34 +10,11 @@
 // ============================================================================
 module aib_channel 
  #(
+    parameter MAX_SCAN_LEN = 200,
     parameter DATAWIDTH = 40
     )
  ( 
-inout wire [DATAWIDTH-1:0]    iopad_tx,
-inout wire [DATAWIDTH-1:0]    iopad_rx,
-inout wire     iopad_ns_rcv_clkb, 
-inout wire     iopad_ns_rcv_clk,
-inout wire     iopad_ns_fwd_clk, 
-inout wire     iopad_ns_fwd_clkb,
-inout wire     iopad_ns_sr_clk, 
-inout wire     iopad_ns_sr_clkb,
-inout wire     iopad_ns_sr_load, 
-inout wire     iopad_ns_sr_data,
-inout wire     iopad_ns_mac_rdy, 
-inout wire     iopad_ns_adapter_rstn,
-inout wire     iopad_spare1, 
-inout wire     iopad_spare0,
-inout wire     iopad_fs_rcv_clkb, 
-inout wire     iopad_fs_rcv_clk,
-inout wire     iopad_fs_fwd_clkb, 
-inout wire     iopad_fs_fwd_clk,
-inout wire     iopad_fs_sr_clkb, 
-inout wire     iopad_fs_sr_clk,
-inout wire     iopad_fs_sr_load, 
-inout wire     iopad_fs_sr_data,
-inout wire     iopad_fs_mac_rdy, 
-inout wire     iopad_fs_adapter_rstn,
-
+inout wire [101:0] iopad_aib,
 input  [DATAWIDTH*8-1:0] data_in_f,
 output [DATAWIDTH*8-1:0] data_out_f,
 
@@ -50,6 +27,7 @@ output         m_fs_rcv_clk,
 output         m_fs_fwd_clk,
 input          m_wr_clk,
 input          m_rd_clk,
+output         tclk_phy,
 
 input          ns_adapter_rstn,  //The name is the same as spec, but not consistent 
 input          ns_mac_rdy,       //with other m_* name convention.
@@ -65,7 +43,7 @@ output         ms_tx_transfer_en,
 output         ms_rx_transfer_en,
 output         sl_tx_transfer_en,
 output         sl_rx_transfer_en,
-output         m_rxfifo_align_done,
+output         m_rx_align_done,
 output [80:0]  sr_ms_tomac,
 output [72:0]  sr_sl_tomac,
 
@@ -77,9 +55,6 @@ input [25:0]   sl_external_cntl_57_32, //user defined bits 57:32 for slave shift
 input [4:0]    ms_external_cntl_4_0,   //user defined bits 4:0 for master shift register
 input [57:0]   ms_external_cntl_65_8,  //user defined bits 65:8 for master shift register
 
-
-output         wa_error,
-output [3:0]   wa_error_cnt,
 
 input          dual_mode_select, //Mater or Slave
 input          m_gen2_mode,  //If 1, it is aib2.0
@@ -100,6 +75,15 @@ input          jtag_weakpu,
 input          jtag_tx_scanen_in,
 input          scan_in,
 
+//Scan IO ports
+input          i_scan_clk,
+input          i_scan_clk_500m,
+input          i_scan_clk_1000m,
+input          i_scan_en,
+input          i_scan_mode,
+input  [MAX_SCAN_LEN-1:0] i_scan_din,         
+output [MAX_SCAN_LEN-1:0] i_scan_dout,         
+
 input [5:0]    i_channel_id, // channel ID to program
 input          i_cfg_avmm_clk,
 input          i_cfg_avmm_rst_n,
@@ -111,12 +95,12 @@ input [31:0]   i_cfg_avmm_wdata, // data to be programmed
 
 output         o_cfg_avmm_rdatavld,// Assert to indicate data available for Cfg read access
 output [31:0]  o_cfg_avmm_rdata, // data returned for Cfg read access
-output         o_cfg_avmm_waitreq, // asserted to indicate not ready for Cfg access
+output         o_cfg_avmm_waitreq // asserted to indicate not ready for Cfg access
 
-input          vccl_aib,
-input          vssl_aib );
+ );
 
-
+wire [DATAWIDTH-1:0]    iopad_tx;
+wire [DATAWIDTH-1:0]    iopad_rx;
 
 wire        dig_rstb;
 wire        ms_rx_dll_lock_req;
@@ -142,7 +126,7 @@ wire        srl_in;
 wire        sr_ms_load_out;
 wire        sr_clk_in;
 wire        sr_clk_out;
-
+wire        clkp;
 
 wire        adpt_rstn;
 wire        rstn_out, adapter_rstno;
@@ -158,6 +142,7 @@ wire        dcc_clk_out;
 wire        rstn_in;
 wire [31:0] rx_adapt_0, rx_adapt_1;
 wire [31:0] tx_adapt_0, tx_adapt_1;
+wire [31:0] redund_0, redund_1, redund_2, redund_3;
 
 wire [79:0] aibio_din, aibio_dout;
 
@@ -179,36 +164,50 @@ aib_avmm avmm_config (
     .rx_adapt_0(rx_adapt_0),
     .rx_adapt_1(rx_adapt_1),
     .tx_adapt_0(tx_adapt_0),
-    .tx_adapt_1(tx_adapt_1)
+    .tx_adapt_1(tx_adapt_1),
+    .redund_0(redund_0),
+    .redund_1(redund_1),
+    .redund_2(redund_2),
+    .redund_3(redund_3)
 
 //AIB IO control CSR
 );
 
+wire vccl_aib = 1'b1;
+wire vssl_aib = 1'b0;
 //////////////////////////////////////////////////////////////////////
-//CSR for IO  redundancy
+//CSR for IO  redundancy. See Table 50. Example Bump Table of AIB 2.0
 ////////////////////////////////////////////////////////////////////////
-wire  [DATAWIDTH-1:0]   csr_shift_en_tx = 40'h0; //tx red. shift enable
-wire  [DATAWIDTH-1:0]   csr_shift_en_rx = 40'h0; //rx red. shift enable
-wire           csr_shift_en_txclkb = 1'b0;
-wire           csr_shift_en_txfckb = 1'b0;
-wire           csr_shift_en_stckb = 1'b0;
-wire           csr_shift_en_stl = 1'b0;
-wire           csr_shift_en_arstno = 1'b0;
-wire           csr_shift_en_txclk = 1'b0;
-wire           csr_shift_en_std = 1'b0;
-wire           csr_shift_en_stck = 1'b0;
-wire           csr_shift_en_txfck = 1'b0;
-wire           csr_shift_en_rstno = 1'b0;
-wire           csr_shift_en_rxclkb = 1'b0;
-wire           csr_shift_en_rxfckb = 1'b0;
-wire           csr_shift_en_srckb = 1'b0;
-wire           csr_shift_en_srl = 1'b0;
-wire           csr_shift_en_arstni = 1'b0;
-wire           csr_shift_en_rxclk = 1'b0;
-wire           csr_shift_en_rxfck = 1'b0;
-wire           csr_shift_en_srck = 1'b0;
-wire           csr_shift_en_srd = 1'b0;
-wire           csr_shift_en_rstni = 1'b0;
+wire [101:0] AIB = {redund_3[5:0], redund_2[31:0], redund_1[31:0], redund_0[31:0]};
+wire [39:0] csr_shift_rxdat = {AIB[100],AIB[101],AIB[98],AIB[99],AIB[96],AIB[97],AIB[94],AIB[95],AIB[92],AIB[93], 
+                               AIB[90], AIB[91], AIB[88],AIB[89],AIB[86],AIB[87],AIB[84],AIB[85],AIB[82],AIB[81],
+                               AIB[80], AIB[81], AIB[78],AIB[79],AIB[76],AIB[77],AIB[74],AIB[75],AIB[72],AIB[71],
+                               AIB[68], AIB[69], AIB[66],AIB[67],AIB[64],AIB[65],AIB[62],AIB[63],AIB[60],AIB[61]};
+wire        csr_shift_fs_fwd_clk = AIB[71];
+wire        csr_shift_fs_fwd_clkb = AIB[70];
+wire        csr_shift_fs_rcv_clk = AIB[59];
+wire        csr_shift_fs_rcv_clkb = AIB[58];
+wire        csr_shift_fs_sr_clk = AIB[57];
+wire        csr_shift_fs_sr_clkb = AIB[56];
+wire        csr_shift_fs_sr_data = AIB[55];
+wire        csr_shift_fs_sr_load = AIB[54];
+wire        csr_shift_fs_mac_rdy = AIB[53];
+wire        csr_shift_fs_adapter_rstn = AIB[52];
+wire [1:0]  csr_shift_spare = AIB[51:50];
+wire        csr_shift_ns_adapter_rstn = AIB[49];
+wire        csr_shift_ns_mac_rdy = AIB[48];
+wire        csr_shift_ns_sr_load = AIB[47];
+wire        csr_shift_ns_sr_data = AIB[46];
+wire        csr_shift_ns_sr_clkb = AIB[45];
+wire        csr_shift_ns_sr_clk  = AIB[44];
+wire        csr_shift_ns_rcv_clkb = AIB[43];
+wire        csr_shift_ns_rcv_clk  = AIB[42];
+wire        csr_shift_ns_fwd_clkb = AIB[31];
+wire        csr_shift_ns_fwd_clk  = AIB[30];
+wire [39:0] csr_shift_txdat = {AIB[1], AIB[0], AIB[3], AIB[2], AIB[5], AIB[4], AIB[7], AIB[6], AIB[9], AIB[8],
+                               AIB[11],AIB[10],AIB[13],AIB[12],AIB[15],AIB[14],AIB[17],AIB[16],AIB[19],AIB[18],
+                               AIB[21],AIB[20],AIB[23],AIB[22],AIB[25],AIB[24],AIB[27],AIB[26],AIB[29],AIB[28],
+                               AIB[33],AIB[32],AIB[35],AIB[34],AIB[37],AIB[36],AIB[39],AIB[38],AIB[41],AIB[40]};
 
 wire           csr_iddren = 1'b1;        //csr for turn on DDR bumps
 wire           csr_idataselb = 1'b0;     //csr for turn on async buffer
@@ -236,13 +235,33 @@ wire   [4:0]   csr_tx_mkbit=tx_adapt_0[20:16];    //Marker bit position of 79:76
 
 
 assign adpt_rstn =  i_conf_done & adapter_rstni;
-assign dig_rstb =   i_conf_done;
+assign dig_rstb =   i_conf_done & (~por);
+wire tx_fifo_rstn = (dual_mode_select) ?  ms_tx_transfer_en : sl_tx_transfer_en;
+wire rx_fifo_rstn = (dual_mode_select) ?  ms_rx_transfer_en : sl_rx_transfer_en;
 
+wire [39:0] idat0, idat1, data_out0, data_out1;
+genvar i;
+generate
+   for (i=1; i<(DATAWIDTH+1); i=i+1) begin:data_in_gen
+      assign idat0[i-1] = aibio_dout[2*i-2];
+      assign idat1[i-1] = aibio_dout[2*i-1];
+   end
+endgenerate
+
+generate
+   for (i=1; i<(DATAWIDTH+1); i=i+1) begin:data_out_gen
+      assign aibio_din[2*i-2] = data_out0[i-1];
+      assign aibio_din[2*i-1] = data_out1[i-1];
+   end
+endgenerate
 
 aib_adapt_2doto aib_adapt (
       .atpg_mode(1'b0),
       .dual_mode_select(dual_mode_select),
       .m_gen2_mode(m_gen2_mode),
+      .adapt_rstn(adpt_rstn),
+      .tx_fifo_rstn(tx_fifo_rstn),
+      .rx_fifo_rstn(rx_fifo_rstn),
       .data_out_f(data_out_f), //to mac
       .data_out(data_out), //to mac
       .data_in(data_in),  //from mac
@@ -293,9 +312,7 @@ aib_adapt_2doto aib_adapt (
       .ms_tx_dcc_cal_req(ms_tx_dcc_cal_req),
       .sl_tx_dcc_cal_req(sl_tx_dcc_cal_req),
 
-      .m_rxfifo_align_done(m_rxfifo_align_done),
-      .wa_error(wa_error),
-      .wa_error_cnt(wa_error_cnt),
+      .m_rx_align_done(m_rx_align_done),
 
       .i_osc_clk(i_osc_clk), //from aux channel
 
@@ -333,35 +350,45 @@ aib_adapt_2doto aib_adapt (
 
 
 aib_ioring #(.DATAWIDTH(DATAWIDTH)) aib_ioring ( 
-     .iopad_txdat(iopad_tx), 
-     .iopad_rxdat(iopad_rx), 
-     .iopad_txclkb(iopad_ns_rcv_clkb), 
-     .iopad_txclk(iopad_ns_rcv_clk),
-     .iopad_txfck(iopad_ns_fwd_clk), 
-     .iopad_txfckb(iopad_ns_fwd_clkb),
-     .iopad_stck(iopad_ns_sr_clk), 
-     .iopad_stckb(iopad_ns_sr_clkb),
-     .iopad_stl(iopad_ns_sr_load), 
-     .iopad_std(iopad_ns_sr_data),
-     .iopad_rstno(iopad_ns_mac_rdy), 
-     .iopad_arstno(iopad_ns_adapter_rstn),
-     .iopad_spareo(iopad_spare1), 
-     .iopad_sparee(iopad_spare0),
-     .iopad_rxclkb(iopad_fs_rcv_clkb), 
-     .iopad_rxclk(iopad_fs_rcv_clk),
-     .iopad_rxfckb(iopad_fs_fwd_clkb), 
-     .iopad_rxfck(iopad_fs_fwd_clk),
-     .iopad_srckb(iopad_fs_sr_clkb), 
-     .iopad_srck(iopad_fs_sr_clk),
-     .iopad_srl(iopad_fs_sr_load), 
-     .iopad_srd(iopad_fs_sr_data),
-     .iopad_rstni(iopad_fs_mac_rdy), 
-     .iopad_arstni(iopad_fs_adapter_rstn),
+     .iopad_txdat({     iopad_aib[1:0],  iopad_aib[3:2],  iopad_aib[5:4],  iopad_aib[7:6],  iopad_aib[9:8],
+                        iopad_aib[11:10],iopad_aib[13:12],iopad_aib[15:14],iopad_aib[17:16],iopad_aib[19:18], 
+                        iopad_aib[21:20],iopad_aib[23:22],iopad_aib[25:24],iopad_aib[27:26],iopad_aib[29:28], 
+                        iopad_aib[33:32],iopad_aib[35:34],iopad_aib[37:36],iopad_aib[39:38],iopad_aib[41:40]}), 
+//   .iopad_txdat(iopad_tx), 
+//   .iopad_rxdat(iopad_rx), 
+     .iopad_rxdat({     iopad_aib[100],iopad_aib[101],iopad_aib[98],iopad_aib[99],iopad_aib[96],iopad_aib[97],
+                        iopad_aib[94], iopad_aib[95], iopad_aib[92],iopad_aib[93],iopad_aib[90],iopad_aib[91],  
+                        iopad_aib[88], iopad_aib[89], iopad_aib[86],iopad_aib[87],iopad_aib[84],iopad_aib[85],
+                        iopad_aib[82], iopad_aib[83], iopad_aib[80],iopad_aib[81],iopad_aib[78],iopad_aib[79],
+                        iopad_aib[76], iopad_aib[77], iopad_aib[74],iopad_aib[75],iopad_aib[72],iopad_aib[73],
+                        iopad_aib[68], iopad_aib[69], iopad_aib[66],iopad_aib[67],iopad_aib[64],iopad_aib[65],
+                        iopad_aib[62], iopad_aib[63], iopad_aib[60],iopad_aib[61]}), 
+     .iopad_txclkb(iopad_aib[43]), //iopad_ns_rcv_clkb), 
+     .iopad_txclk(iopad_aib[42]), //iopad_ns_rcv_clk),
+     .iopad_txfck(iopad_aib[30]), //iopad_ns_fwd_clk), 
+     .iopad_txfckb(iopad_aib[31]), //iopad_ns_fwd_clkb),
+     .iopad_stck(iopad_aib[44]), //iopad_ns_sr_clk), 
+     .iopad_stckb(iopad_aib[45]), //iopad_ns_sr_clkb),
+     .iopad_stl(iopad_aib[47]), //iopad_ns_sr_load), 
+     .iopad_std(iopad_aib[46]), //iopad_ns_sr_data),
+     .iopad_rstno(iopad_aib[48]), //iopad_ns_mac_rdy), 
+     .iopad_arstno(iopad_aib[49]), //iopad_ns_adapter_rstn),
+     .iopad_spareo(iopad_aib[51]), //iopad_spare1), 
+     .iopad_sparee(iopad_aib[50]), //iopad_spare0),
+     .iopad_rxclkb(iopad_aib[58]), //iopad_fs_rcv_clkb), 
+     .iopad_rxclk(iopad_aib[57]), //iopad_fs_rcv_clk),
+     .iopad_rxfckb(iopad_aib[70]), //iopad_fs_fwd_clkb), 
+     .iopad_rxfck(iopad_aib[71]), //iopad_fs_fwd_clk),
+     .iopad_srckb(iopad_aib[56]), //iopad_fs_sr_clkb), 
+     .iopad_srck(iopad_aib[57]), //iopad_fs_sr_clk),
+     .iopad_srl(iopad_aib[54]), //iopad_fs_sr_load), 
+     .iopad_srd(iopad_aib[55]), //iopad_fs_sr_data),
+     .iopad_rstni(iopad_aib[53]), //iopad_fs_mac_rdy), 
+     .iopad_arstni(iopad_aib[52]), //iopad_fs_adapter_rstn),
 
      .tx_launch_clk(dcc_clk_out),
 //   .tx_launch_div2_clk(tx_launch_div2_clk),
      .fs_rvc_clk_tomac(fs_rvc_clk_tomac),
-     .fs_fwd_clk_tomac(fs_fwd_clk_tomac),
      .ns_rvc_clk_frmac(ns_rvc_clk_frmac),
 //   .ns_rvc_div2_clk_frmac(ns_rvc_div2_clk_frmac),
      .dig_rstb(dig_rstb), //reset for io
@@ -369,10 +396,12 @@ aib_ioring #(.DATAWIDTH(DATAWIDTH)) aib_ioring (
      .idataselb(csr_idataselb),
      .itxen(csr_itxen),
      .irxen(csr_irxen),
-     .idat0(aibio_dout[39:0]),
-     .idat1(aibio_dout[79:40]),
-     .data_out0(aibio_din[39:0]),
-     .data_out1(aibio_din[79:40]),
+     .idat0(idat0[39:0]),
+     .idat1(idat1[39:0]),
+     .data_out0(data_out0[39:0]),
+     .data_out1(data_out1[39:0]),
+     .clk_dll_out(clk_dll_out),
+     .clkp(clkp),
      .std_out(std_out),
      .stl_out(stl_out),
      .srd_in(srd_in),
@@ -395,28 +424,28 @@ aib_ioring #(.DATAWIDTH(DATAWIDTH)) aib_ioring (
      .jtag_tx_scanen_in(jtag_tx_scanen_in),
      .scan_in(scan_in), 
 
-     .tx_shift_en(csr_shift_en_tx),
-     .rx_shift_en(csr_shift_en_rx),
-     .shift_en_txclkb(csr_shift_en_txclkb),
-     .shift_en_txfckb(csr_shift_en_txfckb),
-     .shift_en_stckb(csr_shift_en_stckb),
-     .shift_en_stl(csr_shift_en_stl),
-     .shift_en_arstno(csr_shift_en_arstno),
-     .shift_en_txclk(csr_shift_en_txclk),
-     .shift_en_std(csr_shift_en_std),
-     .shift_en_stck(csr_shift_en_stck),
-     .shift_en_txfck(csr_shift_en_txfck),
-     .shift_en_rstno(csr_shift_en_rstno),
-     .shift_en_rxclkb(csr_shift_en_rxclkb),
-     .shift_en_rxfckb(csr_shift_en_rxfckb),
-     .shift_en_srckb(csr_shift_en_srckb),
-     .shift_en_srl(csr_shift_en_srl),
-     .shift_en_arstni(csr_shift_en_arstni),
-     .shift_en_rxclk(csr_shift_en_rxclk),
-     .shift_en_rxfck(csr_shift_en_rxfck),
-     .shift_en_srck(csr_shift_en_srck),
-     .shift_en_srd(csr_shift_en_srd),
-     .shift_en_rstni(csr_shift_en_rstni),
+     .tx_shift_en(csr_shift_txdat),
+     .rx_shift_en(csr_shift_rxdat),
+     .shift_en_txclkb(csr_shift_ns_rcv_clkb),
+     .shift_en_txfckb(csr_shift_ns_fwd_clkb),
+     .shift_en_stckb(csr_shift_ns_sr_clkb),
+     .shift_en_stl(csr_shift_ns_sr_load),
+     .shift_en_arstno(csr_shift_ns_adapter_rstn),
+     .shift_en_txclk(csr_shift_ns_rcv_clk),
+     .shift_en_std(csr_shift_ns_sr_data),
+     .shift_en_stck(csr_shift_ns_sr_clk),
+     .shift_en_txfck(csr_shift_ns_fwd_clk),
+     .shift_en_rstno(csr_shift_ns_mac_rdy),
+     .shift_en_rxclkb(csr_shift_fs_rcv_clkb),
+     .shift_en_rxfckb(csr_shift_fs_fwd_clkb),
+     .shift_en_srckb(csr_shift_fs_sr_clkb),
+     .shift_en_srl(csr_shift_fs_sr_load),
+     .shift_en_arstni(csr_shift_fs_adapter_rstn),
+     .shift_en_rxclk(csr_shift_fs_rcv_clk),
+     .shift_en_rxfck(csr_shift_fs_fwd_clk),
+     .shift_en_srck(csr_shift_fs_sr_clk),
+     .shift_en_srd(csr_shift_fs_sr_data),
+     .shift_en_rstni(csr_shift_fs_mac_rdy),
      .idataselb_stck(1'b1),
      .idataselb_std(1'b1),
      .idataselb_stl(1'b1),
@@ -443,8 +472,8 @@ aib_dcc aib_dcc
 
 dll  u_dll
      (
-     .clkp(fs_fwd_clk_tomac),
-     .clkn(~fs_fwd_clk_tomac),
+     .clkp(clkp),
+     .clkn(~clkp),
      .rstb(adpt_rstn), // Hold DDR in reset if SDR Mode
      .rx_clk_tree_in(clk_dll_out),
      .ms_rx_dll_lock_req(ms_rx_dll_lock_req),
@@ -454,5 +483,6 @@ dll  u_dll
      .ms_nsl(dual_mode_select),
      .atpg_mode(1'b0)
       );
+assign fs_fwd_clk_tomac = clk_dll_out;
 
 endmodule // aib_channel

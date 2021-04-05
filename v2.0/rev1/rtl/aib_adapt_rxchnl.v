@@ -6,12 +6,11 @@ module aib_adapt_rxchnl(
 output wire [319:0]             data_out_f,
 output wire [79:0]              data_out,
 output wire                     align_done,
-output wire                     wa_error,
-output wire [3:0]               wa_error_cnt,
    // Inputs
 input wire                      atpg_mode,
 input wire                      m_gen2_mode,
 input wire                      adapt_rstn,
+input wire                      rx_fifo_rstn,
 input wire  [79:0]	        din,   //from io buffer
 input wire                      m_rd_clk, 
 input wire                      rxfifo_wrclk,
@@ -26,6 +25,7 @@ input wire 			r_rx_dbi_en
 wire [79:0]  dbi_dout, rx_fifo_data_out_sel;
 wire [319:0] rx_fifo_data_out;
 wire         rxwr_rstn, rxrd_rstn;
+wire         rxwr_fifo_rstn, rxrd_fifo_rstn;
 
 assign data_out_f =  {rx_fifo_data_out[319:80], rx_fifo_data_out_sel};
 assign data_out   =  dbi_dout;
@@ -48,15 +48,13 @@ aib_adaptrxdp_fifo rxdp_fifo(
     .fifo_pempty          (fifo_pempty),
     .fifo_pfull           (fifo_pfull),
     .fifo_full            (fifo_full_int),
-    .wa_error             (wa_error),
-    .wa_error_cnt         (wa_error_cnt[3:0]),
     .align_done           (align_done),
 
     // Inputs
-    .wr_rst_n             (rxwr_rstn),
+    .wr_rst_n             (rxwr_fifo_rstn),
     .wr_clk               (rxfifo_wrclk),
     .fifo_din             (dbi_dout),
-    .rd_rst_n             (rxrd_rstn),
+    .rd_rst_n             (rxrd_fifo_rstn),
     .rd_clk               (m_rd_clk),
     .r_pempty             (5'b0),
     .r_pfull              (5'b11111),
@@ -78,6 +76,15 @@ aib_rstnsync rxwr_rstnsync
 
    );
 
+aib_rstnsync rxwr_fifo_rstnsync
+  (
+    .clk(rxfifo_wrclk),              
+    .i_rst_n(rx_fifo_rstn),           
+    .scan_mode(atpg_mode),         
+    .sync_rst_n(rxwr_fifo_rstn)        
+
+   );
+
 aib_rstnsync rxrd_rstnsync
   (
     .clk(m_rd_clk),                   // Destination clock of reset to be synced
@@ -87,5 +94,13 @@ aib_rstnsync rxrd_rstnsync
 
    );
 
+aib_rstnsync rxrd_fifo_rstnsync
+  (
+    .clk(m_rd_clk),                
+    .i_rst_n(rx_fifo_rstn),         
+    .scan_mode(atpg_mode),       
+    .sync_rst_n(rxrd_fifo_rstn)      
+
+   );
 
 endmodule

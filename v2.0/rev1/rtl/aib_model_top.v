@@ -7,37 +7,39 @@
 // Revision       : 2.0
 // ============================================================================
 module aib_model_top #(
+    parameter MAX_SCAN_LEN = 200,
     parameter DATAWIDTH = 40,
     parameter TOTAL_CHNL_NUM = 24
     )
  ( 
-inout wire [DATAWIDTH*TOTAL_CHNL_NUM-1:0]    iopad_tx,
-inout wire [DATAWIDTH*TOTAL_CHNL_NUM-1:0]    iopad_rx,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_rcv_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_rcv_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_fwd_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_fwd_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_sr_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_sr_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_sr_load,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_sr_data,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_mac_rdy,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_ns_adapter_rstn,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_spare1,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_spare0,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_rcv_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_rcv_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_fwd_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_fwd_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_sr_clkb,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_sr_clk,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_sr_load,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_sr_data,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_mac_rdy,
-inout wire [TOTAL_CHNL_NUM-1:0]              iopad_fs_adapter_rstn,
 
-inout                                        device_detect,
-inout                                        por,
+inout wire [101:0]                           iopad_ch0_aib,
+inout wire [101:0]                           iopad_ch1_aib,
+inout wire [101:0]                           iopad_ch2_aib,
+inout wire [101:0]                           iopad_ch3_aib,
+inout wire [101:0]                           iopad_ch4_aib,
+inout wire [101:0]                           iopad_ch5_aib,
+inout wire [101:0]                           iopad_ch6_aib,
+inout wire [101:0]                           iopad_ch7_aib,
+inout wire [101:0]                           iopad_ch8_aib,
+inout wire [101:0]                           iopad_ch9_aib,
+inout wire [101:0]                           iopad_ch10_aib,
+inout wire [101:0]                           iopad_ch11_aib,
+inout wire [101:0]                           iopad_ch12_aib,
+inout wire [101:0]                           iopad_ch13_aib,
+inout wire [101:0]                           iopad_ch14_aib,
+inout wire [101:0]                           iopad_ch15_aib,
+inout wire [101:0]                           iopad_ch16_aib,
+inout wire [101:0]                           iopad_ch17_aib,
+inout wire [101:0]                           iopad_ch18_aib,
+inout wire [101:0]                           iopad_ch19_aib,
+inout wire [101:0]                           iopad_ch20_aib,
+inout wire [101:0]                           iopad_ch21_aib,
+inout wire [101:0]                           iopad_ch22_aib,
+inout wire [101:0]                           iopad_ch23_aib,
+
+inout                                        iopad_device_detect,
+inout                                        iopad_power_on_reset,
 
 input  [DATAWIDTH*8*TOTAL_CHNL_NUM-1 :0]     data_in_f, 
 output [DATAWIDTH*8*TOTAL_CHNL_NUM-1 :0]     data_out_f, 
@@ -51,6 +53,7 @@ output [TOTAL_CHNL_NUM-1:0]    m_fs_rcv_clk,
 output [TOTAL_CHNL_NUM-1:0]    m_fs_fwd_clk,
 input  [TOTAL_CHNL_NUM-1:0]    m_wr_clk,
 input  [TOTAL_CHNL_NUM-1:0]    m_rd_clk,
+output [TOTAL_CHNL_NUM-1:0]    tclk_phy,
 
 input  [TOTAL_CHNL_NUM-1:0]    ns_adapter_rstn,
 input  [TOTAL_CHNL_NUM-1:0]    ns_mac_rdy,
@@ -66,9 +69,7 @@ output [TOTAL_CHNL_NUM-1:0]    ms_tx_transfer_en,
 output [TOTAL_CHNL_NUM-1:0]    ms_rx_transfer_en,
 output [TOTAL_CHNL_NUM-1:0]    sl_tx_transfer_en,
 output [TOTAL_CHNL_NUM-1:0]    sl_rx_transfer_en,
-output [TOTAL_CHNL_NUM-1:0]    m_rxfifo_align_done,
-output [TOTAL_CHNL_NUM-1:0]    wa_error,
-output [4*TOTAL_CHNL_NUM-1:0]  wa_error_cnt,
+output [TOTAL_CHNL_NUM-1:0]    m_rx_align_done,
 output [81*TOTAL_CHNL_NUM-1:0] sr_ms_tomac,
 output [73*TOTAL_CHNL_NUM-1:0] sr_sl_tomac,
 input                          dual_mode_select,
@@ -93,6 +94,15 @@ input                          i_jtag_tx_scanen,
 input                          i_jtag_weakpdn, 
 input                          i_jtag_weakpu, 
 
+input                          i_scan_clk,
+input                          i_scan_clk_500m,
+input                          i_scan_clk_1000m,
+input                          i_scan_en,
+input                          i_scan_mode,
+input  [TOTAL_CHNL_NUM-1:0][MAX_SCAN_LEN-1:0] i_scan_din,
+output [TOTAL_CHNL_NUM-1:0][MAX_SCAN_LEN-1:0] i_scan_dout,
+
+
 //AVMM interface
 input                          i_cfg_avmm_clk,
 input                          i_cfg_avmm_rst_n,
@@ -113,10 +123,9 @@ input [3*TOTAL_CHNL_NUM-1:0]   sl_external_cntl_30_28, //user defined bits 30:28
 input [26*TOTAL_CHNL_NUM-1:0]  sl_external_cntl_57_32, //user defined bits 57:32 for slave shift register
 
 input [5*TOTAL_CHNL_NUM-1:0]   ms_external_cntl_4_0,   //user defined bits 4:0 for master shift register
-input [58*TOTAL_CHNL_NUM-1:0]  ms_external_cntl_65_8,  //user defined bits 65:8 for master shift register
+input [58*TOTAL_CHNL_NUM-1:0]  ms_external_cntl_65_8   //user defined bits 65:8 for master shift register
 
-input          vccl_aib,
-input          vssl_aib );
+);
 
 wire por_ms, osc_clk;
 wire [TOTAL_CHNL_NUM-1:0] o_cfg_avmm_rdatavld_ch;
@@ -124,6 +133,8 @@ wire [TOTAL_CHNL_NUM-1:0] o_cfg_avmm_waitreq_ch;
 wire [TOTAL_CHNL_NUM-1:0] o_jtag_tdo_ch; 
 wire [31:0] o_rdata_ch[0:23];
 
+wire  vccl_aib = 1'b1;
+wire vssl_aib = 1'b0;
 assign o_jtag_tdo = o_jtag_tdo_ch[23];
 /////////////////////////////////////////////////////////////////////////////////
 //
@@ -137,32 +148,9 @@ assign o_cfg_avmm_rdata    = o_rdata_ch[23]|o_rdata_ch[22]|o_rdata_ch[21]|o_rdat
                              o_rdata_ch[5 ]|o_rdata_ch[4 ]|o_rdata_ch[3 ]|o_rdata_ch[2] |o_rdata_ch[1] |o_rdata_ch[0];
                           
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel0
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel0
  ( 
-     .iopad_tx(iopad_tx[40*1-1:40*0]),
-     .iopad_rx(iopad_rx[40*1-1:40*0]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[0]), 
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[0]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[0]), 
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[0]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[0]), 
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[0]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[0]), 
-     .iopad_ns_sr_data(iopad_ns_sr_data[0]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[0]), 
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[0]),
-     .iopad_spare1(iopad_spare1[0]), 
-     .iopad_spare0(iopad_spare0[0]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[0]), 
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[0]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[0]), 
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[0]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[0]), 
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[0]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[0]), 
-     .iopad_fs_sr_data(iopad_fs_sr_data[0]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[0]), 
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[0]),
+     .iopad_aib(iopad_ch0_aib),
 
      .data_in_f(data_in_f[320*1-1:320*0]),
      .data_out_f(data_out_f[320*1-1:320*0]),
@@ -175,6 +163,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel0
      .m_ns_rcv_clk(m_ns_rcv_clk[0]), 
      .m_wr_clk(m_wr_clk[0]),
      .m_rd_clk(m_wr_clk[0]),
+     .tclk_phy(tclk_phy[0]),
 
      .i_conf_done(i_conf_done), 
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[0]),
@@ -185,9 +174,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel0
      .ms_rx_transfer_en(ms_rx_transfer_en[0]),
      .sl_tx_transfer_en(sl_tx_transfer_en[0]),
      .sl_rx_transfer_en(sl_rx_transfer_en[0]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[0]),
-     .wa_error(wa_error[0]),
-     .wa_error_cnt(wa_error_cnt[4*1-1:4*0]),
+     .m_rx_align_done(m_rx_align_done[0]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*1-1:81*0]),
@@ -221,6 +208,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel0
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(i_jtag_tdi),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[0][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[0][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd0), 
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -233,39 +227,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel0
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[0]),
      .o_cfg_avmm_rdata(o_rdata_ch[0]), 
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[0]), 
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[0])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel1
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel1
  (
-     .iopad_tx(iopad_tx[40*2-1:40*1]),
-     .iopad_rx(iopad_rx[40*2-1:40*1]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[1]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[1]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[1]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[1]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[1]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[1]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[1]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[1]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[1]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[1]),
-     .iopad_spare1(iopad_spare1[1]),
-     .iopad_spare0(iopad_spare0[1]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[1]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[1]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[1]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[1]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[1]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[1]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[1]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[1]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[1]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[1]),
-
+     .iopad_aib(iopad_ch1_aib),
      .data_in_f(data_in_f[320*2-1:320*1]),
      .data_out_f(data_out_f[320*2-1:320*1]),
      .data_in(data_in[80*2-1:80*1]),
@@ -276,6 +244,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel1
      .m_ns_rcv_clk(m_ns_rcv_clk[1]),
      .m_wr_clk(m_wr_clk[1]),
      .m_rd_clk(m_wr_clk[1]),
+     .tclk_phy(tclk_phy[1]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[1]),
@@ -286,9 +255,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel1
      .ms_rx_transfer_en(ms_rx_transfer_en[1]),
      .sl_tx_transfer_en(sl_tx_transfer_en[1]),
      .sl_rx_transfer_en(sl_rx_transfer_en[1]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[1]),
-     .wa_error(wa_error[1]),
-     .wa_error_cnt(wa_error_cnt[4*2-1:4*1]),
+     .m_rx_align_done(m_rx_align_done[1]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*2-1:81*1]),
@@ -322,6 +289,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel1
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[0]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[1][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[1][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd1),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -334,39 +308,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel1
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[1]),
      .o_cfg_avmm_rdata(o_rdata_ch[1]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[1]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[1])
+     );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel2
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel2
  (
-     .iopad_tx(iopad_tx[40*3-1:40*2]),
-     .iopad_rx(iopad_rx[40*3-1:40*2]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[2]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[2]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[2]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[2]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[2]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[2]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[2]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[2]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[2]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[2]),
-     .iopad_spare1(iopad_spare1[2]),
-     .iopad_spare0(iopad_spare0[2]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[2]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[2]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[2]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[2]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[2]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[2]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[2]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[2]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[2]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[2]),
-
+     .iopad_aib(iopad_ch2_aib),
      .data_in_f(data_in_f[320*3-1:320*2]),
      .data_out_f(data_out_f[320*3-1:320*2]),
      .data_in(data_in[80*3-1:80*2]),
@@ -377,6 +325,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel2
      .m_ns_rcv_clk(m_ns_rcv_clk[2]),
      .m_wr_clk(m_wr_clk[2]),
      .m_rd_clk(m_wr_clk[2]),
+     .tclk_phy(tclk_phy[2]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[2]),
@@ -387,9 +336,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel2
      .ms_rx_transfer_en(ms_rx_transfer_en[2]),
      .sl_tx_transfer_en(sl_tx_transfer_en[2]),
      .sl_rx_transfer_en(sl_rx_transfer_en[2]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[2]),
-     .wa_error(wa_error[2]),
-     .wa_error_cnt(wa_error_cnt[4*3-1:4*2]),
+     .m_rx_align_done(m_rx_align_done[2]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*3-1:81*2]),
@@ -423,6 +370,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel2
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[1]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[2][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[2][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd2),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -435,40 +389,14 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel2
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[2]),
      .o_cfg_avmm_rdata(o_rdata_ch[2]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[2]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[2])
+     );
 
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel3
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel3
  (
-     .iopad_tx(iopad_tx[40*4-1:40*3]),
-     .iopad_rx(iopad_rx[40*4-1:40*3]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[3]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[3]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[3]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[3]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[3]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[3]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[3]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[3]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[3]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[3]),
-     .iopad_spare1(iopad_spare1[3]),
-     .iopad_spare0(iopad_spare0[3]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[3]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[3]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[3]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[3]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[3]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[3]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[3]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[3]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[3]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[3]),
-
+     .iopad_aib(iopad_ch3_aib),
      .data_in_f(data_in_f[320*4-1:320*3]),
      .data_out_f(data_out_f[320*4-1:320*3]),
      .data_in(data_in[80*4-1:80*3]),
@@ -479,6 +407,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel3
      .m_ns_rcv_clk(m_ns_rcv_clk[3]),
      .m_wr_clk(m_wr_clk[3]),
      .m_rd_clk(m_wr_clk[3]),
+     .tclk_phy(tclk_phy[3]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[3]),
@@ -489,9 +418,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel3
      .ms_rx_transfer_en(ms_rx_transfer_en[3]),
      .sl_tx_transfer_en(sl_tx_transfer_en[3]),
      .sl_rx_transfer_en(sl_rx_transfer_en[3]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[3]),
-     .wa_error(wa_error[3]),
-     .wa_error_cnt(wa_error_cnt[4*4-1:4*3]),
+     .m_rx_align_done(m_rx_align_done[3]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*4-1:81*3]),
@@ -525,6 +452,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel3
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[2]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[3][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[3][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd3),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -537,39 +471,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel3
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[3]),
      .o_cfg_avmm_rdata(o_rdata_ch[3]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[3]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[3])
+     );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel4
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel4
  (
-     .iopad_tx(iopad_tx[40*5-1:40*4]),
-     .iopad_rx(iopad_rx[40*5-1:40*4]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[4]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[4]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[4]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[4]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[4]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[4]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[4]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[4]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[4]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[4]),
-     .iopad_spare1(iopad_spare1[4]),
-     .iopad_spare0(iopad_spare0[4]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[4]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[4]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[4]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[4]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[4]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[4]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[4]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[4]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[4]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[4]),
-
+     .iopad_aib(iopad_ch4_aib),
      .data_in_f(data_in_f[320*5-1:320*4]),
      .data_out_f(data_out_f[320*5-1:320*4]),
      .data_in(data_in[80*5-1:80*4]),
@@ -580,6 +488,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel4
      .m_ns_rcv_clk(m_ns_rcv_clk[4]),
      .m_wr_clk(m_wr_clk[4]),
      .m_rd_clk(m_wr_clk[4]),
+     .tclk_phy(tclk_phy[4]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[4]),
@@ -590,9 +499,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel4
      .ms_rx_transfer_en(ms_rx_transfer_en[4]),
      .sl_tx_transfer_en(sl_tx_transfer_en[4]),
      .sl_rx_transfer_en(sl_rx_transfer_en[4]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[4]),
-     .wa_error(wa_error[4]),
-     .wa_error_cnt(wa_error_cnt[4*5-1:4*4]),
+     .m_rx_align_done(m_rx_align_done[4]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*5-1:81*4]),
@@ -626,6 +533,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel4
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[3]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[4][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[4][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd4),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -638,39 +552,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel4
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[4]),
      .o_cfg_avmm_rdata(o_rdata_ch[4]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[4]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[4])
+     );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel5
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel5
  (
-     .iopad_tx(iopad_tx[40*6-1:40*5]),
-     .iopad_rx(iopad_rx[40*6-1:40*5]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[5]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[5]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[5]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[5]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[5]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[5]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[5]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[5]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[5]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[5]),
-     .iopad_spare1(iopad_spare1[5]),
-     .iopad_spare0(iopad_spare0[5]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[5]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[5]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[5]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[5]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[5]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[5]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[5]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[5]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[5]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[5]),
-
+     .iopad_aib(iopad_ch5_aib),
      .data_in_f(data_in_f[320*6-1:320*5]),
      .data_out_f(data_out_f[320*6-1:320*5]),
      .data_in(data_in[80*6-1:80*5]),
@@ -681,6 +569,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel5
      .m_ns_rcv_clk(m_ns_rcv_clk[5]),
      .m_wr_clk(m_wr_clk[5]),
      .m_rd_clk(m_wr_clk[5]),
+     .tclk_phy(tclk_phy[5]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[5]),
@@ -691,9 +580,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel5
      .ms_rx_transfer_en(ms_rx_transfer_en[5]),
      .sl_tx_transfer_en(sl_tx_transfer_en[5]),
      .sl_rx_transfer_en(sl_rx_transfer_en[5]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[5]),
-     .wa_error(wa_error[5]),
-     .wa_error_cnt(wa_error_cnt[4*6-1:4*5]),
+     .m_rx_align_done(m_rx_align_done[5]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*6-1:81*5]),
@@ -727,6 +614,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel5
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[4]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[5][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[5][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd5),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -739,39 +633,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel5
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[5]),
      .o_cfg_avmm_rdata(o_rdata_ch[5]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[5]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[5])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel6
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel6
  (
-     .iopad_tx(iopad_tx[40*7-1:40*6]),
-     .iopad_rx(iopad_rx[40*7-1:40*6]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[6]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[6]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[6]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[6]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[6]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[6]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[6]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[6]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[6]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[6]),
-     .iopad_spare1(iopad_spare1[6]),
-     .iopad_spare0(iopad_spare0[6]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[6]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[6]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[6]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[6]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[6]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[6]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[6]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[6]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[6]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[6]),
-
+     .iopad_aib(iopad_ch6_aib),
      .data_in_f(data_in_f[320*7-1:320*6]),
      .data_out_f(data_out_f[320*7-1:320*6]),
      .data_in(data_in[80*7-1:80*6]),
@@ -782,6 +650,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel6
      .m_ns_rcv_clk(m_ns_rcv_clk[6]),
      .m_wr_clk(m_wr_clk[6]),
      .m_rd_clk(m_wr_clk[6]),
+     .tclk_phy(tclk_phy[6]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[6]),
@@ -792,9 +661,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel6
      .ms_rx_transfer_en(ms_rx_transfer_en[6]),
      .sl_tx_transfer_en(sl_tx_transfer_en[6]),
      .sl_rx_transfer_en(sl_rx_transfer_en[6]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[6]),
-     .wa_error(wa_error[6]),
-     .wa_error_cnt(wa_error_cnt[4*7-1:4*6]),
+     .m_rx_align_done(m_rx_align_done[6]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*7-1:81*6]),
@@ -828,6 +695,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel6
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[5]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[6][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[6][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd6),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -840,39 +714,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel6
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[6]),
      .o_cfg_avmm_rdata(o_rdata_ch[6]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[6]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[6])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel7
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel7
  (
-     .iopad_tx(iopad_tx[40*8-1:40*7]),
-     .iopad_rx(iopad_rx[40*8-1:40*7]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[7]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[7]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[7]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[7]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[7]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[7]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[7]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[7]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[7]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[7]),
-     .iopad_spare1(iopad_spare1[7]),
-     .iopad_spare0(iopad_spare0[7]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[7]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[7]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[7]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[7]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[7]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[7]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[7]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[7]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[7]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[7]),
-
+     .iopad_aib(iopad_ch7_aib),
      .data_in_f(data_in_f[320*8-1:320*7]),
      .data_out_f(data_out_f[320*8-1:320*7]),
      .data_in(data_in[80*8-1:80*7]),
@@ -883,6 +731,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel7
      .m_ns_rcv_clk(m_ns_rcv_clk[7]),
      .m_wr_clk(m_wr_clk[7]),
      .m_rd_clk(m_wr_clk[7]),
+     .tclk_phy(tclk_phy[7]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[7]),
@@ -893,9 +742,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel7
      .ms_rx_transfer_en(ms_rx_transfer_en[7]),
      .sl_tx_transfer_en(sl_tx_transfer_en[7]),
      .sl_rx_transfer_en(sl_rx_transfer_en[7]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[7]),
-     .wa_error(wa_error[7]),
-     .wa_error_cnt(wa_error_cnt[4*8-1:4*7]),
+     .m_rx_align_done(m_rx_align_done[7]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*8-1:81*7]),
@@ -929,6 +776,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel7
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[6]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[7][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[7][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd7),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -941,39 +795,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel7
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[7]),
      .o_cfg_avmm_rdata(o_rdata_ch[7]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[7]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[7])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel8
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel8
  (
-     .iopad_tx(iopad_tx[40*9-1:40*8]),
-     .iopad_rx(iopad_rx[40*9-1:40*8]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[8]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[8]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[8]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[8]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[8]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[8]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[8]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[8]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[8]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[8]),
-     .iopad_spare1(iopad_spare1[8]),
-     .iopad_spare0(iopad_spare0[8]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[8]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[8]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[8]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[8]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[8]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[8]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[8]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[8]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[8]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[8]),
-
+     .iopad_aib(iopad_ch8_aib),
      .data_in_f(data_in_f[320*9-1:320*8]),
      .data_out_f(data_out_f[320*9-1:320*8]),
      .data_in(data_in[80*9-1:80*8]),
@@ -984,6 +812,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel8
      .m_ns_rcv_clk(m_ns_rcv_clk[8]),
      .m_wr_clk(m_wr_clk[8]),
      .m_rd_clk(m_wr_clk[8]),
+     .tclk_phy(tclk_phy[8]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[8]),
@@ -994,9 +823,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel8
      .ms_rx_transfer_en(ms_rx_transfer_en[8]),
      .sl_tx_transfer_en(sl_tx_transfer_en[8]),
      .sl_rx_transfer_en(sl_rx_transfer_en[8]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[8]),
-     .wa_error(wa_error[8]),
-     .wa_error_cnt(wa_error_cnt[4*9-1:4*8]),
+     .m_rx_align_done(m_rx_align_done[8]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*9-1:81*8]),
@@ -1030,6 +857,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel8
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[7]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[8][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[8][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd8),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1042,39 +876,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel8
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[8]),
      .o_cfg_avmm_rdata(o_rdata_ch[8]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[8]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[8])
+     );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel9
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel9
  (
-     .iopad_tx(iopad_tx[40*10-1:40*9]),
-     .iopad_rx(iopad_rx[40*10-1:40*9]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[9]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[9]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[9]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[9]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[9]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[9]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[9]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[9]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[9]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[9]),
-     .iopad_spare1(iopad_spare1[9]),
-     .iopad_spare0(iopad_spare0[9]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[9]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[9]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[9]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[9]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[9]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[9]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[9]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[9]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[9]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[9]),
-
+     .iopad_aib(iopad_ch9_aib),
      .data_in_f(data_in_f[320*10-1:320*9]),
      .data_out_f(data_out_f[320*10-1:320*9]),
      .data_in(data_in[80*10-1:80*9]),
@@ -1085,6 +893,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel9
      .m_ns_rcv_clk(m_ns_rcv_clk[9]),
      .m_wr_clk(m_wr_clk[9]),
      .m_rd_clk(m_wr_clk[9]),
+     .tclk_phy(tclk_phy[9]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[9]),
@@ -1095,9 +904,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel9
      .ms_rx_transfer_en(ms_rx_transfer_en[9]),
      .sl_tx_transfer_en(sl_tx_transfer_en[9]),
      .sl_rx_transfer_en(sl_rx_transfer_en[9]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[9]),
-     .wa_error(wa_error[9]),
-     .wa_error_cnt(wa_error_cnt[4*10-1:4*9]),
+     .m_rx_align_done(m_rx_align_done[9]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*10-1:81*9]),
@@ -1131,6 +938,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel9
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[8]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[9][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[9][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd9),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1143,39 +957,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel9
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[9]),
      .o_cfg_avmm_rdata(o_rdata_ch[9]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[9]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[9])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel10
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel10
  (
-     .iopad_tx(iopad_tx[40*11-1:40*10]),
-     .iopad_rx(iopad_rx[40*11-1:40*10]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[10]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[10]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[10]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[10]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[10]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[10]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[10]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[10]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[10]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[10]),
-     .iopad_spare1(iopad_spare1[10]),
-     .iopad_spare0(iopad_spare0[10]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[10]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[10]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[10]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[10]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[10]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[10]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[10]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[10]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[10]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[10]),
-
+     .iopad_aib(iopad_ch10_aib),
      .data_in_f(data_in_f[320*11-1:320*10]),
      .data_out_f(data_out_f[320*11-1:320*10]),
      .data_in(data_in[80*11-1:80*10]),
@@ -1186,6 +974,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel10
      .m_ns_rcv_clk(m_ns_rcv_clk[10]),
      .m_wr_clk(m_wr_clk[10]),
      .m_rd_clk(m_wr_clk[10]),
+     .tclk_phy(tclk_phy[10]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[10]),
@@ -1196,9 +985,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel10
      .ms_rx_transfer_en(ms_rx_transfer_en[10]),
      .sl_tx_transfer_en(sl_tx_transfer_en[10]),
      .sl_rx_transfer_en(sl_rx_transfer_en[10]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[10]),
-     .wa_error(wa_error[10]),
-     .wa_error_cnt(wa_error_cnt[4*11-1:4*10]),
+     .m_rx_align_done(m_rx_align_done[10]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*11-1:81*10]),
@@ -1232,6 +1019,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel10
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[9]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[10][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[10][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd10),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1244,39 +1038,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel10
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[10]),
      .o_cfg_avmm_rdata(o_rdata_ch[10]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[10]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[10])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel11
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel11
  (
-     .iopad_tx(iopad_tx[40*12-1:40*11]),
-     .iopad_rx(iopad_rx[40*12-1:40*11]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[11]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[11]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[11]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[11]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[11]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[11]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[11]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[11]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[11]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[11]),
-     .iopad_spare1(iopad_spare1[11]),
-     .iopad_spare0(iopad_spare0[11]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[11]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[11]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[11]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[11]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[11]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[11]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[11]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[11]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[11]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[11]),
-
+     .iopad_aib(iopad_ch11_aib),
      .data_in_f(data_in_f[320*12-1:320*11]),
      .data_out_f(data_out_f[320*12-1:320*11]),
      .data_in(data_in[80*12-1:80*11]),
@@ -1287,6 +1055,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel11
      .m_ns_rcv_clk(m_ns_rcv_clk[11]),
      .m_wr_clk(m_wr_clk[11]),
      .m_rd_clk(m_wr_clk[11]),
+     .tclk_phy(tclk_phy[11]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[11]),
@@ -1297,9 +1066,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel11
      .ms_rx_transfer_en(ms_rx_transfer_en[11]),
      .sl_tx_transfer_en(sl_tx_transfer_en[11]),
      .sl_rx_transfer_en(sl_rx_transfer_en[11]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[11]),
-     .wa_error(wa_error[11]),
-     .wa_error_cnt(wa_error_cnt[4*12-1:4*11]),
+     .m_rx_align_done(m_rx_align_done[11]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*12-1:81*11]),
@@ -1333,6 +1100,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel11
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[10]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[11][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[11][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd11),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1345,39 +1119,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel11
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[11]),
      .o_cfg_avmm_rdata(o_rdata_ch[11]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[11]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[11])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel12
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel12
  (
-     .iopad_tx(iopad_tx[40*13-1:40*12]),
-     .iopad_rx(iopad_rx[40*13-1:40*12]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[12]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[12]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[12]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[12]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[12]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[12]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[12]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[12]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[12]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[12]),
-     .iopad_spare1(iopad_spare1[12]),
-     .iopad_spare0(iopad_spare0[12]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[12]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[12]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[12]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[12]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[12]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[12]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[12]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[12]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[12]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[12]),
-
+     .iopad_aib(iopad_ch12_aib),
      .data_in_f(data_in_f[320*13-1:320*12]),
      .data_out_f(data_out_f[320*13-1:320*12]),
      .data_in(data_in[80*13-1:80*12]),
@@ -1388,6 +1136,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel12
      .m_ns_rcv_clk(m_ns_rcv_clk[12]),
      .m_wr_clk(m_wr_clk[12]),
      .m_rd_clk(m_wr_clk[12]),
+     .tclk_phy(tclk_phy[12]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[12]),
@@ -1398,9 +1147,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel12
      .ms_rx_transfer_en(ms_rx_transfer_en[12]),
      .sl_tx_transfer_en(sl_tx_transfer_en[12]),
      .sl_rx_transfer_en(sl_rx_transfer_en[12]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[12]),
-     .wa_error(wa_error[12]),
-     .wa_error_cnt(wa_error_cnt[4*13-1:4*12]),
+     .m_rx_align_done(m_rx_align_done[12]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*13-1:81*12]),
@@ -1434,6 +1181,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel12
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[11]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[12][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[12][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd12),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1446,39 +1200,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel12
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[12]),
      .o_cfg_avmm_rdata(o_rdata_ch[12]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[12]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[12])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel13
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel13
  (
-     .iopad_tx(iopad_tx[40*14-1:40*13]),
-     .iopad_rx(iopad_rx[40*14-1:40*13]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[13]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[13]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[13]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[13]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[13]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[13]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[13]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[13]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[13]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[13]),
-     .iopad_spare1(iopad_spare1[13]),
-     .iopad_spare0(iopad_spare0[13]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[13]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[13]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[13]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[13]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[13]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[13]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[13]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[13]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[13]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[13]),
-
+     .iopad_aib(iopad_ch13_aib),
      .data_in_f(data_in_f[320*14-1:320*13]),
      .data_out_f(data_out_f[320*14-1:320*13]),
      .data_in(data_in[80*14-1:80*13]),
@@ -1489,6 +1217,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel13
      .m_ns_rcv_clk(m_ns_rcv_clk[13]),
      .m_wr_clk(m_wr_clk[13]),
      .m_rd_clk(m_wr_clk[13]),
+     .tclk_phy(tclk_phy[13]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[13]),
@@ -1499,9 +1228,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel13
      .ms_rx_transfer_en(ms_rx_transfer_en[13]),
      .sl_tx_transfer_en(sl_tx_transfer_en[13]),
      .sl_rx_transfer_en(sl_rx_transfer_en[13]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[13]),
-     .wa_error(wa_error[13]),
-     .wa_error_cnt(wa_error_cnt[4*14-1:4*13]),
+     .m_rx_align_done(m_rx_align_done[13]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*14-1:81*13]),
@@ -1535,6 +1262,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel13
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[12]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[13][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[13][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd13),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1547,39 +1281,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel13
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[13]),
      .o_cfg_avmm_rdata(o_rdata_ch[13]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[13]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[13])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel14
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel14
  (
-     .iopad_tx(iopad_tx[40*15-1:40*14]),
-     .iopad_rx(iopad_rx[40*15-1:40*14]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[14]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[14]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[14]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[14]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[14]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[14]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[14]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[14]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[14]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[14]),
-     .iopad_spare1(iopad_spare1[14]),
-     .iopad_spare0(iopad_spare0[14]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[14]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[14]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[14]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[14]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[14]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[14]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[14]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[14]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[14]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[14]),
-
+     .iopad_aib(iopad_ch14_aib),
      .data_in_f(data_in_f[320*15-1:320*14]),
      .data_out_f(data_out_f[320*15-1:320*14]),
      .data_in(data_in[80*15-1:80*14]),
@@ -1590,6 +1298,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel14
      .m_ns_rcv_clk(m_ns_rcv_clk[14]),
      .m_wr_clk(m_wr_clk[14]),
      .m_rd_clk(m_wr_clk[14]),
+     .tclk_phy(tclk_phy[14]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[14]),
@@ -1600,9 +1309,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel14
      .ms_rx_transfer_en(ms_rx_transfer_en[14]),
      .sl_tx_transfer_en(sl_tx_transfer_en[14]),
      .sl_rx_transfer_en(sl_rx_transfer_en[14]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[14]),
-     .wa_error(wa_error[14]),
-     .wa_error_cnt(wa_error_cnt[4*15-1:4*14]),
+     .m_rx_align_done(m_rx_align_done[14]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*15-1:81*14]),
@@ -1636,6 +1343,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel14
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[13]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[14][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[14][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd14),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1648,39 +1362,14 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel14
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[14]),
      .o_cfg_avmm_rdata(o_rdata_ch[14]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[14]),
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[14])
 
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel15
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel15
  (
-     .iopad_tx(iopad_tx[40*16-1:40*15]),
-     .iopad_rx(iopad_rx[40*16-1:40*15]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[15]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[15]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[15]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[15]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[15]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[15]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[15]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[15]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[15]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[15]),
-     .iopad_spare1(iopad_spare1[15]),
-     .iopad_spare0(iopad_spare0[15]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[15]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[15]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[15]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[15]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[15]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[15]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[15]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[15]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[15]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[15]),
-
+     .iopad_aib(iopad_ch15_aib),
      .data_in_f(data_in_f[320*16-1:320*15]),
      .data_out_f(data_out_f[320*16-1:320*15]),
      .data_in(data_in[80*16-1:80*15]),
@@ -1691,6 +1380,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel15
      .m_ns_rcv_clk(m_ns_rcv_clk[15]),
      .m_wr_clk(m_wr_clk[15]),
      .m_rd_clk(m_wr_clk[15]),
+     .tclk_phy(tclk_phy[15]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[15]),
@@ -1701,9 +1391,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel15
      .ms_rx_transfer_en(ms_rx_transfer_en[15]),
      .sl_tx_transfer_en(sl_tx_transfer_en[15]),
      .sl_rx_transfer_en(sl_rx_transfer_en[15]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[15]),
-     .wa_error(wa_error[15]),
-     .wa_error_cnt(wa_error_cnt[4*16-1:4*15]),
+     .m_rx_align_done(m_rx_align_done[15]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*16-1:81*15]),
@@ -1737,6 +1425,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel15
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[14]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[15][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[15][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd15),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1749,39 +1444,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel15
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[15]),
      .o_cfg_avmm_rdata(o_rdata_ch[15]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[15]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[15])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel16
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel16
  (
-     .iopad_tx(iopad_tx[40*17-1:40*16]),
-     .iopad_rx(iopad_rx[40*17-1:40*16]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[16]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[16]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[16]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[16]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[16]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[16]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[16]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[16]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[16]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[16]),
-     .iopad_spare1(iopad_spare1[16]),
-     .iopad_spare0(iopad_spare0[16]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[16]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[16]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[16]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[16]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[16]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[16]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[16]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[16]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[16]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[16]),
-
+     .iopad_aib(iopad_ch16_aib),
      .data_in_f(data_in_f[320*17-1:320*16]),
      .data_out_f(data_out_f[320*17-1:320*16]),
      .data_in(data_in[80*17-1:80*16]),
@@ -1792,6 +1461,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel16
      .m_ns_rcv_clk(m_ns_rcv_clk[16]),
      .m_wr_clk(m_wr_clk[16]),
      .m_rd_clk(m_wr_clk[16]),
+     .tclk_phy(tclk_phy[16]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[16]),
@@ -1802,9 +1472,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel16
      .ms_rx_transfer_en(ms_rx_transfer_en[16]),
      .sl_tx_transfer_en(sl_tx_transfer_en[16]),
      .sl_rx_transfer_en(sl_rx_transfer_en[16]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[16]),
-     .wa_error(wa_error[16]),
-     .wa_error_cnt(wa_error_cnt[4*17-1:4*16]),
+     .m_rx_align_done(m_rx_align_done[16]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*17-1:81*16]),
@@ -1838,6 +1506,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel16
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[15]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[16][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[16][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd16),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1850,40 +1525,14 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel16
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[16]),
      .o_cfg_avmm_rdata(o_rdata_ch[16]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[16]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[16])
+     );
 
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel17
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel17
  (
-     .iopad_tx(iopad_tx[40*18-1:40*17]),
-     .iopad_rx(iopad_rx[40*18-1:40*17]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[17]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[17]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[17]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[17]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[17]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[17]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[17]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[17]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[17]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[17]),
-     .iopad_spare1(iopad_spare1[17]),
-     .iopad_spare0(iopad_spare0[17]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[17]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[17]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[17]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[17]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[17]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[17]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[17]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[17]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[17]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[17]),
-
+     .iopad_aib(iopad_ch17_aib),
      .data_in_f(data_in_f[320*18-1:320*17]),
      .data_out_f(data_out_f[320*18-1:320*17]),
      .data_in(data_in[80*18-1:80*17]),
@@ -1894,6 +1543,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel17
      .m_ns_rcv_clk(m_ns_rcv_clk[17]),
      .m_wr_clk(m_wr_clk[17]),
      .m_rd_clk(m_wr_clk[17]),
+     .tclk_phy(tclk_phy[17]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[17]),
@@ -1904,9 +1554,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel17
      .ms_rx_transfer_en(ms_rx_transfer_en[17]),
      .sl_tx_transfer_en(sl_tx_transfer_en[17]),
      .sl_rx_transfer_en(sl_rx_transfer_en[17]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[17]),
-     .wa_error(wa_error[17]),
-     .wa_error_cnt(wa_error_cnt[4*18-1:4*17]),
+     .m_rx_align_done(m_rx_align_done[17]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*18-1:81*17]),
@@ -1940,6 +1588,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel17
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[16]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[17][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[17][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd17),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -1952,39 +1607,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel17
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[17]),
      .o_cfg_avmm_rdata(o_rdata_ch[17]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[17]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[17])
+     );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel18
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel18
  (
-     .iopad_tx(iopad_tx[40*19-1:40*18]),
-     .iopad_rx(iopad_rx[40*19-1:40*18]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[18]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[18]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[18]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[18]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[18]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[18]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[18]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[18]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[18]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[18]),
-     .iopad_spare1(iopad_spare1[18]),
-     .iopad_spare0(iopad_spare0[18]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[18]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[18]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[18]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[18]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[18]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[18]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[18]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[18]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[18]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[18]),
-
+     .iopad_aib(iopad_ch18_aib),
      .data_in_f(data_in_f[320*19-1:320*18]),
      .data_out_f(data_out_f[320*19-1:320*18]),
      .data_in(data_in[80*19-1:80*18]),
@@ -1995,6 +1624,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel18
      .m_ns_rcv_clk(m_ns_rcv_clk[18]),
      .m_wr_clk(m_wr_clk[18]),
      .m_rd_clk(m_wr_clk[18]),
+     .tclk_phy(tclk_phy[18]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[18]),
@@ -2005,9 +1635,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel18
      .ms_rx_transfer_en(ms_rx_transfer_en[18]),
      .sl_tx_transfer_en(sl_tx_transfer_en[18]),
      .sl_rx_transfer_en(sl_rx_transfer_en[18]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[18]),
-     .wa_error(wa_error[18]),
-     .wa_error_cnt(wa_error_cnt[4*19-1:4*18]),
+     .m_rx_align_done(m_rx_align_done[18]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*19-1:81*18]),
@@ -2041,6 +1669,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel18
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[17]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[18][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[18][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd18),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2053,39 +1688,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel18
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[18]),
      .o_cfg_avmm_rdata(o_rdata_ch[18]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[18]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[18])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel19
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel19
  (
-     .iopad_tx(iopad_tx[40*20-1:40*19]),
-     .iopad_rx(iopad_rx[40*20-1:40*19]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[19]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[19]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[19]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[19]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[19]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[19]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[19]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[19]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[19]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[19]),
-     .iopad_spare1(iopad_spare1[19]),
-     .iopad_spare0(iopad_spare0[19]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[19]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[19]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[19]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[19]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[19]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[19]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[19]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[19]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[19]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[19]),
-
+     .iopad_aib(iopad_ch19_aib),
      .data_in_f(data_in_f[320*20-1:320*19]),
      .data_out_f(data_out_f[320*20-1:320*19]),
      .data_in(data_in[80*20-1:80*19]),
@@ -2096,6 +1705,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel19
      .m_ns_rcv_clk(m_ns_rcv_clk[19]),
      .m_wr_clk(m_wr_clk[19]),
      .m_rd_clk(m_wr_clk[19]),
+     .tclk_phy(tclk_phy[19]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[19]),
@@ -2106,9 +1716,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel19
      .ms_rx_transfer_en(ms_rx_transfer_en[19]),
      .sl_tx_transfer_en(sl_tx_transfer_en[19]),
      .sl_rx_transfer_en(sl_rx_transfer_en[19]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[19]),
-     .wa_error(wa_error[19]),
-     .wa_error_cnt(wa_error_cnt[4*20-1:4*19]),
+     .m_rx_align_done(m_rx_align_done[19]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*20-1:81*19]),
@@ -2142,6 +1750,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel19
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[18]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[19][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[19][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd19),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2154,39 +1769,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel19
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[19]),
      .o_cfg_avmm_rdata(o_rdata_ch[19]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[19]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[19])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel20
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel20
  (
-     .iopad_tx(iopad_tx[40*21-1:40*20]),
-     .iopad_rx(iopad_rx[40*21-1:40*20]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[20]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[20]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[20]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[20]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[20]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[20]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[20]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[20]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[20]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[20]),
-     .iopad_spare1(iopad_spare1[20]),
-     .iopad_spare0(iopad_spare0[20]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[20]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[20]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[20]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[20]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[20]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[20]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[20]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[20]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[20]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[20]),
-
+     .iopad_aib(iopad_ch20_aib),
      .data_in_f(data_in_f[320*21-1:320*20]),
      .data_out_f(data_out_f[320*21-1:320*20]),
      .data_in(data_in[80*21-1:80*20]),
@@ -2197,6 +1786,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel20
      .m_ns_rcv_clk(m_ns_rcv_clk[20]),
      .m_wr_clk(m_wr_clk[20]),
      .m_rd_clk(m_wr_clk[20]),
+     .tclk_phy(tclk_phy[20]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[20]),
@@ -2207,9 +1797,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel20
      .ms_rx_transfer_en(ms_rx_transfer_en[20]),
      .sl_tx_transfer_en(sl_tx_transfer_en[20]),
      .sl_rx_transfer_en(sl_rx_transfer_en[20]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[20]),
-     .wa_error(wa_error[20]),
-     .wa_error_cnt(wa_error_cnt[4*21-1:4*20]),
+     .m_rx_align_done(m_rx_align_done[20]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*21-1:81*20]),
@@ -2243,6 +1831,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel20
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[19]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[20][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[20][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd20),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2255,39 +1850,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel20
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[20]),
      .o_cfg_avmm_rdata(o_rdata_ch[20]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[20]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[20])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel21
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel21
  (
-     .iopad_tx(iopad_tx[40*22-1:40*21]),
-     .iopad_rx(iopad_rx[40*22-1:40*21]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[21]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[21]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[21]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[21]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[21]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[21]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[21]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[21]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[21]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[21]),
-     .iopad_spare1(iopad_spare1[21]),
-     .iopad_spare0(iopad_spare0[21]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[21]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[21]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[21]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[21]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[21]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[21]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[21]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[21]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[21]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[21]),
-
+     .iopad_aib(iopad_ch21_aib),
      .data_in_f(data_in_f[320*22-1:320*21]),
      .data_out_f(data_out_f[320*22-1:320*21]),
      .data_in(data_in[80*22-1:80*21]),
@@ -2298,6 +1867,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel21
      .m_ns_rcv_clk(m_ns_rcv_clk[21]),
      .m_wr_clk(m_wr_clk[21]),
      .m_rd_clk(m_wr_clk[21]),
+     .tclk_phy(tclk_phy[21]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[21]),
@@ -2308,9 +1878,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel21
      .ms_rx_transfer_en(ms_rx_transfer_en[21]),
      .sl_tx_transfer_en(sl_tx_transfer_en[21]),
      .sl_rx_transfer_en(sl_rx_transfer_en[21]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[21]),
-     .wa_error(wa_error[21]),
-     .wa_error_cnt(wa_error_cnt[4*22-1:4*21]),
+     .m_rx_align_done(m_rx_align_done[21]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*22-1:81*21]),
@@ -2344,6 +1912,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel21
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[20]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[21][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[21][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd21),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2356,39 +1931,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel21
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[21]),
      .o_cfg_avmm_rdata(o_rdata_ch[21]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[21]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[21])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel22
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel22
  (
-     .iopad_tx(iopad_tx[40*23-1:40*22]),
-     .iopad_rx(iopad_rx[40*23-1:40*22]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[22]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[22]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[22]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[22]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[22]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[22]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[22]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[22]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[22]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[22]),
-     .iopad_spare1(iopad_spare1[22]),
-     .iopad_spare0(iopad_spare0[22]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[22]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[22]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[22]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[22]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[22]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[22]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[22]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[22]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[22]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[22]),
-
+     .iopad_aib(iopad_ch22_aib),
      .data_in_f(data_in_f[320*23-1:320*22]),
      .data_out_f(data_out_f[320*23-1:320*22]),
      .data_in(data_in[80*23-1:80*22]),
@@ -2399,6 +1948,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel22
      .m_ns_rcv_clk(m_ns_rcv_clk[22]),
      .m_wr_clk(m_wr_clk[22]),
      .m_rd_clk(m_wr_clk[22]),
+     .tclk_phy(tclk_phy[22]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[22]),
@@ -2409,9 +1959,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel22
      .ms_rx_transfer_en(ms_rx_transfer_en[22]),
      .sl_tx_transfer_en(sl_tx_transfer_en[22]),
      .sl_rx_transfer_en(sl_rx_transfer_en[22]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[22]),
-     .wa_error(wa_error[22]),
-     .wa_error_cnt(wa_error_cnt[4*23-1:4*22]),
+     .m_rx_align_done(m_rx_align_done[22]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*23-1:81*22]),
@@ -2445,6 +1993,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel22
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[21]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[22][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[22][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd22),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2457,39 +2012,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel22
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[22]),
      .o_cfg_avmm_rdata(o_rdata_ch[22]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[22]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[22])
+      );
 
 
-aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel23
+aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel23
  (
-     .iopad_tx(iopad_tx[40*24-1:40*23]),
-     .iopad_rx(iopad_rx[40*24-1:40*23]),
-     .iopad_ns_rcv_clkb(iopad_ns_rcv_clkb[23]),
-     .iopad_ns_rcv_clk(iopad_ns_rcv_clk[23]),
-     .iopad_ns_fwd_clk(iopad_ns_fwd_clk[23]),
-     .iopad_ns_fwd_clkb(iopad_ns_fwd_clkb[23]),
-     .iopad_ns_sr_clk(iopad_ns_sr_clk[23]),
-     .iopad_ns_sr_clkb(iopad_ns_sr_clkb[23]),
-     .iopad_ns_sr_load(iopad_ns_sr_load[23]),
-     .iopad_ns_sr_data(iopad_ns_sr_data[23]),
-     .iopad_ns_mac_rdy(iopad_ns_mac_rdy[23]),
-     .iopad_ns_adapter_rstn(iopad_ns_adapter_rstn[23]),
-     .iopad_spare1(iopad_spare1[23]),
-     .iopad_spare0(iopad_spare0[23]),
-     .iopad_fs_rcv_clkb(iopad_fs_rcv_clkb[23]),
-     .iopad_fs_rcv_clk(iopad_fs_rcv_clk[23]),
-     .iopad_fs_fwd_clkb(iopad_fs_fwd_clkb[23]),
-     .iopad_fs_fwd_clk(iopad_fs_fwd_clk[23]),
-     .iopad_fs_sr_clkb(iopad_fs_sr_clkb[23]),
-     .iopad_fs_sr_clk(iopad_fs_sr_clk[23]),
-     .iopad_fs_sr_load(iopad_fs_sr_load[23]),
-     .iopad_fs_sr_data(iopad_fs_sr_data[23]),
-     .iopad_fs_mac_rdy(iopad_fs_mac_rdy[23]),
-     .iopad_fs_adapter_rstn(iopad_fs_adapter_rstn[23]),
-
+     .iopad_aib(iopad_ch23_aib),
      .data_in_f(data_in_f[320*24-1:320*23]),
      .data_out_f(data_out_f[320*24-1:320*23]),
      .data_in(data_in[80*24-1:80*23]),
@@ -2500,6 +2029,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel23
      .m_ns_rcv_clk(m_ns_rcv_clk[23]),
      .m_wr_clk(m_wr_clk[23]),
      .m_rd_clk(m_wr_clk[23]),
+     .tclk_phy(tclk_phy[23]),
 
      .i_conf_done(i_conf_done),
      .ms_rx_dcc_dll_lock_req(ms_rx_dcc_dll_lock_req[23]),
@@ -2510,9 +2040,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel23
      .ms_rx_transfer_en(ms_rx_transfer_en[23]),
      .sl_tx_transfer_en(sl_tx_transfer_en[23]),
      .sl_rx_transfer_en(sl_rx_transfer_en[23]),
-     .m_rxfifo_align_done(m_rxfifo_align_done[23]),
-     .wa_error(wa_error[23]),
-     .wa_error_cnt(wa_error_cnt[4*24-1:4*23]),
+     .m_rx_align_done(m_rx_align_done[23]),
 
 
      .sr_ms_tomac(sr_ms_tomac[81*24-1:81*23]),
@@ -2546,6 +2074,13 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel23
      .jtag_weakpu(i_jtag_weakpu),
      .jtag_tx_scanen_in(i_jtag_tx_scanen),
      .scan_in(o_jtag_tdo_ch[22]),
+     .i_scan_clk(i_scan_clk),
+     .i_scan_clk_500m(i_scan_clk_500m),
+     .i_scan_clk_1000m(i_scan_clk_1000m),
+     .i_scan_en(i_scan_en),
+     .i_scan_mode(i_scan_mode),
+     .i_scan_din(i_scan_din[23][MAX_SCAN_LEN-1:0]),
+     .i_scan_dout(i_scan_dout[23][MAX_SCAN_LEN-1:0]),
 
      .i_channel_id(6'd23),
      .i_cfg_avmm_clk(i_cfg_avmm_clk),
@@ -2558,20 +2093,18 @@ aib_channel #(.DATAWIDTH(DATAWIDTH)) aib_channel23
 
      .o_cfg_avmm_rdatavld(o_cfg_avmm_rdatavld_ch[23]),
      .o_cfg_avmm_rdata(o_rdata_ch[23]),
-     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[23]),
-
-     .vccl_aib(vccl_aib),
-     .vssl_aib(vssl_aib) );
+     .o_cfg_avmm_waitreq(o_cfg_avmm_waitreq_ch[23])
+      );
 
 
 
 aib_aux_channel  aib_aux_channel
    (
     // AIB IO Bidirectional
-    .iopad_dev_dect(device_detect),
-    .iopad_dev_dectrdcy(device_detect),
-    .iopad_dev_por(por),
-    .iopad_dev_porrdcy(por),
+    .iopad_dev_dect(iopad_device_detect),
+    .iopad_dev_dectrdcy(iopad_device_detect),
+    .iopad_dev_por(iopad_power_on_reset),
+    .iopad_dev_porrdcy(iopad_power_on_reset),
 
 //  .device_detect_ms(ms_device_detect),
     .m_por_ovrd(m_por_ovrd),
