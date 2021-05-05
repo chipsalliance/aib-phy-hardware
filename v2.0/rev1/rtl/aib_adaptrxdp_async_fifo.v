@@ -87,6 +87,7 @@ module aib_adaptrxdp_async_fifo
 
    reg [1:0]                    wr_cnt;
    reg                          full_wr_en;
+   reg                          wm_bit;
    wire                         wa_lock_int;
    
 
@@ -165,7 +166,16 @@ aib_adaptrxdp_fifo_ptr
    assign wr_full_comb   = (wr_numdata >= r_full) ? 1'b1 : 1'b0;
    assign wr_pfull_comb  = (wr_numdata >= r_pfull) ? 1'b1 : 1'b0;
 
-   assign wm_bit  = |({wr_data[79:76], wr_data[39]} & r_mkbit[4:0]);
+   always @* begin
+      casez (r_mkbit)
+        5'b10000: wm_bit = wr_data[79];
+        5'b01000: wm_bit = wr_data[78];
+        5'b00100: wm_bit = wr_data[77];
+        5'b00010: wm_bit = wr_data[76];
+        5'b00001: wm_bit = wr_data[39];
+        default: wm_bit = 1'b0; 
+      endcase
+   end
 
    assign wa_lock_int = (r_fifo_mode == FIFO_4X) ? ((wm_history==12'h111) ? 1'b1: 1'b0) :
                         (r_fifo_mode == FIFO_2X) ? ((wm_history[5:0]==6'h15)? 1'b1: 1'b0): 

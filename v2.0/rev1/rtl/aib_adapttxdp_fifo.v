@@ -65,8 +65,9 @@ reg			phcomp_wren_sync4;
 reg			phcomp_wren_sync5;
 reg			phcomp_wren_sync6;
 
-wire [DWIDTH*4-1:0]	fifo_out;
-reg  [DWIDTH*4-1:0]     data_out_int, wr_data;
+wire [DWIDTH-1:0]	fifo_out;
+reg  [DWIDTH-1:0]       data_out_int;
+reg  [DWIDTH*4-1:0]     wr_data;
 //wire			phcomp_mode1x;
 wire 			wr_en_int;
 wire 			rd_en_int;
@@ -137,13 +138,21 @@ always @ * begin
                     {data_in[159:157], 1'b1, data_in[155:80]},
                     {data_in[79:77],   1'b0, data_in[75:0]}};
         else if (r_mkbit[0] & ~m_gen2_mode)
-          wr_data ={ 160'h0, 80'h0,
-                    {1'b1, data_in[78:40], 1'b0, data_in[38:0]}};
+          wr_data ={ 160'h0,
+                    {40'h0, 1'b1, data_in[78:40]},
+                    {40'h0, 1'b0, data_in[38:0]}};
         else 
           wr_data = data_in;
       else
           wr_data = data_in;
-   end else  wr_data = data_in;
+   end else begin
+   if ((r_fifo_mode == FIFO_2X) & ~m_gen2_mode)
+      wr_data ={ 160'h0,
+               {40'h0, data_in[79:40]},
+               {40'h0, data_in[39:0]}};
+   else
+      wr_data = data_in;
+   end
 end
 
 

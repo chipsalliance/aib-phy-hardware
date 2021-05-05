@@ -1,0 +1,15 @@
+#!/bin/bash
+
+
+export RTL_ROOT="$(pwd)/../../rtl"
+export GEN1_ROOT="$(pwd)/../../../../v1.0/rev2/rtl"
+export V1M_ROOT="$GEN1_ROOT/v1_master"
+export V2COM_ROOT="$GEN1_ROOT/v2_common"
+
+
+vlogan -sverilog  +v2k -full64 -timescale=1ps/1ps +define+VCS  -f ../flist/ms.cf -l compile_ms1.log
+vlogan -sverilog  +v2k -full64 -timescale=1ps/1ps +define+VCS+AIB_TOP_PIN96+TIMESCALE_EN+BEHAVIORAL  -f ../flist/ms_v1.cf -l compile_ms_gen1.log
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+MS_AIB_GEN1 -f ../flist/tb_rtl.cf -l compile_tb.log
+
+vcs -debug_acc+all -full64 +lint=TFIPC-L +error+100 +lint=PCWM  -top top_tb -l vcs.log

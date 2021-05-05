@@ -32,7 +32,7 @@ module aib_adapttxdp_async_fifo
                                           //      2'b01 2:1 FIFO mode
                                           //      2'b10 4:1 FIFO mode. 
                                           //      2'b11 reg mode. 
-    output reg  [DWIDTH*4-1:0] rd_data,   // Read Data Out 
+    output reg  [DWIDTH-1:0] rd_data,   // Read Data Out 
     
     output reg               wr_empty,   // FIFO Empty
     output reg               wr_pempty,  // FIFO Partial Empty

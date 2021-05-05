@@ -71,7 +71,7 @@ bit [1023:0] status;
 
     // One channel Embedded Multi-Die Interconnect Bridge (EMIB) for future use.
 
-    emib_ch dut_emib (
+    emib_ch_m2s2 dut_emib (
        .m_aib(m1_iopad_aib),
        .s_aib(s1_iopad_aib)
        );

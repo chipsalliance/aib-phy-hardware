@@ -1,5 +1,5 @@
 README.txt
-April. 05, 2021
+May. 05, 2021
 
 ============================================================
 ============================================================
@@ -25,6 +25,12 @@ Version 1.0: Initial release
 4) Added redundancy test.
 5) Added ncsim simulation support
 
+05/05/2021: Changelist
+1) Modified testbench and test vector to include
+   AIB2.0 leader      <---> AIB 2.0 Follower (Gen2)
+   AIB2.0 Leader Gen1 <---> AIB 1.0 Follower (FPGA)
+   AIB1.0 Leader      <---> AIB 2.0 Follower Gen1
+2) See README.txt under sims for the detail instruction to run
 ============================================================
 Files included:
 ============================================================

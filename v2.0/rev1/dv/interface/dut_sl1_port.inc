@@ -58,7 +58,11 @@
     .sr_sl_tomac(intf_s1.sl_sideband),
     .m_rx_align_done(intf_s1.m_rx_align_done),
     .dual_mode_select(1'b0),
+`ifdef MS_AIB_GEN1
+    .m_gen2_mode(1'b0),
+`else
     .m_gen2_mode(1'b1),
+`endif
     .i_osc_clk(intf_s1.i_osc_clk),   //Only for master mode
 
     //AVMM interface

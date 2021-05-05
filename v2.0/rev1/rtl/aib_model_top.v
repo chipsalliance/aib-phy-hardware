@@ -162,7 +162,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel0
      .m_fs_fwd_clk(m_fs_fwd_clk[0]), 
      .m_ns_rcv_clk(m_ns_rcv_clk[0]), 
      .m_wr_clk(m_wr_clk[0]),
-     .m_rd_clk(m_wr_clk[0]),
+     .m_rd_clk(m_rd_clk[0]),
      .tclk_phy(tclk_phy[0]),
 
      .i_conf_done(i_conf_done), 
@@ -243,7 +243,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel1
      .m_fs_fwd_clk(m_fs_fwd_clk[1]),
      .m_ns_rcv_clk(m_ns_rcv_clk[1]),
      .m_wr_clk(m_wr_clk[1]),
-     .m_rd_clk(m_wr_clk[1]),
+     .m_rd_clk(m_rd_clk[1]),
      .tclk_phy(tclk_phy[1]),
 
      .i_conf_done(i_conf_done),
@@ -324,7 +324,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel2
      .m_fs_fwd_clk(m_fs_fwd_clk[2]),
      .m_ns_rcv_clk(m_ns_rcv_clk[2]),
      .m_wr_clk(m_wr_clk[2]),
-     .m_rd_clk(m_wr_clk[2]),
+     .m_rd_clk(m_rd_clk[2]),
      .tclk_phy(tclk_phy[2]),
 
      .i_conf_done(i_conf_done),
@@ -406,7 +406,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel3
      .m_fs_fwd_clk(m_fs_fwd_clk[3]),
      .m_ns_rcv_clk(m_ns_rcv_clk[3]),
      .m_wr_clk(m_wr_clk[3]),
-     .m_rd_clk(m_wr_clk[3]),
+     .m_rd_clk(m_rd_clk[3]),
      .tclk_phy(tclk_phy[3]),
 
      .i_conf_done(i_conf_done),
@@ -487,7 +487,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel4
      .m_fs_fwd_clk(m_fs_fwd_clk[4]),
      .m_ns_rcv_clk(m_ns_rcv_clk[4]),
      .m_wr_clk(m_wr_clk[4]),
-     .m_rd_clk(m_wr_clk[4]),
+     .m_rd_clk(m_rd_clk[4]),
      .tclk_phy(tclk_phy[4]),
 
      .i_conf_done(i_conf_done),
@@ -568,7 +568,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel5
      .m_fs_fwd_clk(m_fs_fwd_clk[5]),
      .m_ns_rcv_clk(m_ns_rcv_clk[5]),
      .m_wr_clk(m_wr_clk[5]),
-     .m_rd_clk(m_wr_clk[5]),
+     .m_rd_clk(m_rd_clk[5]),
      .tclk_phy(tclk_phy[5]),
 
      .i_conf_done(i_conf_done),
@@ -649,7 +649,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel6
      .m_fs_fwd_clk(m_fs_fwd_clk[6]),
      .m_ns_rcv_clk(m_ns_rcv_clk[6]),
      .m_wr_clk(m_wr_clk[6]),
-     .m_rd_clk(m_wr_clk[6]),
+     .m_rd_clk(m_rd_clk[6]),
      .tclk_phy(tclk_phy[6]),
 
      .i_conf_done(i_conf_done),
@@ -730,7 +730,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel7
      .m_fs_fwd_clk(m_fs_fwd_clk[7]),
      .m_ns_rcv_clk(m_ns_rcv_clk[7]),
      .m_wr_clk(m_wr_clk[7]),
-     .m_rd_clk(m_wr_clk[7]),
+     .m_rd_clk(m_rd_clk[7]),
      .tclk_phy(tclk_phy[7]),
 
      .i_conf_done(i_conf_done),
@@ -811,7 +811,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel8
      .m_fs_fwd_clk(m_fs_fwd_clk[8]),
      .m_ns_rcv_clk(m_ns_rcv_clk[8]),
      .m_wr_clk(m_wr_clk[8]),
-     .m_rd_clk(m_wr_clk[8]),
+     .m_rd_clk(m_rd_clk[8]),
      .tclk_phy(tclk_phy[8]),
 
      .i_conf_done(i_conf_done),
@@ -892,7 +892,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel9
      .m_fs_fwd_clk(m_fs_fwd_clk[9]),
      .m_ns_rcv_clk(m_ns_rcv_clk[9]),
      .m_wr_clk(m_wr_clk[9]),
-     .m_rd_clk(m_wr_clk[9]),
+     .m_rd_clk(m_rd_clk[9]),
      .tclk_phy(tclk_phy[9]),
 
      .i_conf_done(i_conf_done),
@@ -973,7 +973,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel10
      .m_fs_fwd_clk(m_fs_fwd_clk[10]),
      .m_ns_rcv_clk(m_ns_rcv_clk[10]),
      .m_wr_clk(m_wr_clk[10]),
-     .m_rd_clk(m_wr_clk[10]),
+     .m_rd_clk(m_rd_clk[10]),
      .tclk_phy(tclk_phy[10]),
 
      .i_conf_done(i_conf_done),
@@ -1054,7 +1054,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel11
      .m_fs_fwd_clk(m_fs_fwd_clk[11]),
      .m_ns_rcv_clk(m_ns_rcv_clk[11]),
      .m_wr_clk(m_wr_clk[11]),
-     .m_rd_clk(m_wr_clk[11]),
+     .m_rd_clk(m_rd_clk[11]),
      .tclk_phy(tclk_phy[11]),
 
      .i_conf_done(i_conf_done),
@@ -1135,7 +1135,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel12
      .m_fs_fwd_clk(m_fs_fwd_clk[12]),
      .m_ns_rcv_clk(m_ns_rcv_clk[12]),
      .m_wr_clk(m_wr_clk[12]),
-     .m_rd_clk(m_wr_clk[12]),
+     .m_rd_clk(m_rd_clk[12]),
      .tclk_phy(tclk_phy[12]),
 
      .i_conf_done(i_conf_done),
@@ -1216,7 +1216,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel13
      .m_fs_fwd_clk(m_fs_fwd_clk[13]),
      .m_ns_rcv_clk(m_ns_rcv_clk[13]),
      .m_wr_clk(m_wr_clk[13]),
-     .m_rd_clk(m_wr_clk[13]),
+     .m_rd_clk(m_rd_clk[13]),
      .tclk_phy(tclk_phy[13]),
 
      .i_conf_done(i_conf_done),
@@ -1297,7 +1297,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel14
      .m_fs_fwd_clk(m_fs_fwd_clk[14]),
      .m_ns_rcv_clk(m_ns_rcv_clk[14]),
      .m_wr_clk(m_wr_clk[14]),
-     .m_rd_clk(m_wr_clk[14]),
+     .m_rd_clk(m_rd_clk[14]),
      .tclk_phy(tclk_phy[14]),
 
      .i_conf_done(i_conf_done),
@@ -1379,7 +1379,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel15
      .m_fs_fwd_clk(m_fs_fwd_clk[15]),
      .m_ns_rcv_clk(m_ns_rcv_clk[15]),
      .m_wr_clk(m_wr_clk[15]),
-     .m_rd_clk(m_wr_clk[15]),
+     .m_rd_clk(m_rd_clk[15]),
      .tclk_phy(tclk_phy[15]),
 
      .i_conf_done(i_conf_done),
@@ -1460,7 +1460,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel16
      .m_fs_fwd_clk(m_fs_fwd_clk[16]),
      .m_ns_rcv_clk(m_ns_rcv_clk[16]),
      .m_wr_clk(m_wr_clk[16]),
-     .m_rd_clk(m_wr_clk[16]),
+     .m_rd_clk(m_rd_clk[16]),
      .tclk_phy(tclk_phy[16]),
 
      .i_conf_done(i_conf_done),
@@ -1542,7 +1542,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel17
      .m_fs_fwd_clk(m_fs_fwd_clk[17]),
      .m_ns_rcv_clk(m_ns_rcv_clk[17]),
      .m_wr_clk(m_wr_clk[17]),
-     .m_rd_clk(m_wr_clk[17]),
+     .m_rd_clk(m_rd_clk[17]),
      .tclk_phy(tclk_phy[17]),
 
      .i_conf_done(i_conf_done),
@@ -1623,7 +1623,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel18
      .m_fs_fwd_clk(m_fs_fwd_clk[18]),
      .m_ns_rcv_clk(m_ns_rcv_clk[18]),
      .m_wr_clk(m_wr_clk[18]),
-     .m_rd_clk(m_wr_clk[18]),
+     .m_rd_clk(m_rd_clk[18]),
      .tclk_phy(tclk_phy[18]),
 
      .i_conf_done(i_conf_done),
@@ -1704,7 +1704,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel19
      .m_fs_fwd_clk(m_fs_fwd_clk[19]),
      .m_ns_rcv_clk(m_ns_rcv_clk[19]),
      .m_wr_clk(m_wr_clk[19]),
-     .m_rd_clk(m_wr_clk[19]),
+     .m_rd_clk(m_rd_clk[19]),
      .tclk_phy(tclk_phy[19]),
 
      .i_conf_done(i_conf_done),
@@ -1785,7 +1785,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel20
      .m_fs_fwd_clk(m_fs_fwd_clk[20]),
      .m_ns_rcv_clk(m_ns_rcv_clk[20]),
      .m_wr_clk(m_wr_clk[20]),
-     .m_rd_clk(m_wr_clk[20]),
+     .m_rd_clk(m_rd_clk[20]),
      .tclk_phy(tclk_phy[20]),
 
      .i_conf_done(i_conf_done),
@@ -1866,7 +1866,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel21
      .m_fs_fwd_clk(m_fs_fwd_clk[21]),
      .m_ns_rcv_clk(m_ns_rcv_clk[21]),
      .m_wr_clk(m_wr_clk[21]),
-     .m_rd_clk(m_wr_clk[21]),
+     .m_rd_clk(m_rd_clk[21]),
      .tclk_phy(tclk_phy[21]),
 
      .i_conf_done(i_conf_done),
@@ -1947,7 +1947,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel22
      .m_fs_fwd_clk(m_fs_fwd_clk[22]),
      .m_ns_rcv_clk(m_ns_rcv_clk[22]),
      .m_wr_clk(m_wr_clk[22]),
-     .m_rd_clk(m_wr_clk[22]),
+     .m_rd_clk(m_rd_clk[22]),
      .tclk_phy(tclk_phy[22]),
 
      .i_conf_done(i_conf_done),
@@ -2028,7 +2028,7 @@ aib_channel #(.DATAWIDTH(DATAWIDTH), .MAX_SCAN_LEN(MAX_SCAN_LEN)) aib_channel23
      .m_fs_fwd_clk(m_fs_fwd_clk[23]),
      .m_ns_rcv_clk(m_ns_rcv_clk[23]),
      .m_wr_clk(m_wr_clk[23]),
-     .m_rd_clk(m_wr_clk[23]),
+     .m_rd_clk(m_rd_clk[23]),
      .tclk_phy(tclk_phy[23]),
 
      .i_conf_done(i_conf_done),

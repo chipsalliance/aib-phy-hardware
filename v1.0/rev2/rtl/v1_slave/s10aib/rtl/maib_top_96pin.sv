@@ -1009,7 +1009,7 @@ output wire                          m_device_detect
 
      maib_ch u_maib_17 (
 `ifdef MAIB_PIN96
-             .iopad_aib(iopad_aib_ch0),
+             .iopad_aib(iopad_aib_ch17),
 `else
              .iopad_aib(           {  iopad_fs_sr_data[17],       iopad_fs_sr_load[17],       iopad_ns_sr_data[17],      iopad_ns_sr_load[17],   
                                     iopad_unused_aib91[17],     iopad_unused_aib90[17],     iopad_unused_aib89[17],    iopad_unused_aib88[17],  

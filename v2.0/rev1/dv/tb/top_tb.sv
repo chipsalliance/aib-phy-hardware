@@ -8,7 +8,18 @@ module top_tb;
 parameter TOTAL_CHNL_NUM = 24;
 parameter AVMM_CYCLE = 4000;
 parameter OSC_CYCLE  = 1000;
-parameter FWD_CYCLE  = 500;
+//parameter FWD_CYCLE  = 500;
+
+`ifdef MS_AIB_GEN1
+   parameter M_PAD_NUM  = 96;
+`else
+   parameter M_PAD_NUM  = 102;
+`endif
+`ifdef SL_AIB_GEN1
+   parameter S_PAD_NUM  = 96;
+`else
+   parameter S_PAD_NUM  = 102;
+`endif
 
 logic  avmm_clk = 1'b0; 
 logic  osc_clk = 1'b0; 
@@ -19,11 +30,14 @@ int run_for_n_pkts_ms1;
 int run_for_n_pkts_sl1;
 int run_for_n_wa_cycle;
 int err_count;
-logic [80*24-1:0] sl1_xmit_q [$];
-logic [80*24-1:0] ms1_xmit_q [$];
 
-logic [320*24-1:0] sl1_xmit_f_q [$];
-logic [320*24-1:0] ms1_xmit_f_q [$];
+logic [40*24-1:0] ms1_rcv_40b_q [$];
+
+logic [80*24-1:0] sl1_rcv_80b_q [$];
+logic [80*24-1:0] ms1_rcv_80b_q [$];
+
+logic [320*24-1:0] sl1_rcv_320b_q [$];
+logic [320*24-1:0] ms1_rcv_320b_q [$];
 bit [1023:0] status;
 
 `include "top_tb_declare.inc"
@@ -37,7 +51,7 @@ bit [1023:0] status;
 
     always #(OSC_CYCLE/2)  osc_clk  = ~osc_clk;
 
-    always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
+//  always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
 
 
     //-----------------------------------------------------------------------------------------
@@ -64,20 +78,45 @@ bit [1023:0] status;
 
     // One channel master uses aib model
     parameter DATAWIDTH      = 40;
+`ifdef MS_AIB_GEN1
+    aib_top_wrapper_v1m dut_master1 (
+       `include "dut_ms_gen1.inc"
+    );
+`else 
     aib_model_top  #(.DATAWIDTH(DATAWIDTH)) dut_master1 (
         `include "dut_ms1_port.inc"
      );
-    // One channel slave uses aib model 
+`endif
+
+`ifdef SL_AIB_GEN1
+    maib_top dut_slave1 (
+        `include "dut_sl_gen1.inc"
+       );
+initial begin
+@(posedge dut_slave1.config_done);
+`include "../test/data/maib_prog.inc"
+end
+    
+`else
     aib_model_top #(.DATAWIDTH(DATAWIDTH)) dut_slave1 (
         `include "dut_sl1_port.inc"
        );
+`endif
 
-    // One channel Embedded Multi-Die Interconnect Bridge (EMIB) For future use
-
-    emib dut_emib (
+    // 24 channel Embedded Multi-Die Interconnect Bridge (EMIB) For future use
+`ifdef MS_AIB_GEN1
+    emib_m1s2 dut_emib (
         `include "dut_emib.inc"
        );
-
+`elsif SL_AIB_GEN1
+    emib_m2s1 dut_emib (
+        `include "dut_emib.inc"
+       );
+`else
+    emib_m2s2 dut_emib (
+        `include "dut_emib.inc"
+       );
+`endif
 
    //---------------------------------------------------------------------------
    // DUMP

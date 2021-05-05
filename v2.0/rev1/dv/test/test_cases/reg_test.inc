@@ -1,11 +1,10 @@
     parameter WR_CYCLE   = 500;
     parameter RD_CYCLE   = 500;
-
+    parameter FWD_CYCLE  = 500;
 
     always #(WR_CYCLE/2)   wr_clk   = ~wr_clk;
-
     always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
-
+    always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
 
 
 integer i_m1, i_s1;
@@ -76,10 +75,10 @@ integer i_m1, i_s1;
       $display("////////////////////////////////////////////////////////////////////////////\n");
       
       fork
-         ms1_data_xmit ();
-         ms1_data_rcv ();
-         sl1_data_xmit ();
-         sl1_data_rcv ();
+         ms1_aib2_reg2reg_xmit ();
+         sl1_aib2_reg2reg_xmit ();
+         ms1_aib2_regmod_rcv ();
+         sl1_aib2_regmod_rcv();
       join
 
       status = "Finishing data transmission";

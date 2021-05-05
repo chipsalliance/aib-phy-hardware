@@ -1,4 +1,4 @@
-module emib_ch (
+module emib_ch_m2s2 (
 	inout [101:0] s_aib,
 	inout [101:0] m_aib
 

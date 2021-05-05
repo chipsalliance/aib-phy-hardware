@@ -13,6 +13,10 @@ interface dut_if_mac #(parameter DWIDTH = 40, parameter TOTAL_CHNL_NUM = 24)
     logic [TOTAL_CHNL_NUM*DWIDTH*2-1:0]   data_out; 
     logic [TOTAL_CHNL_NUM*DWIDTH*8-1:0]   data_in_f;
     logic [TOTAL_CHNL_NUM*DWIDTH*8-1:0]   data_out_f;
+    logic [TOTAL_CHNL_NUM*DWIDTH-1:0]     gen1_data_in;
+    logic [TOTAL_CHNL_NUM*DWIDTH-1:0]     gen1_data_out;
+    logic [TOTAL_CHNL_NUM*DWIDTH*2-1:0]   gen1_data_in_f;
+    logic [TOTAL_CHNL_NUM*DWIDTH*2-1:0]   gen1_data_out_f;
     logic [TOTAL_CHNL_NUM*81-1:0]         ms_sideband;    
     logic [TOTAL_CHNL_NUM*73-1:0]         sl_sideband;    
 

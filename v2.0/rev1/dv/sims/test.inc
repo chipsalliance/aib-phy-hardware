@@ -1,12 +1,12 @@
 integer i_m1, i_s1;
 parameter WR_CYCLE   = 1000;
 parameter RD_CYCLE   = 1000;
+parameter FWD_CYCLE  = 500;
 
 
 always #(WR_CYCLE/2)   wr_clk   = ~wr_clk;
-
 always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
-
+always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
 
   initial begin
     begin
@@ -58,6 +58,8 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
       sl1_rx_fifo_mode = 2'b01;
       ms1_tx_markbit   = 5'b00100;
       sl1_tx_markbit   = 5'b00100;
+      ms1_gen1 = 1'b0;
+      sl1_gen1 = 1'b0;
 
       run_for_n_pkts_ms1 = 40;
       run_for_n_pkts_sl1 = 40;
@@ -80,12 +82,11 @@ always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
       $display("%0t: Starting data transmission", $time);
       $display("////////////////////////////////////////////////////////////////////////////\n");
       
-      init_wa_toggle ();
       fork
-         ms1_data_xmit_fifo ();
-         ms1_data_rcv_fifo ();
-         sl1_data_xmit_fifo ();
-         sl1_data_rcv_fifo ();
+         ms1_aib2_f2f_s_xmit ();
+         ms1_aib2_fifomod_rcv ();
+         sl1_aib2_f2f_s_xmit ();
+         sl1_aib2_fifomod_rcv ();
       join
 
       status = "Finishing data transmission";

@@ -6,7 +6,7 @@
 +incdir+../test/task
 +incdir+../test/test_cases
 ../emib/aliasv.sv
-../emib/emib_ch.sv
+../emib/emib_ch_m2s2.sv
 ../interface/dut_if_mac_ch.sv
 ../interface/avalon_mm_if.sv
 ../tb/top_tb_ch.sv
