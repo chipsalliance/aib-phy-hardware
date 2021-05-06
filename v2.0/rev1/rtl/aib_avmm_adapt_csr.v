@@ -142,15 +142,15 @@ rdata_comb = 32'h0;
    if(re) begin
       case (addr)  
 	7'h08 : begin
-		rdata_comb [1]	= rx_0[1];
+		rdata_comb [1:0]   = rx_0[1:0];
 		rdata_comb [26:24] = rx_0[26:24] ;
 	end
 	7'h10 : begin
-		rdata_comb [2:0] = rx_1 [2:0] ;
+		rdata_comb [7:0] = rx_1 [7:0] ;
 	end
 	7'h18 : begin
-		rdata_comb [1]	= tx_0[1];
-		rdata_comb [23:21] = tx_0[23:21];
+		rdata_comb [1:0]   = tx_0[1:0];
+		rdata_comb [23:16] = tx_0[23:16];
 		rdata_comb [31:28] = tx_0[31:28];
 	end
 	7'h1c : begin

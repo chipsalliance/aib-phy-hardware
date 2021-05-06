@@ -33,10 +33,10 @@ module aib_adapttxdbi_txdp (
      end
     else
       last_din     <= data_in[79:0];
-      dbi_data_out <= {dbi_calc[3], {19{dbi_calc[3]}} ^ last_din[78:60], 
-                       dbi_calc[2], {19{dbi_calc[2]}} ^ last_din[58:40], 
-                       dbi_calc[1], {19{dbi_calc[1]}} ^ last_din[38:20], 
-                       dbi_calc[0], {19{dbi_calc[0]}} ^ last_din[18:0]}; 
+      dbi_data_out <= {dbi_calc[3], {19{dbi_calc[3]}} ^ data_in[78:60], 
+                       dbi_calc[2], {19{dbi_calc[2]}} ^ data_in[58:40], 
+                       dbi_calc[1], {19{dbi_calc[1]}} ^ data_in[38:20], 
+                       dbi_calc[0], {19{dbi_calc[0]}} ^ data_in[18:0]}; 
    end
 
    function  dbi_value (
