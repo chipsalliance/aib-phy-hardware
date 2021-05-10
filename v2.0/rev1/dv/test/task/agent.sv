@@ -143,7 +143,9 @@
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_m1.m_wr_clk);
             intf_m1.data_in_f <=  din;
-            sl1_rcv_320b_q.push_back(din);
+            if (ms1_lpbk == 1'b1)
+                 ms1_rcv_320b_q.push_back(din);
+            else sl1_rcv_320b_q.push_back(din);
             pkts_gen++;
         end
   endtask
@@ -154,10 +156,12 @@
         bit [320*24-1:0] exp_din = 0;
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(ms1_rx_fifo_mode, 1'b1, 1'b0);
-            $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
+            $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_s1.m_wr_clk);
             intf_s1.data_in_f <=  din;
-            ms1_rcv_320b_q.push_back(din);
+            if (sl1_lpbk == 1'b1)
+                 sl1_rcv_320b_q.push_back(din);
+            else ms1_rcv_320b_q.push_back(din);
             pkts_gen++;
         end
   endtask
@@ -396,6 +400,7 @@
 // AIB2      <-> AIB2 asymmetric (FIFO2x <-> FIFO4x)
 // AIB2 Gen1 <-> AIB1 
 // The generated traffic will push into queue for receiver side comparason
+// Use default marker bit: 77
 //////////////////////////////////////////////////////////
   function [320*24-1:0] tx_data_gen(input [1:0] rcv_fifo_mode, input aib2_die, input gen1_mode);
      bit [320*24-1:0] data= 0;
@@ -410,22 +415,23 @@
          if (aib2_die == 1'b1) begin
            if (gen1_mode == 1'b1) begin
              case (rcv_fifo_mode)
-               2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = data[(j*320) +: 320] & {280'h0, {40{1'b1}}}; 
+               2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = {280'h0, data[(j*320) +: 40]};
                2'b01:        tx_data_gen[(j*320) +: 320] = {240'h0, 1'b1, data[(j*320+40) +: 39], 1'b0, data[(j*320) +: 39]}; 
                default:      tx_data_gen[(j*320) +: 320] = 320'h0;
              endcase
            end else begin
              case (rcv_fifo_mode)
-               2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = data[(j*320) +: 320] & {240'h0, {80{1'b1}}};
-               2'b01:        tx_data_gen[(j*320) +: 320] = data[(j*320) +: 320] & {160'h0, {160{1'b1}}}; 
-               2'b10:        tx_data_gen[(j*320) +: 320] = data[(j*320) +: 320]; 
+               2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = {240'h0, data[(j*320) +: 80]};
+               2'b01:        tx_data_gen[(j*320) +: 320] = {160'h0, 1'b1, data[(j*320+78) +: 79], 1'b0, data[(j*320) +: 77]};
+               2'b10:        tx_data_gen[(j*320) +: 320] = {1'b1, data[(j*320+238) +: 79], 1'b0, data[(j*320+158) +: 79],
+                                                            1'b0, data[(j*320+ 78) +: 79], 1'b0, data[(j*320)     +: 77]}; 
              endcase 
            end
          end else begin
            case (rcv_fifo_mode)
-             2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = data[(j*320) +: 320] & {280'h0, {40{1'b1}}};
+             2'b00, 2'b11: tx_data_gen[(j*320) +: 320] = {280'h0, data[(j*320) +: 40]};
              2'b01:        tx_data_gen[(j*320) +: 320] = {240'h0, 1'b1, data[(j*320+40) +: 39], 1'b0, data[(j*320) +: 39]};
-             default:      tx_data_gen[(j*320) +: 320] = 320'h0;
+             default:      tx_data_gen[(j*320) +: 320] =  320'h0;
            endcase
         end
      end
@@ -599,7 +605,7 @@
                     data_exp = ms1_rcv_320b_q.pop_front();
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, ms1_rx_fifo_mode, sl1_tx_markbit);
-                    if ((|eq_chk) !== 1'b1) begin
+                    if ((|eq_chk) == 1'b1) begin
                         err_count++;
                         $display ("[%t] ms1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_m1.data_out_f, data_exp);
                         $display ("[%t] ms1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
@@ -626,7 +632,7 @@
                     data_exp = sl1_rcv_320b_q.pop_front();
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, sl1_rx_fifo_mode, ms1_tx_markbit);
-                    if (|eq_chk !== 1'b1) begin
+                    if (|eq_chk == 1'b1) begin
                         err_count++;
                         $display ("[%t] sl1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_s1.data_out_f, data_exp);
                         $display ("[%t] sl1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);

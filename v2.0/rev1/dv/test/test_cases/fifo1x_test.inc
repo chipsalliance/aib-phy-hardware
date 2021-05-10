@@ -57,6 +57,8 @@ always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
       sl1_rx_fifo_mode = 2'b00;
       ms1_gen1 = 1'b0;
       sl1_gen1 = 1'b0;
+      ms1_lpbk = 1'b0;
+      sl1_lpbk = 1'b0;
 
       run_for_n_pkts_ms1 = 40;
       run_for_n_pkts_sl1 = 40;

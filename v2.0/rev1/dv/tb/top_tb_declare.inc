@@ -60,3 +60,5 @@
     reg  [4:0]  sl1_tx_markbit;
     reg         ms1_gen1;
     reg         sl1_gen1;
+    reg         ms1_lpbk;
+    reg         sl1_lpbk;
