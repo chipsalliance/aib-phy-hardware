@@ -58,12 +58,16 @@ bit [1023:0] status;
     //Avalon MM Interface instantiation
 
     //-----------------------------------------------------------------------------------------
-
-    avalon_mm_if avmm_if_m1  (
+`ifdef MS_AIB_GEN1
+    avalon_mm_if #(.AVMM_WIDTH(32), .BYTE_WIDTH(4)) avmm_if_m1  (
      .clk    (avmm_clk)
     );
-
-    avalon_mm_if avmm_if_s1  (
+`else
+    avalon_mm_if #(.AVMM_WIDTH(16), .BYTE_WIDTH(2)) avmm_if_m1  (
+     .clk    (avmm_clk)
+    );
+`endif
+     avalon_mm_if #(.AVMM_WIDTH(16), .BYTE_WIDTH(2)) avmm_if_s1  (
      .clk    (avmm_clk)
     );
     //-----------------------------------------------------------------------------------------

@@ -448,6 +448,7 @@
           2'b00: begin 
                    for (i=0; i<24; i++) begin
                      rcv_d_mod [(i*320) +: 320] = {240'h0, din[(i*320) +: 80]}; 
+                     exp_d_mod [(i*320) +: 320] = {240'h0, exp_d[(i*320) +: 80]}; 
                    end
                  end
           2'b01: begin
@@ -595,6 +596,9 @@
         bit [320*24-1:0] data_exp = 0;
         bit [320*24-1:0] data_rcvd = 0;
         bit [320*24-1:0] eq_chk = 0;
+        bit [320*24-1:0] dbi_mask = 0;
+        bit [320*24-1:0] eq_chk_dbi = 0;
+        static int i;
         static int pkts_rcvd = 0;
         begin
             while(pkts_rcvd < (run_for_n_pkts_ms1)) begin
@@ -605,7 +609,12 @@
                     data_exp = ms1_rcv_320b_q.pop_front();
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, ms1_rx_fifo_mode, sl1_tx_markbit);
-                    if ((|eq_chk) == 1'b1) begin
+                    for (i=0; i<24; i++) begin
+                      dbi_mask[(i*320) +: 320] = {16{20'h7ffff}};
+                    end
+                    if (ms1_dbi_en == 1'b1) eq_chk_dbi = eq_chk & dbi_mask;
+                    else            eq_chk_dbi = eq_chk;
+                    if ((|eq_chk_dbi) == 1'b1) begin
                         err_count++;
                         $display ("[%t] ms1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_m1.data_out_f, data_exp);
                         $display ("[%t] ms1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
@@ -622,7 +631,10 @@
         bit [320*24-1:0] data_exp = 0;
         bit [320*24-1:0] data_rcvd = 0;
         bit [320*24-1:0] eq_chk = 0;
+        bit [320*24-1:0] dbi_mask = 0;
+        bit [320*24-1:0] eq_chk_dbi = 0;
         static int pkts_rcvd = 0;
+        static int i;
         begin
             while(pkts_rcvd < (run_for_n_pkts_sl1)) begin
                 @ (posedge intf_s1.m_rd_clk);
@@ -632,7 +644,12 @@
                     data_exp = sl1_rcv_320b_q.pop_front();
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, sl1_rx_fifo_mode, ms1_tx_markbit);
-                    if (|eq_chk == 1'b1) begin
+                    for (i=0; i<24; i++) begin
+                      dbi_mask[(i*320) +: 320] = {16{20'h7ffff}};
+                    end
+                    if (sl1_dbi_en) eq_chk_dbi = eq_chk & dbi_mask;
+                    else            eq_chk_dbi = eq_chk;
+                    if (|eq_chk_dbi == 1'b1) begin
                         err_count++;
                         $display ("[%t] sl1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_s1.data_out_f, data_exp);
                         $display ("[%t] sl1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);

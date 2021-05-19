@@ -30,18 +30,18 @@ module aib_avmm_rdl_intf #(
    input   logic                         i_avmm_write       ,
    input   logic                         i_avmm_read        ,
    input   logic  [AVMM_ADDR_WIDTH-1:0]  i_avmm_addr        ,
-   input   logic  [31:0]                 i_avmm_wdata       ,
-   input   logic  [3:0]                  i_avmm_byte_en     ,
-   output  logic  [31:0]                 o_avmm_rdata       ,
+   input   logic  [15:0]                 i_avmm_wdata       ,
+   input   logic  [1:0]                  i_avmm_byte_en     ,
+   output  logic  [15:0]                 o_avmm_rdata       ,
    output  logic                         o_avmm_rdatavalid  ,
    output  logic                         o_avmm_waitrequest ,
    output  logic                         clk                , // RDL-generated memory map interface
    output  logic                         reset              ,
-   output  logic  [31:0]                 writedata          ,
+   output  logic  [15:0]                 writedata          ,
    output  logic                         read               ,
    output  logic                         write              ,
-   output  logic  [3:0]                  byteenable         ,
-   input   logic  [31:0]                 readdata           ,
+   output  logic  [1:0]                  byteenable         ,
+   input   logic  [15:0]                 readdata           ,
    input   logic                         readdatavalid      ,
    output  logic  [RDL_ADDR_WIDTH-1:0]   address
 
@@ -91,10 +91,10 @@ generate
    end
 endgenerate
 
-assign o_avmm_rdata                = (addr_out_of_range_r==1'b0)?readdata[31:0]:RDATA_OUT_OF_RANGE_ADDR;
+assign o_avmm_rdata                = (addr_out_of_range_r==1'b0)?readdata[15:0]:RDATA_OUT_OF_RANGE_ADDR;
 assign write                       = (addr_out_of_range==1'b0)?i_avmm_write  :1'b0;
-assign writedata                   = i_avmm_wdata[31:0];
-assign byteenable                  = i_avmm_byte_en[3:0];
+assign writedata                   = i_avmm_wdata[15:0];
+assign byteenable                  = i_avmm_byte_en[1:0];
 assign address[RDL_ADDR_WIDTH-1:0] = i_avmm_addr[RDL_ADDR_WIDTH-1:0];
 assign read                        = i_avmm_read;
 assign clk                         = avmm_clk;

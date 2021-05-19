@@ -2,7 +2,7 @@
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 
 `timescale 1ps/1ps
-interface avalon_mm_if (
+interface avalon_mm_if #(parameter AVMM_WIDTH = 16, BYTE_WIDTH = 2) (
     input bit clk
     );
 
@@ -10,17 +10,17 @@ interface avalon_mm_if (
     logic [16:0]                 address;
     logic                        read;
     logic                        write;
-    logic [31:0]                 writedata;
-    logic [ 3:0]                 byteenable;
-    logic [31:0]                 readdata;
+    logic [AVMM_WIDTH-1:0]       writedata;
+    logic [BYTE_WIDTH-1:0]       byteenable;
+    logic [AVMM_WIDTH-1:0]       readdata;
     logic                        readdatavalid;
     logic                        waitrequest;
 
 
     task cfg_write (
        input [16:0] addr,
-       input [ 3:0] be,
-       input [31:0] wdata);
+       input [BYTE_WIDTH-1:0] be,
+       input [AVMM_WIDTH-1:0] wdata);
 
        begin
            @(posedge clk);
@@ -39,8 +39,8 @@ interface avalon_mm_if (
 
    task cfg_read (
        input  [16:0] addr,
-       input  [ 3:0] be,
-       output [31:0] rdata);
+       input  [BYTE_WIDTH-1:0] be,
+       output [AVMM_WIDTH-1:0] rdata);
 
        begin
            @(posedge clk);

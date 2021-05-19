@@ -62,3 +62,5 @@
     reg         sl1_gen1;
     reg         ms1_lpbk;
     reg         sl1_lpbk;
+    reg         ms1_dbi_en;
+    reg         sl1_dbi_en;

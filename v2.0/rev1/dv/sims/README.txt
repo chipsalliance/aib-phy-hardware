@@ -34,6 +34,9 @@ test vector: fifo2x_test.inc
              fifo2x_test.inc
              fifo4x_test.inc
              reg_test.inc
+             fifo4x_dbi_test.inc
+             fifo4x_nslpbk_test.inc
+             fifo4x_fslpbk_test.inc
 
 Commands to run ncsim test
 ./runnc.ch

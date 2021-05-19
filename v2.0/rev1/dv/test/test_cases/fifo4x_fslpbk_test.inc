@@ -29,26 +29,43 @@ always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
       fork
  
         for (i_m1=0; i_m1<24; i_m1++) begin
-            avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0600_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0025);      
-            avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h60c4_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h31c}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h320}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h324}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h328}, 4'hf, 32'h0000_0000);
-
+            avmm_if_m1.cfg_write({i_m1,11'h208}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h20a}, 2'h3, 16'h0600);
+            avmm_if_m1.cfg_write({i_m1,11'h210}, 2'h3, 16'h0025);
+            avmm_if_m1.cfg_write({i_m1,11'h212}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h218}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h21a}, 2'h3, 16'h60c4);
+            avmm_if_m1.cfg_write({i_m1,11'h21c}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h21e}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h31c}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h31e}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h320}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h322}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h324}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h326}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h328}, 2'h3, 16'h0000);
+            avmm_if_m1.cfg_write({i_m1,11'h32a}, 2'h3, 16'h0000);
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
-            avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0025);
-            avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60c4_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_4000);
-            avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h208}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h20a}, 2'h3, 16'h0600);
+            avmm_if_s1.cfg_write({i_s1,11'h210}, 2'h3, 16'h0025);
+            avmm_if_s1.cfg_write({i_s1,11'h212}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h218}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h21a}, 2'h3, 16'h60c4);
+            avmm_if_s1.cfg_write({i_s1,11'h21c}, 2'h3, 16'h4000);
+            avmm_if_s1.cfg_write({i_s1,11'h21e}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h31c}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h31e}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h320}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h322}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h324}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h326}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h328}, 2'h3, 16'h0000);
+            avmm_if_s1.cfg_write({i_s1,11'h32a}, 2'h3, 16'h0000);
+
         end
+
       join
 
       ms1_tx_fifo_mode = 2'b10;
@@ -61,6 +78,8 @@ always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
       sl1_gen1 = 1'b0;
       ms1_lpbk = 1'b1;
       sl1_lpbk = 1'b1;
+      ms1_dbi_en = 1'b0;
+      sl1_dbi_en = 1'b0;
       run_for_n_pkts_ms1 = 40;
       run_for_n_pkts_sl1 = 40;
 

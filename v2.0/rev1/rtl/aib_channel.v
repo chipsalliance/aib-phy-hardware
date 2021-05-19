@@ -88,13 +88,13 @@ input [5:0]    i_channel_id, // channel ID to program
 input          i_cfg_avmm_clk,
 input          i_cfg_avmm_rst_n,
 input [16:0]   i_cfg_avmm_addr, // address to be programmed
-input [3:0]    i_cfg_avmm_byte_en, // byte enable
+input [1:0]    i_cfg_avmm_byte_en, // byte enable
 input          i_cfg_avmm_read, // Asserted to indicate the Cfg read access
 input          i_cfg_avmm_write, // Asserted to indicate the Cfg write access
-input [31:0]   i_cfg_avmm_wdata, // data to be programmed
+input [15:0]   i_cfg_avmm_wdata, // data to be programmed
 
 output         o_cfg_avmm_rdatavld,// Assert to indicate data available for Cfg read access
-output [31:0]  o_cfg_avmm_rdata, // data returned for Cfg read access
+output [15:0]  o_cfg_avmm_rdata, // data returned for Cfg read access
 output         o_cfg_avmm_waitreq // asserted to indicate not ready for Cfg access
 
  );
