@@ -610,7 +610,7 @@
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, ms1_rx_fifo_mode, sl1_tx_markbit);
                     for (i=0; i<24; i++) begin
-                      dbi_mask[(i*320) +: 320] = {16{20'h7ffff}};
+                      dbi_mask[(i*320) +: 320] = {8{40'h3f_ffff_ffff}};
                     end
                     if (ms1_dbi_en == 1'b1) eq_chk_dbi = eq_chk & dbi_mask;
                     else            eq_chk_dbi = eq_chk;
@@ -645,7 +645,7 @@
                     pkts_rcvd++;
                     eq_chk = compare_eq_320b(data_rcvd, data_exp, sl1_rx_fifo_mode, ms1_tx_markbit);
                     for (i=0; i<24; i++) begin
-                      dbi_mask[(i*320) +: 320] = {16{20'h7ffff}};
+                      dbi_mask[(i*320) +: 320] = {8{40'h3f_ffff_ffff}};
                     end
                     if (sl1_dbi_en) eq_chk_dbi = eq_chk & dbi_mask;
                     else            eq_chk_dbi = eq_chk;

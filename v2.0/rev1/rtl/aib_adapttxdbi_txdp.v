@@ -18,25 +18,25 @@ module aib_adapttxdbi_txdp (
    output wire [79:0]           data_out	 
    );
 
-   wire [3:0] dbi_calc;
-   reg  [79:0] last_din, dbi_data_out;
+   wire [3:0]  dbi_calc;
+   wire [79:0] last_din;
+   reg  [79:0] dbi_data_out;
+   assign last_din = data_out;
 
    assign data_out = dbi_en? dbi_data_out : data_in;
-   assign dbi_calc = {dbi_value(data_in[78:60], last_din[78:60]), dbi_value(data_in[58:40], last_din[58:40]),
-                      dbi_value(data_in[38:20], last_din[38:20]), dbi_value(data_in[18:0],  last_din[18:0])};
+   assign dbi_calc = {dbi_value(data_in[77:59], last_din[77:59]), dbi_value(data_in[58:40], last_din[58:40]),
+                      dbi_value(data_in[37:19], last_din[37:19]), dbi_value(data_in[18:0],  last_din[18:0])};
    always @(posedge clk or negedge rst_n)
    begin
     if (!rst_n)
      begin
-      last_din     <= 80'b0;
       dbi_data_out <= 80'h0;
      end
     else
-      last_din     <= data_in[79:0];
-      dbi_data_out <= {dbi_calc[3], {19{dbi_calc[3]}} ^ data_in[78:60], 
-                       dbi_calc[2], {19{dbi_calc[2]}} ^ data_in[58:40], 
-                       dbi_calc[1], {19{dbi_calc[1]}} ^ data_in[38:20], 
-                       dbi_calc[0], {19{dbi_calc[0]}} ^ data_in[18:0]}; 
+      dbi_data_out <= {dbi_calc[3:2], {19{dbi_calc[3]}} ^ data_in[77:59], 
+                                      {19{dbi_calc[2]}} ^ data_in[58:40], 
+                       dbi_calc[1:0], {19{dbi_calc[1]}} ^ data_in[37:19], 
+                                      {19{dbi_calc[0]}} ^ data_in[18:0]}; 
    end
 
    function  dbi_value (
