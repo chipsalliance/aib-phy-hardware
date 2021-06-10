@@ -20,9 +20,21 @@ module aib_adaptrxdbi_rxdp (
 
    wire [3:0] dbi_calc;
    reg  [79:0] last_din, dbi_data_out;
+   wire [37:0] dbi_dat_lo, dbi_dat_hi;
 
    assign data_out = dbi_en? dbi_data_out : data_in;
    assign dbi_calc = {data_in[79], data_in[78], data_in[39], data_in[38]};
+
+   genvar j;
+   generate
+   for (j=0; j<19; j=j+1) begin:data_out_gen
+      assign dbi_dat_lo[2*j]   = data_in[2*j]     ^dbi_calc[0];
+      assign dbi_dat_lo[2*j+1] = data_in[2*j+1]   ^dbi_calc[1];
+      assign dbi_dat_hi[2*j]   = data_in[2*j+40]  ^dbi_calc[2];
+      assign dbi_dat_hi[2*j+1] = data_in[2*j+1+40]^dbi_calc[3];
+   end
+   endgenerate
+
    always @(posedge clk or negedge rst_n)
    begin
     if (!rst_n)
@@ -30,10 +42,8 @@ module aib_adaptrxdbi_rxdp (
       dbi_data_out <= 80'h0;
      end
     else
-      dbi_data_out <= {dbi_calc[3:2], {19{dbi_calc[3]}} ^ data_in[77:59], 
-                                      {19{dbi_calc[2]}} ^ data_in[58:40], 
-                       dbi_calc[1:0], {19{dbi_calc[1]}} ^ data_in[37:19], 
-                                      {19{dbi_calc[0]}} ^ data_in[18:0]}; 
+      dbi_data_out <= {dbi_calc[3:2], dbi_dat_hi, 
+                       dbi_calc[1:0], dbi_dat_lo}; 
    end
 
 
