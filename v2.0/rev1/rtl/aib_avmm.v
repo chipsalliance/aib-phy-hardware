@@ -16,9 +16,9 @@ module aib_avmm (
   input         cfg_avmm_write,
   input         cfg_avmm_read,
   input [16:0]  cfg_avmm_addr,
-  input [15:0]  cfg_avmm_wdata,
-  input [1:0]   cfg_avmm_byte_en,
-  output [15:0] cfg_avmm_rdata,
+  input [31:0]  cfg_avmm_wdata,
+  input [3:0]   cfg_avmm_byte_en,
+  output [31:0] cfg_avmm_rdata,
   output        cfg_avmm_rdatavld,
   output        cfg_avmm_waitreq,
 
@@ -38,12 +38,12 @@ module aib_avmm (
 wire cfg_csr_clk, cfg_csr_reset;
 wire cfg_csr_read,cfg_csr_write;
 wire cfg_csr_rdatavld;
-wire [15:0] cfg_csr_wdata, cfg_csr_rdata;
+wire [31:0] cfg_csr_wdata, cfg_csr_rdata;
 wire [6:0]  cfg_csr_addr;
-wire [1:0]  cfg_csr_byteen; 
+wire [3:0]  cfg_csr_byteen; 
 wire cfg_adapt_addr_match, cfg_io_addr_match;
 wire cfg_adapt_rdatavld, cfg_io_rdatavld;
-wire [15:0] cfg_adapt_rdata, cfg_io_rdata;
+wire [31:0] cfg_adapt_rdata, cfg_io_rdata;
 
 localparam AIB_BASE_BOT = 11'h200;
 localparam AIB_BASE_MID = 11'h300;

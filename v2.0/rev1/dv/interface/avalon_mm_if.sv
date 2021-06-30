@@ -2,7 +2,7 @@
 // Copyright (C) 2019 Intel Corporation. All rights reserved
 
 `timescale 1ps/1ps
-interface avalon_mm_if #(parameter AVMM_WIDTH = 16, BYTE_WIDTH = 2) (
+interface avalon_mm_if #(parameter AVMM_WIDTH = 32, BYTE_WIDTH = 4) (
     input bit clk
     );
 

@@ -107,12 +107,12 @@ output [TOTAL_CHNL_NUM-1:0][MAX_SCAN_LEN-1:0] i_scan_dout,
 input                          i_cfg_avmm_clk,
 input                          i_cfg_avmm_rst_n,
 input [16:0]                   i_cfg_avmm_addr, // address to be programmed
-input [1:0]                    i_cfg_avmm_byte_en, // byte enable
+input [3:0]                    i_cfg_avmm_byte_en, // byte enable
 input                          i_cfg_avmm_read, // Asserted to indicate the Cfg read access
 input                          i_cfg_avmm_write, // Asserted to indicate the Cfg write access
-input [15:0]                   i_cfg_avmm_wdata, // data to be programmed
+input [31:0]                   i_cfg_avmm_wdata, // data to be programmed
 output                         o_cfg_avmm_rdatavld,// Assert to indicate data available for Cfg read access
-output [15:0]                  o_cfg_avmm_rdata, // data returned for Cfg read access
+output [31:0]                  o_cfg_avmm_rdata, // data returned for Cfg read access
 output                         o_cfg_avmm_waitreq, // asserted to indicate not ready for Cfg access
 output                         o_jtag_tdo, //last boundary scan chain output, TDO
 
@@ -131,7 +131,7 @@ wire por_ms, osc_clk;
 wire [TOTAL_CHNL_NUM-1:0] o_cfg_avmm_rdatavld_ch;
 wire [TOTAL_CHNL_NUM-1:0] o_cfg_avmm_waitreq_ch;
 wire [TOTAL_CHNL_NUM-1:0] o_jtag_tdo_ch; 
-wire [15:0] o_rdata_ch[0:23];
+wire [31:0] o_rdata_ch[0:23];
 
 wire  vccl_aib = 1'b1;
 wire vssl_aib = 1'b0;
