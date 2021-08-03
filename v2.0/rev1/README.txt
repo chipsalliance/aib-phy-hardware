@@ -1,5 +1,5 @@
 README.txt
-May. 05, 2021
+Aug. 03, 2021
 
 ============================================================
 ============================================================
@@ -31,6 +31,13 @@ Version 1.0: Initial release
    AIB2.0 Leader Gen1 <---> AIB 1.0 Follower (FPGA)
    AIB1.0 Leader      <---> AIB 2.0 Follower Gen1
 2) See README.txt under sims for the detail instruction to run
+
+08/03/2021: changelist
+Added three test cases:
+   fifo1x_test_msaib1.inc
+   fifo2x_fifo4x_test.inc
+   fifo1x_test_slaib1.inc
+For detail how to run these test, see README.txt under aib-phy-hardware/v2.0/rev1/dv/sims
 ============================================================
 Files included:
 ============================================================

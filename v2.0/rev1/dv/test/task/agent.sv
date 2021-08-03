@@ -137,8 +137,7 @@
   task ms1_aib2_f2f_s_xmit ();
         static int pkts_gen = 0;
         bit [320*24-1:0] din = 0;
-        bit [320*24-1:0] exp_din = 0;
-        while (pkts_gen < run_for_n_pkts_ms1) begin
+	while (pkts_gen < run_for_n_pkts_ms1) begin
             din = tx_data_gen(sl1_rx_fifo_mode, 1'b1, 1'b0);
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_m1.m_wr_clk);
@@ -153,7 +152,6 @@
   task sl1_aib2_f2f_s_xmit ();
         static int pkts_gen = 0;
         bit [320*24-1:0] din = 0;
-        bit [320*24-1:0] exp_din = 0;
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(ms1_rx_fifo_mode, 1'b1, 1'b0);
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
@@ -175,46 +173,60 @@
   task ms1_aib2_usr_f2to4_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
+        integer j;
         bit [320*24-1:0] din = 0;
-        bit [320*24-1:0] exp_din = 0;
+        bit [320*24-1:0] din_hi = 0;
+        bit [320*24-1:0] din_lo = 0;
 
         while (mrk_gen < 4) begin
           @(posedge intf_m1.m_wr_clk);
-              intf_m1.data_in_f = usrmod_mrkgen(2'b01, 2'b10, 1'b0, 1'b0);
+              intf_m1.data_in_f = {24{160'h0, 2'b0, 1'b0, 77'h0, 80'h0}};
           @(posedge intf_m1.m_wr_clk);
-              intf_m1.data_in_f = usrmod_mrkgen(2'b01, 2'b10, 1'b1, 1'b0);
+              intf_m1.data_in_f = {24{160'h0, 2'b0, 1'b1, 77'h0, 80'h0}};
           mrk_gen++;
         end
 
-        while (pkts_gen < run_for_n_pkts_ms1) begin
+        while (pkts_gen < run_for_n_pkts_ms1/2) begin
             din = tx_data_gen(sl1_rx_fifo_mode, 1'b1, 1'b0);
-            $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
+            for (j=0; j<24; j++) begin
+               din_hi[(j*320) +: 320] = {160'h0, din[(j*320+160) +: 160]};
+               din_lo[(j*320) +: 320] = {160'h0, din[(j*320) +: 160]};
+            end
+            $display ("[%t] ms1 Generating data low [%d] = %x \n", $time, pkts_gen, din_lo);
+            $display ("[%t] ms1 Generating data high[%d] = %x \n", $time, pkts_gen, din_hi);
             @(posedge intf_m1.m_wr_clk);
-            intf_m1.data_in_f =  din;
-            usrmod_datgen(din, 2'b01, 2'b10, 1'b0);
-            usrmod_datgen(din, 2'b01, 2'b10, 1'b1);
+            intf_m1.data_in_f = din_lo;
+            @(posedge intf_m1.m_wr_clk);
+            intf_m1.data_in_f = din_hi;
             sl1_rcv_320b_q.push_back(din);
             pkts_gen++;
         end
   endtask
 
-  task ms1_aib2_usr_f4to2_xmit ();
+  task sl1_aib2_usr_f4to2_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
+        integer j;
         bit [320*24-1:0] din = 0;
-        bit [320*24-1:0] exp_din = 0;
+        bit [320*24-1:0] din_lo = 0;
+        bit [320*24-1:0] din_hi = 0;
 
         while (mrk_gen < 4) begin
-          @(posedge intf_m1.m_wr_clk);
-              intf_m1.data_in_f = usrmod_mrkgen(2'b10, 2'b01, 1'b0, 1'b0);
+          @(posedge intf_s1.m_wr_clk);
+              intf_s1.data_in_f = {24{2'b0, 1'b1, 77'h0, 80'h0, 2'b0, 1'b1, 77'h0,  80'h0}};
           mrk_gen++;
         end
-        while (pkts_gen < run_for_n_pkts_ms1) begin
-            din = tx_data_gen(sl1_rx_fifo_mode, 1'b1, 1'b0);
-            $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
-            @(posedge intf_m1.m_wr_clk);
-            intf_m1.data_in_f =  din;
-            sl1_rcv_320b_q.push_back(din);
+        while (pkts_gen < run_for_n_pkts_sl1) begin
+            din = tx_data_gen(sl1_tx_fifo_mode, 1'b1, 1'b0);
+            $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
+            @(posedge intf_s1.m_wr_clk);
+            intf_s1.data_in_f =  din;
+            for (j=0; j<24; j++) begin
+               din_hi[(j*320) +: 320] = {160'h0, din[(j*320+160) +: 160]};
+               din_lo[(j*320) +: 320] = {160'h0, din[(j*320) +: 160]};
+            end
+            ms1_rcv_320b_q.push_back(din_lo);
+            ms1_rcv_320b_q.push_back(din_hi);
             pkts_gen++;
         end
   endtask
@@ -249,6 +261,45 @@
   endtask
 
 ////////////////////////////////////////////////////////////////
+/* AIB2.0 Gen1  Master to  FPGA AIB1.0 Slave */
+//     FIFO1x AIB2.0 Gen1 (40 bit) <-> FIFO2x AIB1.0 (80 bit)
+////////////////////////////////////////////////////////////////
+  task ms1_gen1toaib1_f1f2_xmit ();
+        static int pkts_gen = 0;
+        static int mrk_gen = 0;
+        integer j;
+        bit [320*24-1:0]  din = 0;
+        bit [320*24-1:0]  din_lo = 0;
+        bit [320*24-1:0]  din_hi = 0;
+        bit [80*24-1:0]   din_80b = 0;
+
+        while (mrk_gen < 8) begin
+          @(posedge intf_m1.m_ns_fwd_clk);
+              intf_m1.data_in_f = {24{320'h0}};
+          @(posedge intf_s1.m_ns_fwd_clk);
+              intf_m1.data_in_f = {24{280'h0,1'b1, 39'h0}};
+          mrk_gen++;
+        end
+        while (pkts_gen < run_for_n_pkts_ms1/2) begin
+            din = tx_data_gen(sl1_rx_fifo_mode, 1'b0, 1'b1);
+            for (j=0; j<24; j++) begin
+               din_hi[(j*320) +: 40] = din[(j*320+40) +: 40];
+               din_lo[(j*320) +: 40] = din[(j*320) +: 40];
+               din_80b[(j*80) +: 80] = din[(j*320) +: 80];
+            end
+            $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din_lo);
+            $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din_hi);
+            @(posedge intf_m1.m_ns_fwd_clk);
+            intf_m1.data_in_f =  din_lo;
+            @(posedge intf_m1.m_ns_fwd_clk);
+            intf_m1.data_in_f =  din_hi;
+            sl1_rcv_80b_q.push_back(din_80b);
+            pkts_gen++;
+        end
+  endtask
+
+
+////////////////////////////////////////////////////////////////
 /* AIB2.0 Gen1  Master FPGA AIB1.0 Slave */
 //           FIFO2x AIB2.0 Gen1 <-> FIFO2x AIB1.0
 ////////////////////////////////////////////////////////////////
@@ -258,7 +309,6 @@
         integer j;
         bit [320*24-1:0] din = 0;
         bit [80*24-1:0]  din_80b = 0;
-        bit [320*24-1:0] exp_din = 0;
 
         while (mrk_gen < 4) begin
           @(negedge intf_s1.m_wr_clk);
@@ -279,17 +329,46 @@
   endtask
 
 ////////////////////////////////////////////////////////////////
+/*  FPGA AIB1.0 Slave to AIB2.0 Gen1  Master*/
+//      FIFO2x AIB1.0 (80 bit) <-> FIFO1x AIB2.0 Gen1 (40 bit)
+////////////////////////////////////////////////////////////////
+  task sl1_aib1togen1_f2f1_xmit ();
+        static int pkts_gen = 0;
+        static int mrk_gen = 0;
+        integer j;
+        bit [320*24-1:0] din = 0;
+        bit [320*24-1:0] din_hi = 0;
+        bit [320*24-1:0] din_lo = 0;
+        bit [80*24-1:0]  din_80b = 0;
+
+        while (pkts_gen < run_for_n_pkts_sl1) begin
+            din = tx_data_gen(sl1_tx_fifo_mode, 1'b0, 1'b1);  //First generate SL1 FPGA format
+            for (j=0; j<24; j++) begin
+               din_hi[(j*320) +: 320] = {280'h0, 1'b1, din[(j*320+40) +: 39]};
+               din_lo[(j*320) +: 320] = {280'h0, 1'b0, din[(j*320) +: 39]};
+               din_80b[(j*80) +: 80] = din[(j*320) +: 80];
+            end
+            $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
+            @(negedge intf_s1.m_wr_clk);
+            intf_s1.gen1_data_in_f =  din_80b;
+            ms1_rcv_320b_q.push_back(din_lo);
+            ms1_rcv_320b_q.push_back(din_hi);
+            pkts_gen++;
+        end
+  endtask
+
+
+////////////////////////////////////////////////////////////////
 /* AIB1.0 Master to AIB2.0 Gen1 FIFO2x Slave */
 //          REG Mode AIB1.0  <-> FIFO2x AIB2.0 Gen1
 ////////////////////////////////////////////////////////////////
-  task ms1_aib1togen1_reg2fifo_xmit ();
+  task ms1_aib1togen1_reg2fifo2x_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
         integer j;
         bit [320*24-1:0] din = 0;
         bit [40*24-1:0]  din_40b_lo = 0;
         bit [40*24-1:0]  din_40b_hi = 0;
-        bit [320*24-1:0] exp_din = 0;
 
         while (mrk_gen < 8) begin
           @(posedge intf_m1.m_ns_fwd_clk);
@@ -316,17 +395,41 @@
   endtask
 
 ////////////////////////////////////////////////////////////////
+/* AIB1.0 Master to AIB2.0 Gen1 FIFO1x Slave */
+// REG Mode AIB1.0  <-> FIFO1x AIB2.0 Gen1 (40bit to 40bit)
+////////////////////////////////////////////////////////////////
+  task ms1_aib1togen1_reg2fifo1x_xmit ();
+        static int pkts_gen = 0;
+        static int mrk_gen = 0;
+        integer j;
+        bit [320*24-1:0] din = 0;
+        bit [40*24-1:0]  din_40b = 0;
+
+        while (pkts_gen < run_for_n_pkts_ms1) begin
+            din = tx_data_gen(sl1_rx_fifo_mode, 1'b0, 1'b1);
+            for (j=0; j<24; j++) begin
+               din_40b[(j*40) +: 40] = din[j*320 +: 40];
+            end
+            $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din_40b);
+            @(posedge intf_m1.m_ns_fwd_clk);
+            intf_m1.gen1_data_in =  din_40b;
+            sl1_rcv_320b_q.push_back(din);
+            pkts_gen++;
+        end
+  endtask
+
+
+////////////////////////////////////////////////////////////////
 //  Gen1 FIFO2x Slave to AIB1.0 master */
 //  FIFO2x AIB2.0 Gen1 <-> REG Mode AIB1.0
 ////////////////////////////////////////////////////////////////
-  task sl1_gen1toaib1_fifo2reg_xmit ();
+  task sl1_gen1toaib1_fifo2x_reg_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
         integer j;
         bit [320*24-1:0] din = 0;
         bit [40*24-1:0]  din_40b_hi = 0;
         bit [40*24-1:0]  din_40b_lo = 0;
-        bit [320*24-1:0] exp_din = 0;
 
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(2'b01, 1'b1, 1'b1);
@@ -339,6 +442,31 @@
             intf_s1.data_in_f =  din;
             ms1_rcv_40b_q.push_back(din_40b_lo);
             ms1_rcv_40b_q.push_back(din_40b_hi);
+            pkts_gen++;
+        end
+  endtask
+
+////////////////////////////////////////////////////////////////
+//  Gen1 FIFO1x Slave to AIB1.0 master */
+//  FIFO1x AIB2.0 Gen1 <-> REG Mode AIB1.0
+//  40 bit to 40 bit
+////////////////////////////////////////////////////////////////
+  task sl1_gen1toaib1_fifo1x_reg_xmit ();
+        static int pkts_gen = 0;
+        static int mrk_gen = 0;
+        integer j;
+        bit [320*24-1:0] din = 0;
+        bit [40*24-1:0]  din_40b = 0;
+
+        while (pkts_gen < run_for_n_pkts_sl1) begin
+            din = tx_data_gen(2'b00, 1'b1, 1'b1);
+            for (j=0; j<24; j++) begin
+               din_40b[(j*40) +: 40] = din[(j*320) +: 40];
+            end
+            $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
+            @(posedge intf_s1.m_wr_clk);
+            intf_s1.data_in_f =  din;
+            ms1_rcv_40b_q.push_back(din_40b);
             pkts_gen++;
         end
   endtask
@@ -467,9 +595,11 @@
                                   exp_d_mod[(i*320) +: 320] = {160'h0, exp_d[i*320  +: 160]};
                                end
                     5'b00100:  begin 
+                                /* 
                                   rcv_d_mod[(i*320) +: 320] ={din[((i+1)*320-1) -: 160], 
                                                          din[159+i*320], din[158+i*320], 1'b1,           din[156+i*320], din[(i*320+155) -: 76],                       
-                                                         din[79+i*320],  din[78+i*320],  1'b0,           din[76+i*320],  din[(i*320+75)  -: 76]};
+                                                         din[79+i*320],  din[78+i*320],  1'b0,           din[76+i*320],  din[(i*320+75)  -: 76]}; */
+                                  rcv_d_mod[(i*320) +: 320] = {160'h0,   din[i*320  +: 160]};
                                   exp_d_mod[(i*320) +: 320] = {160'h0, exp_d[i*320  +: 160]};
                                end
                     5'b00010:  begin 
@@ -565,8 +695,11 @@
   task ms1_aib1_regmod_rcv ();  //reg mode. Received data is transmitting from slave
         bit [(40*24-1):0] data_exp = 0;
         static int pkts_rcvd = 0;
+        static int expect_pkt_num = 0;
         begin
-            while(pkts_rcvd < (2*run_for_n_pkts_sl1)) begin
+            if (sl1_tx_fifo_mode == 2'b00) expect_pkt_num = run_for_n_pkts_sl1;   //If fifo1x mode
+            else                           expect_pkt_num = 2*run_for_n_pkts_sl1; //If fifo2x mode
+            while(pkts_rcvd < expect_pkt_num) begin
                 @ (negedge intf_m1.m_fs_fwd_clk);
                 if (intf_m1.gen1_data_out[38:0] !== 0) begin
                     $display ("[%t] ms1 Receiving data[%d] = %x \n", $time, pkts_rcvd, intf_m1.gen1_data_out);
@@ -662,8 +795,8 @@
   endtask
 
 ////////////////////////////////////////////////////////////////
-/* AIB2.0 Gen1 Receiver data master/slave side with FIFO mode Symmetric */
-//           FIFO2x <-> FIFO2x
+/* AIB2.0 Gen1 Receiver data master/slave side with FIFO mode */
+//          FIFO1X (40 bit) or FIFO2X mode (80 bit) 
 ////////////////////////////////////////////////////////////////
 
   task ms1_gen1_fifomod_rcv ();
@@ -674,7 +807,10 @@
         begin
             while(pkts_rcvd < (run_for_n_pkts_ms1)) begin
                 @ (negedge intf_m1.m_rd_clk);
-                data_rcvd = intf_m1.data_out_f & {24{240'h0, {80{1'b1}}}};
+                if (ms1_rx_fifo_mode == 2'b00)    //1XFIFO mode
+                   data_rcvd = intf_m1.data_out_f & {24{280'h0, {40{1'b1}}}};
+                else   //2XFIFO mode
+                   data_rcvd = intf_m1.data_out_f & {24{240'h0, {80{1'b1}}}};
                 if (data_rcvd[38:0] != 39'h0) begin
                     $display ("[%t] ms1 Receiving data[%d] = %x \n", $time, pkts_rcvd, data_rcvd);
                     data_exp = ms1_rcv_320b_q.pop_front();
@@ -701,7 +837,12 @@
         begin
             while(pkts_rcvd < (run_for_n_pkts_ms1/2)) begin
                 @ (negedge intf_s1.m_rd_clk);
-                data_rcvd = intf_s1.data_out_f & {24{240'h0, {80{1'b1}}}};
+
+                if (sl1_rx_fifo_mode == 2'b00)    //1XFIFO mode
+                   data_rcvd = intf_s1.data_out_f & {24{280'h0, {40{1'b1}}}};
+                else   //2XFIFO mode
+                   data_rcvd = intf_s1.data_out_f & {24{240'h0, {80{1'b1}}}};
+
                 if (data_rcvd[38:0] != 39'h0) begin
                     $display ("[%t] sl1 Receiving data[%d] = %x \n", $time, pkts_rcvd, data_rcvd);
                     data_exp = sl1_rcv_320b_q.pop_front();

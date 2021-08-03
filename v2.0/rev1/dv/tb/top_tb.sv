@@ -23,9 +23,12 @@ parameter OSC_CYCLE  = 1000;
 
 logic  avmm_clk = 1'b0; 
 logic  osc_clk = 1'b0; 
-logic  fwd_clk = 1'b0; 
-logic  wr_clk = 1'b0; 
-logic  rd_clk = 1'b0;
+logic  ms_fwd_clk = 1'b0; 
+logic  ms_wr_clk = 1'b0; 
+logic  ms_rd_clk = 1'b0;
+logic  sl_fwd_clk = 1'b0;
+logic  sl_wr_clk = 1'b0;
+logic  sl_rd_clk = 1'b0;
 int run_for_n_pkts_ms1;
 int run_for_n_pkts_sl1;
 int run_for_n_wa_cycle;
@@ -58,24 +61,18 @@ bit [1023:0] status;
     //Avalon MM Interface instantiation
 
     //-----------------------------------------------------------------------------------------
-`ifdef MS_AIB_GEN1
     avalon_mm_if #(.AVMM_WIDTH(32), .BYTE_WIDTH(4)) avmm_if_m1  (
      .clk    (avmm_clk)
     );
-`else
-    avalon_mm_if #(.AVMM_WIDTH(32), .BYTE_WIDTH(4)) avmm_if_m1  (
-     .clk    (avmm_clk)
-    );
-`endif
-     avalon_mm_if #(.AVMM_WIDTH(32), .BYTE_WIDTH(4)) avmm_if_s1  (
+    avalon_mm_if #(.AVMM_WIDTH(32), .BYTE_WIDTH(4)) avmm_if_s1  (
      .clk    (avmm_clk)
     );
     //-----------------------------------------------------------------------------------------
     // Mac Interface instantiation
 
     //-----------------------------------------------------------------------------------------
-    dut_if_mac #(.DWIDTH (40)) intf_m1 (.wr_clk(wr_clk), .rd_clk(rd_clk), .fwd_clk(fwd_clk), .osc_clk(osc_clk));
-    dut_if_mac #(.DWIDTH (40)) intf_s1 (.wr_clk(wr_clk), .rd_clk(rd_clk), .fwd_clk(fwd_clk), .osc_clk(osc_clk));
+    dut_if_mac #(.DWIDTH (40)) intf_m1 (.wr_clk(ms_wr_clk), .rd_clk(ms_rd_clk), .fwd_clk(ms_fwd_clk), .osc_clk(osc_clk));
+    dut_if_mac #(.DWIDTH (40)) intf_s1 (.wr_clk(sl_wr_clk), .rd_clk(sl_rd_clk), .fwd_clk(sl_fwd_clk), .osc_clk(osc_clk));
     //-----------------------------------------------------------------------------------------
     // DUT instantiation
     //-----------------------------------------------------------------------------------------

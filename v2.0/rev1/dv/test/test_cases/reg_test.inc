@@ -1,10 +1,14 @@
-    parameter WR_CYCLE   = 500;
-    parameter RD_CYCLE   = 500;
-    parameter FWD_CYCLE  = 500;
+parameter WR_CYCLE   = 500;
+parameter RD_CYCLE   = 500;
+parameter FWD_CYCLE  = 500;
 
-    always #(WR_CYCLE/2)   wr_clk   = ~wr_clk;
-    always #(RD_CYCLE/2)   rd_clk   = ~rd_clk;
-    always #(FWD_CYCLE/2)  fwd_clk  = ~fwd_clk;
+always #(WR_CYCLE/2)   ms_wr_clk   = ~ms_wr_clk;
+always #(RD_CYCLE/2)   ms_rd_clk   = ~ms_rd_clk;
+always #(FWD_CYCLE/2)  ms_fwd_clk  = ~ms_fwd_clk;
+
+always #(WR_CYCLE/2)   sl_wr_clk   = ~sl_wr_clk;
+always #(RD_CYCLE/2)   sl_rd_clk   = ~sl_rd_clk;
+always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
 
 
 integer i_m1, i_s1;
