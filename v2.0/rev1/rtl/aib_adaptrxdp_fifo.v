@@ -62,6 +62,7 @@ wire			phcomp_rden_int;
 
 reg			phcomp_wren_d0;
 wire			phcomp_wren_sync2;
+wire                    defult_wren_sync;
 reg			phcomp_wren_sync3;
 reg			phcomp_wren_sync4;
 reg			phcomp_wren_sync5;
@@ -218,11 +219,14 @@ always @(negedge rd_rst_n or posedge rd_clk) begin
 end   
 
 // Read Enable
-assign phcomp_wren_sync = (r_phcomp_rd_delay == 4'b111) ? phcomp_wren_sync7 : 
-                          (r_phcomp_rd_delay == 4'b110) ? phcomp_wren_sync6 : 
-                          (r_phcomp_rd_delay == 4'b101) ? phcomp_wren_sync5 : 
-                          (r_phcomp_rd_delay == 4'b100) ? phcomp_wren_sync4 : 
-                          (r_phcomp_rd_delay == 4'b011) ? phcomp_wren_sync3 : phcomp_wren_sync2;
+// Add safe guard for FIFO_4X mode in case user put wrong configuration value.
+wire [3:0] r_phcomp_dly_mod;
+assign r_phcomp_dly_mod = ((r_fifo_mode == FIFO_4X) && (r_phcomp_rd_delay < 4'b0110)) ? 4'b0110: r_phcomp_rd_delay;
+assign phcomp_wren_sync = (r_phcomp_dly_mod == 4'b0111) ? phcomp_wren_sync7 : 
+                          (r_phcomp_dly_mod == 4'b0110) ? phcomp_wren_sync6 : 
+                          (r_phcomp_dly_mod == 4'b0101) ? phcomp_wren_sync5 : 
+                          (r_phcomp_dly_mod == 4'b0100) ? phcomp_wren_sync4 : 
+                          (r_phcomp_dly_mod == 4'b0011) ? phcomp_wren_sync3 : phcomp_wren_sync2;
 
 assign phcomp_rden = phcomp_wren_sync;
 
