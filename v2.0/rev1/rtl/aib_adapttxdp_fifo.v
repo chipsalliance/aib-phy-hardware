@@ -123,7 +123,7 @@ always @ * begin
       else if (r_fifo_mode == FIFO_2X)
         if (r_mkbit[4]) 
           wr_data ={ 160'h0,
-                    {              1'b1, data_in[157:80]},
+                    {              1'b1, data_in[158:80]},
                     {              1'b0, data_in[78:0]}}; 
         else if (r_mkbit[3])
           wr_data ={ 160'h0,
