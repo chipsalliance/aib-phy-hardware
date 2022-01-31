@@ -376,7 +376,7 @@ aib_ioring #(.DATAWIDTH(DATAWIDTH)) aib_ioring (
      .iopad_spareo(iopad_aib[51]), //iopad_spare1), 
      .iopad_sparee(iopad_aib[50]), //iopad_spare0),
      .iopad_rxclkb(iopad_aib[58]), //iopad_fs_rcv_clkb), 
-     .iopad_rxclk(iopad_aib[57]), //iopad_fs_rcv_clk),
+     .iopad_rxclk(iopad_aib[59]), //iopad_fs_rcv_clk),
      .iopad_rxfckb(iopad_aib[70]), //iopad_fs_fwd_clkb), 
      .iopad_rxfck(iopad_aib[71]), //iopad_fs_fwd_clk),
      .iopad_srckb(iopad_aib[56]), //iopad_fs_sr_clkb), 

@@ -173,6 +173,7 @@ assign sl_tx_transfer_en = !dual_mode_select ? sl_tx_transfer_en_s : sl_data_to_
 assign sl_rx_transfer_en = !dual_mode_select ? sl_rx_transfer_en_s : sl_data_to_core[70];
 
 
+assign m_fs_rcv_clk = fs_rcv_clk;
 assign ns_rcv_clk = m_ns_rcv_clk;
 
 assign m_fs_mac_rdy = fs_mac_rdyi;
