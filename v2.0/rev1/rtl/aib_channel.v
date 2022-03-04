@@ -181,7 +181,7 @@ wire vssl_aib = 1'b0;
 wire [101:0] AIB = {redund_3[5:0], redund_2[31:0], redund_1[31:0], redund_0[31:0]};
 wire [39:0] csr_shift_rxdat = {AIB[100],AIB[101],AIB[98],AIB[99],AIB[96],AIB[97],AIB[94],AIB[95],AIB[92],AIB[93], 
                                AIB[90], AIB[91], AIB[88],AIB[89],AIB[86],AIB[87],AIB[84],AIB[85],AIB[82],AIB[81],
-                               AIB[80], AIB[81], AIB[78],AIB[79],AIB[76],AIB[77],AIB[74],AIB[75],AIB[72],AIB[71],
+                               AIB[80], AIB[81], AIB[78],AIB[79],AIB[76],AIB[77],AIB[74],AIB[75],AIB[72],AIB[73],
                                AIB[68], AIB[69], AIB[66],AIB[67],AIB[64],AIB[65],AIB[62],AIB[63],AIB[60],AIB[61]};
 wire        csr_shift_fs_fwd_clk = AIB[71];
 wire        csr_shift_fs_fwd_clkb = AIB[70];
