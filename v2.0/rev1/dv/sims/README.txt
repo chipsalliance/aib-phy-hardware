@@ -38,6 +38,9 @@ test vector: fifo1x_test.inc
              fifo4x_nslpbk_test.inc
              fifo4x_fslpbk_test.inc   
              fifo4x_fifo2x_test.inc    //Asymmetric case
+run_compile_rotate has been supplied if due to chiplet phyical layout, so that Ch0 <-> Ch23 ...
+rotation are required.
+
 
 Commands to run ncsim test
 ./runnc.ch
@@ -63,3 +66,6 @@ command to run
 ./simv
 test vector: fifo2x_test_msaib1.inc
 test vector: fifo1x_test_msaib1.inc
+
+run_compile_m1s2_rotate has been supplied if due to chiplet phyical layout, so that Ch0 <-> Ch23 ...
+rotation are required.
