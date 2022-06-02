@@ -912,8 +912,10 @@
 
   task link_up (); 
        begin
-         wait (intf_s1.ms_tx_transfer_en == {TOTAL_CHNL_NUM{1'b1}});
-         wait (intf_s1.sl_tx_transfer_en == {TOTAL_CHNL_NUM{1'b1}});
+         fork
+             wait (intf_s1.ms_tx_transfer_en == {TOTAL_CHNL_NUM{1'b1}});
+             wait (intf_s1.sl_tx_transfer_en == {TOTAL_CHNL_NUM{1'b1}});
+         join
        end
   endtask
 

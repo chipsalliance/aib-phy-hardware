@@ -28,6 +28,7 @@ interface dut_if_mac #(parameter DWIDTH = 40, parameter TOTAL_CHNL_NUM = 24)
     logic [TOTAL_CHNL_NUM-1:0]            m_rd_clk;
 
     logic [TOTAL_CHNL_NUM-1:0]            ns_adapter_rstn;
+    logic [TOTAL_CHNL_NUM-1:0]            fs_adapter_rstn;
     logic [TOTAL_CHNL_NUM-1:0]            ns_mac_rdy;
     logic [TOTAL_CHNL_NUM-1:0]            fs_mac_rdy;
 

@@ -63,11 +63,13 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
           avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
           avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_000b);
           avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60a1_0000);
+	  /*
           avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
           avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
           avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
           avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
           avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
+	  */
       end
 
       ms1_tx_fifo_mode = 2'b00;

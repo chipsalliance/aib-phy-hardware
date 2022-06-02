@@ -1,0 +1,11 @@
+${FM_ROOT}/maib_lib_sim_model.v
+${FM_ROOT}/maib_top_96pin.sv
+${FM_ROOT}/ndaibadapt_wrap.v
+${FM_ROOT}/maib_ch.v
+
+//${V1S_ROOT}/aibndaux_lib/rtl/aibndaux_top_slave.v
+//${V1S_ROOT}/aibndaux_lib/rtl/aibndaux_pasred_simple.v
+//${V1S_ROOT}/aibnd_lib/rtl/block_function/aibnd_buffx1_top.v
+//${V1S_ROOT}/aibnd_lib/rtl/block_function/aibnd_buffx1.v
+//${V1S_ROOT}/aibnd_lib/rtl/block_function/aibnd_red_custom_dig.v
+//${V1S_ROOT}/aibnd_lib/rtl/block_function/aibnd_red_custom_dig2.v

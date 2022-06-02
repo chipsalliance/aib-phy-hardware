@@ -83,6 +83,10 @@ bit [1023:0] status;
     aib_top_wrapper_v1m dut_master1 (
        `include "dut_ms_gen1.inc"
     );
+`elsif MS_AIB_BCA
+    aib_phy_top dut_master1 (
+       `include "dut_ms1_bca.inc"
+    );
 `else 
     aib_model_top  #(.DATAWIDTH(DATAWIDTH)) dut_master1 (
         `include "dut_ms1_port.inc"
@@ -91,12 +95,25 @@ bit [1023:0] status;
 
 `ifdef SL_AIB_GEN1
     maib_top dut_slave1 (
-        `include "dut_sl_gen1.inc"
-       );
-initial begin
-@(posedge dut_slave1.config_done);
-`include "../test/data/maib_prog.inc"
-end
+      `ifdef MAIB_REV1DOT1 
+         `include "dut_s1_maib_rev1.1.inc"
+      `else 
+         `include "dut_sl_gen1.inc"
+          );
+      `endif
+
+    initial begin
+//  @(posedge dut_slave1.config_done);
+      `ifdef MAIB_REV1DOT1 
+          `include "maib_prog_rev1.1.inc"
+      `else
+          `include "../test/data/maib_prog.inc"
+      `endif
+    end
+`elsif SL_AIB_BCA
+    aib_phy_top dut_slave1 (
+       `include "dut_sl1_bca.inc"
+    );
     
 `else
     aib_model_top #(.DATAWIDTH(DATAWIDTH)) dut_slave1 (

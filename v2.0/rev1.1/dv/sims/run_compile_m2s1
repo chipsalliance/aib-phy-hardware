@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#Reuse test case in Rev1. Do the link as the following before running the test
+#ln -s ../../../rev1/dv/test/test_cases/fifo2x_test_slaib1.inc test.inc
+export RTL_ROOT="$(pwd)/../../../rev1/rtl"
+export GEN1_ROOT="$(pwd)/../../../../v1.0/rev2/rtl"
+export V1S_ROOT="$GEN1_ROOT/v1_slave"
+export V2COM_ROOT="$GEN1_ROOT/v2_common"
+export FM_ROOT="$(pwd)/../../rtl/maib_rev1.1"
+export REV1_DV="$(pwd)/../../../rev1/dv"
+
+vlogan -sverilog  +v2k -full64 -timescale=1ps/1ps -f $REV1_DV/flist/ms.cf -l compile_ms1.log
+
+vlogan -sverilog  +v2k -full64 -timescale=1ps/1ps +define+TIMESCALE_EN+VCS+BEHAVIORAL+MAIB_PIN96+ALTR_HPS_INTEL_MACROS_OFF   -f ../flist/maib_rev1.1.cf -l compile_s1.log
+
+vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+SL_AIB_GEN1+MAIB_REV1DOT1 -f ../flist/tb_rtl.cf -l compile_tb.log
+
+vcs -debug_acc+all -full64 +lint=TFIPC-L +error+100 +lint=PCWM  -top top_tb -l vcs.log
+
+./simv

@@ -1,0 +1,18 @@
+# ####################################################################
+# tb files 
+# ####################################################################
++incdir+$REV1_DV/tb
++incdir+$REV1_DV/interface
++incdir+$REV1_DV/test/task
++incdir+../test/data
++incdir+../interface
+$REV1_DV/emib/aliasv.sv
+$REV1_DV/emib/emib_ch_m1s2.sv
+$REV1_DV/emib/emib_ch_m2s1.sv
+$REV1_DV/emib/emib_ch_m2s2.sv
+$REV1_DV/emib/emib_m1s2.sv
+$REV1_DV/emib/emib_m2s1.sv
+$REV1_DV/emib/emib_m2s2.sv
+$REV1_DV/interface/dut_if_mac.sv
+$REV1_DV/interface/avalon_mm_if.sv
+$REV1_DV/tb/top_tb.sv

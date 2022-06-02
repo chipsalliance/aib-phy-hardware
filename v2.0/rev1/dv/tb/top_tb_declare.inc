@@ -49,6 +49,8 @@
     wire [S_PAD_NUM-1:0] s1_iopad_ch22_aib;
     wire [M_PAD_NUM-1:0] m1_iopad_ch23_aib;
     wire [S_PAD_NUM-1:0] s1_iopad_ch23_aib;
+    wire HI = 1'b1;
+    wire LO = 1'b0;
     //=================================================================================
     // Register config for testbench 
     //=================================================================================
