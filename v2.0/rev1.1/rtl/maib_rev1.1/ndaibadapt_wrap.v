@@ -226,7 +226,7 @@ module ndaibadapt_wrap (
     input  wire        pld_pma_tx_qpi_pulldn,
     input  wire        pld_pma_tx_qpi_pullup,
     input  wire        pld_pma_rx_qpi_pullup,
-//  input  wire        pld_pma_aib_tx_clk,    //Pull out for AIB spec. purpose. JZ 11/9/2018
+//  input  wire        pld_pma_aib_tx_clk,   
     // PLD DCM
     input  wire        pld_rx_clk1_dcm,
     input  wire        pld_tx_clk1_dcm,
@@ -382,8 +382,8 @@ module ndaibadapt_wrap (
     output wire	       pld_pcs_tx_clk_out2_hioint,
     output wire	       pld_pll_cal_done,
     output wire	       pld_pma_adapt_done,
-//  output wire        pld_pma_clkdiv_rx_user,    //Pull out for AIB spec. purpose. JZ 11/9/2018
-//  output wire        pld_pma_clkdiv_tx_user,    //Pull out for AIB spec. purpose. JZ 11/9/2018
+//  output wire        pld_pma_clkdiv_rx_user,    
+//  output wire        pld_pma_clkdiv_tx_user,    
     output wire	       pld_pma_fpll_clk0bad,
     output wire	       pld_pma_fpll_clk1bad,
     output wire	       pld_pma_fpll_clksel,
@@ -412,7 +412,7 @@ module ndaibadapt_wrap (
     output wire	       pld_rx_hssi_fifo_latency_pulse,
     output wire	       pld_rx_prbs_done,
     output wire	       pld_rx_prbs_err,
-//  output wire        pld_sr_clk_out,      //Pull out for AIB spec. purpose. JZ 11/9/2018
+//  output wire        pld_sr_clk_out,      
     output wire	       pld_ssr_load,
     output wire	[19:0] pld_test_data,
     output wire	       pld_tx_fabric_fifo_empty,
@@ -1322,7 +1322,7 @@ aibnd_top_wrp aibnd_top_wrp (
     .jtag_weakpu_out                           (jtag_weakpu_out),
     .jtag_intest_out                           (jtag_intest_out),
     .jtag_clksel_out                           (jtag_clksel_out),
-    .iatpg_scan_rst_n                          (iatpg_scan_rst_n),          
+    .iatpg_scan_rst_n                          (iatpg_scan_rst_n),         
     .iatpg_pipeline_global_en                  (iatpg_pipeline_global_en),
     .iatpg_scan_mode_n                         (iatpg_scan_mode_n),
     .iatpg_scan_shift_n                        (iatpg_scan_shift_n),

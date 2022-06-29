@@ -26,7 +26,7 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       $display("\n////////////////////////////////////////////////////////////////////////////");
       $display("\n////////////////////////////////////////////////////////////////////////////");
       $display("\n//                                                                       ///");
-      $display("%0t: set to 4xFIFO mode for  ms -> ms and sl -> sl, near side loopback", $time);
+      $display("%0t: set to 4xFIFO mode for  ms -> ms and sl -> ms, near side loopback", $time);
       $display("\n//                                                                       ///");
       $display("%0t: No dbi enabled", $time);
       $display("////////////////////////////////////////////////////////////////////////////\n");
@@ -34,10 +34,10 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       fork
  
         for (i_m1=0; i_m1<24; i_m1++) begin
-            avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0600_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0500_0000);
             avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0025);      
-            avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h60c4_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h0000_8000);
+            avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h62c4_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h4000_8000);
 /*
             avmm_if_m1.cfg_write({i_m1,11'h31c}, 4'hf, 32'h0000_0000);
             avmm_if_m1.cfg_write({i_m1,11'h320}, 4'hf, 32'h0000_0000);
@@ -46,10 +46,10 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
 */
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
-            avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0500_0000);
             avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0025);
-            avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60c4_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_8000);
+            avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h62c4_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
 /*
             avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
             avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
@@ -86,7 +86,9 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       $display("%0t: Waiting for link up", $time);
       $display("////////////////////////////////////////////////////////////////////////////\n");
 
-      link_up ();
+      //link_up ();
+      wait (intf_m1.ms_tx_transfer_en == {24{1'b1}});
+      wait (intf_m1.m_rx_align_done == {24{1'b1}});
       status = "Starting data transmission";
 
       $display("\n////////////////////////////////////////////////////////////////////////////");
@@ -96,8 +98,8 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       fork
          ms1_aib2_f2f_s_xmit ();
          ms1_aib2_fifomod_rcv ();
-         sl1_aib2_f2f_s_xmit ();
-         sl1_aib2_fifomod_rcv ();
+//         sl1_aib2_f2f_s_xmit ();
+//         sl1_aib2_fifomod_rcv ();
       join
 
       status = "Finishing data transmission";

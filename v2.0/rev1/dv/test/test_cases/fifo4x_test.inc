@@ -33,7 +33,7 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       fork
  
         for (i_m1=0; i_m1<24; i_m1++) begin
-            avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0600_0000);
+            avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0500_0000);
             avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0025);      
             avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h60c4_0000);
 /*
@@ -45,7 +45,7 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
 */
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
-            avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
+            avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0500_0000);
             avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0025);
             avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60c4_0000);
 /*

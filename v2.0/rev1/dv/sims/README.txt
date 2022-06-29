@@ -37,7 +37,7 @@ test vector: fifo1x_test.inc
              fifo4x_dbi_test.inc
              fifo4x_nslpbk_test.inc
              fifo4x_fslpbk_test.inc   
-             fifo4x_fifo2x_test.inc    //Asymmetric case
+             fifo2x_fifo4x_test.inc    //Asymmetric case
 run_compile_rotate has been supplied if due to chiplet phyical layout, so that Ch0 <-> Ch23 ...
 rotation are required.
 
