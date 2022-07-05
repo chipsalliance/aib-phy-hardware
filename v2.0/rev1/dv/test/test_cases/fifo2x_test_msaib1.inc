@@ -102,6 +102,7 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
       $display("%0t: Starting data transmission", $time);
       $display("////////////////////////////////////////////////////////////////////////////\n");
       
+      #(15ns);     //This is necessary wait to give BCA slave extra time.
 //    init_wa_toggle ();
       fork
          ms1_aib1togen1_reg2fifo2x_xmit();
