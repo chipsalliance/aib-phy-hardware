@@ -7,10 +7,21 @@ import freechips.rocketchip.config._
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.immutable.ListMap
 
-case object AIB3DKey extends Field[AIB3DParams]
+/** AIB3D I/O Types */
+sealed trait AIB3DIO {
+  val bumpNum: Int  // bump assignment
+  val ioType: Data  // Input, Output, Analog
+}
+case class TxSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Output(Bits(1.W)) }
+case class RxSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Input(Bits(1.W)) }
+case class TxAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Output(Bits(1.W)) }
+case class RxAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Input(Bits(1.W)) }
+case class BidirSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
+case class BidirAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
+case class PoR(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
+case class Spare(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
 
-/** 
-  * Global AIB3D Parameters 
+/** Global AIB3D Parameters 
   * This generates the global signal <-> ubump assignments
   * @param numTxIOs is the number of Tx ubumps
   * @param numRxIOs is the number of Rx ubumps
@@ -19,70 +30,75 @@ case object AIB3DKey extends Field[AIB3DParams]
 case class AIB3DParams(
   numTxIOs: Int = 256,
   numRxIOs: Int = 256,
-  blackBoxModels: Boolean = false)
-{
+  blackBoxModels: Boolean = false) {
+
+  // Checks
   require(numTxIOs % 16 == 0, "Tx IO count must be a multiple of 16")
   require(numRxIOs % 16 == 0, "Rx IO count must be a multiple of 16")
-  val clockOffset = 8  // where clocks are placed
-
-  // Ordered mapping of <name> -> <Output(Bits(1.W)) = output, Input(Bits(1.W)) = input, Analog(1.W) = inout>
-  private var mapping = LinkedHashMap.empty[String, Data]
+  
+  private val clockOffset = 8  // where clocks are placed
+  
+  // Construct ordered IOs
+  private var ios = LinkedHashMap.empty[String, AIB3DIO]
   // 8 Tx pads come first, then Tx clocks, then rest of Tx IOs
   if (numTxIOs > 0) {
-    for (i <- 0 until clockOffset) { mapping += s"tx_$i" -> Output(Bits(1.W)) }
-    mapping += "ns_fwd_clk" -> Output(Bits(1.W))
-    mapping += "ns_fwd_clkb" -> Output(Bits(1.W))
-    for (i <- 8 until numTxIOs) { mapping += s"tx_$i" -> Output(Bits(1.W)) }
+    for (i <- 0 until clockOffset) { ios += s"tx_$i" -> TxSeq(ios.size) }
+    ios += "ns_fwd_clk" -> TxSeq(ios.size)
+    ios += "ns_fwd_clkb" -> TxSeq(ios.size)
+    for (i <- 8 until numTxIOs) { ios += s"tx_$i" -> TxSeq(ios.size) }
   }
   // Near-side handshake
-  mapping += "ns_transfer_reset" -> Output(Bits(1.W))
-  mapping += "ns_transfer_en" -> Output(Bits(1.W))
+  private val firstTxAsync = ios.size
+  ios += "ns_transfer_reset" -> TxAsync(ios.size)
+  ios += "ns_transfer_en" -> TxAsync(ios.size)
   // Patch detection (power-on reset) on Tx side of spares
-  val firstPoR = mapping.size
-  mapping += "patch_reset" -> Analog(1.W)
-  mapping += "patch_detect" -> Analog(1.W)
+  private val firstPoR = ios.size
+  ios += "patch_reset" -> PoR(ios.size)
+  ios += "patch_detect" -> PoR(ios.size)
   // Spares
-  val firstSpare = mapping.size
-  mapping += "spare0" -> Analog(1.W)
-  mapping += "spare1" -> Analog(1.W)
+  private val firstSpare = ios.size
+  ios += "spare_0" -> Spare(ios.size)
+  ios += "spare_1" -> Spare(ios.size)
   // Far-side handshake
-  mapping += "fs_transfer_en" -> Input(Bits(1.W))
-  mapping += "fs_transfer_reset" -> Input(Bits(1.W))
+  private val firstRxAsync = ios.size
+  ios += "fs_transfer_en" -> RxAsync(ios.size)
+  ios += "fs_transfer_reset" -> RxAsync(ios.size)
   // Rx is reverse of Tx
   if (numRxIOs > 0) {
-    for (i <- (clockOffset until numRxIOs).reverse) { mapping += s"rx_$i" -> Input(Bits(1.W)) }
-    mapping += "fs_fwd_clkb" -> Input(Bits(1.W))
-    mapping += "fs_fwd_clk" -> Input(Bits(1.W))
-    for (i <- (0 until clockOffset).reverse) { mapping += s"rx_$i" -> Input(Bits(1.W)) }
+    for (i <- (clockOffset until numRxIOs).reverse) { ios += s"rx_$i" -> RxSeq(ios.size) }
+    ios += "fs_fwd_clkb" -> RxSeq(ios.size)
+    ios += "fs_fwd_clk" -> RxSeq(ios.size)
+    for (i <- (0 until clockOffset).reverse) { ios += s"rx_$i" -> RxSeq(ios.size) }
   }
 
-  def patchSize: Int = mapping.size
+  // Constants
+  val patchSize = ios.size
+  val numTxCtrlClk = if (numTxIOs > 0) 4 else 2  // excludes patch_detect/reset
+  val numRxCtrlClk = if (numRxIOs > 0) 4 else 2
 
-  def numTxCtrlClk: Int = if (numTxIOs > 0) 4 else 2  // excludes patch_detect/reset
+  // Convenience Ranges
+  val txClkIdx = Range(clockOffset, clockOffset+2)  // doesn't account for no Tx IOs
+  val rxClkIdx = Range(this.patchSize-clockOffset, this.patchSize-clockOffset+2)  // doesn't account for no Rx IOs
+  val porIdx = Range(firstPoR, firstPoR+2)
+  val sparesIdx = Range(firstSpare, firstSpare+2)
 
-  def txClkIdx: Range = Range(clockOffset, clockOffset+2)  // doesn't account for no Tx IOs
+  // Mapped IO types and data
+  val padsIoTypes: ListMap[String, AIB3DIO] = ListMap(ios.toSeq:_*)
+  val padsIoMap: ListMap[String, Data] = ListMap(ios.mapValues(_ => Analog(1.W)).toSeq:_*)  // for connection to pad cells
 
-  def numRxCtrlClk: Int = if (numRxIOs > 0) 4 else 2
-
-  def rxClkIdx: Range = Range(this.patchSize-clockOffset, this.patchSize-clockOffset+2)  // doesn't account for no Rx IOs
-
-  def porIdx: Range = Range(firstPoR, firstPoR+2)
-
-  def sparesIdx: Range = Range(firstSpare, firstSpare+2)
-
-  def padsIoMap: ListMap[String, Data] = {
-    ListMap(mapping.mapValues(_ => Analog(1.W)).toSeq:_*)
-  } 
-
-  def adapterIoMap: ListMap[String, Data] = {
-    // no spares, PoR signals have in and out
-    var adapter_mapping = mapping.take(numTxIOs + this.numTxCtrlClk)
-    adapter_mapping ++= List("patch_reset_out" -> Output(Bits(1.W)), "patch_detect_out" -> Output(Bits(1.W)))
-    adapter_mapping ++= List("patch_reset_in" -> Input(Bits(1.W)), "patch_detect_in" -> Input(Bits(1.W)))
-    adapter_mapping ++= mapping.takeRight(numRxIOs + this.numRxCtrlClk)
-    ListMap(adapter_mapping.toSeq:_*)
-  }
+  // no spares, Bidir/PoR signals turn into in and out
+  // TODO: bidir signals not implemented properly
+  val adapterIoTypes: ListMap[String, AIB3DIO] = ListMap(ios.flatMap {
+    case(n, t) => t match {
+      case _:TxSeq | _:RxSeq | _:TxAsync | _:RxAsync => List(n -> t)
+      case io:BidirSeq => List(s"${n}_out" -> TxSeq(io.bumpNum), s"${n}_in" -> RxSeq(io.bumpNum))
+      case io @ (_:BidirAsync | _:PoR) => List(s"${n}_out" -> TxAsync(io.bumpNum), s"${n}_in" -> RxAsync(io.bumpNum))
+      case _ => List.empty // no spares
+    }}.toSeq:_*)
+  val adapterIoMap: ListMap[String, Data] = ListMap(adapterIoTypes.mapValues(io => io.ioType).toSeq:_*)
 }
+
+case object AIB3DKey extends Field[AIB3DParams]
 
 /** 
   * Global AIB3D Configs

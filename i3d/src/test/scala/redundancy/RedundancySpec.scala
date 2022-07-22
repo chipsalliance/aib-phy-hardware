@@ -210,6 +210,8 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
 		  dut.adapter("patch_detect_out").poke(1.U)
 
       // Set fs_transfer_en
+      dut.from_pad(p(AIB3DKey).sparesIdx.end).async.poke(1.U)
+      // For shift down test, it'll be configured as data instead
       dut.from_pad(p(AIB3DKey).sparesIdx.end).data.poke(1.U)
 
       println(p(AIB3DKey).sparesIdx.head)
