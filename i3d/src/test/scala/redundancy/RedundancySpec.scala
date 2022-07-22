@@ -53,10 +53,11 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.shift.poke(0x3FFFFC.U)
       dut.in.foreach(_.data.poke(0.U))
       dut.in.foreach(_.async.poke(0.U))
+      // set data(0) = 1, should not shift
+      dut.in(0).data.poke(1.U)
+      dut.out(0).data.expect(1.U)
       // set data(2) = 1, should shift
       dut.in(2).data.poke(1.U)
-      dut.out(0).data.expect(0.U)
-      dut.out(2).data.expect(0.U)
       dut.out(4).data.expect(1.U)
       // set data(end-2) = 1, should not shift
       dut.in(p(AIB3DKey).patchSize-3).data.poke(1.U)
@@ -78,18 +79,20 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
   it should "shift down properly" in {
     implicit val p: Parameters = new AIB3DBalancedConfig(16)
 		test(new RedundancyWrapper()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
-      // make 3rd to last bump faulty (bits 43:24 need to be 1)
-      dut.shift.poke(BigInt("FFFFF000000", 16).U)
+      // make 3rd to last bump faulty (bits 41:24 need to be 1)
+      dut.shift.poke(BigInt("3FFFF000000", 16).U)
       dut.in.foreach(_.data.poke(0.U))
       dut.in.foreach(_.async.poke(0.U))
-      // set data(2) = 1, should not shift
+      // set data(0) and data(2) = 1, should not shift
+      dut.in(0).data.poke(1.U)
       dut.in(2).data.poke(1.U)
-      dut.out(0).data.expect(0.U)
+      dut.out(0).data.expect(1.U)
       dut.out(2).data.expect(1.U)
-      dut.out(4).data.expect(0.U)
+      // set data(end-1) = 1, should not shift
+      dut.in(p(AIB3DKey).patchSize-1).data.poke(1.U)
+      dut.out(p(AIB3DKey).patchSize-1).data.expect(1.U)
       // set data(end-3) = 1, should shift
       dut.in(p(AIB3DKey).patchSize-3).data.poke(1.U)
-      dut.out(p(AIB3DKey).patchSize-1).data.expect(1.U)
       dut.out(p(AIB3DKey).patchSize-3).data.expect(0.U)
       // set patch_detect = 1, should not shift
       dut.in(p(AIB3DKey).porIdx.last).async.poke(1.U)
@@ -127,17 +130,16 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
       if (dut.adapter(s"rx_$i").peek().litValue == 1) println(i)
     }
     if (dut.adapter("fs_transfer_reset").peek().litValue == 1) println(p(AIB3DKey).numRxIOs)
-    if (dut.adapter("fs_transfer_reset").peek().litValue == 1) println(p(AIB3DKey).numRxIOs+1)
+    if (dut.adapter("fs_transfer_en").peek().litValue == 1) println(p(AIB3DKey).numRxIOs+1)
   }
 
 	def shiftUpTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
 		dut.csrs.faulty.poke(2.U)
     // Tx should shift
-    dut.to_pad(0).data.expect(0.U)
-		dut.to_pad(2).data.expect(0.U)
+    dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(4).data.expect(1.U)
     // Rx should not shift
-    dut.adapter("rx_0").expect(0.U)
+    dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(1.U)
     // patch_detect should shift
 		dut.to_pad(p(AIB3DKey).porIdx.last).async.expect(0.U)
@@ -151,9 +153,8 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
   def shiftDownTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
 		dut.csrs.faulty.poke((p(AIB3DKey).patchSize-3).U)
     // Tx should not shift
-    dut.to_pad(0).data.expect(0.U)
+    dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(2).data.expect(1.U)
-		dut.to_pad(4).data.expect(0.U)
     // Rx should shift
     dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(0.U)
@@ -169,13 +170,12 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
   def noShiftTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
 		dut.csrs.faulty.poke(p(AIB3DKey).sparesIdx.head.U)
     // Tx should not shift
-    dut.to_pad(0).data.expect(0.U)
+    dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(2).data.expect(1.U)
 		dut.to_pad(4).data.expect(0.U)
     // Rx should not shift
-    dut.adapter("rx_0").expect(0.U)
+    dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(1.U)
-    dut.adapter("rx_4").expect(0.U)
     // patch_detect should not shift
 		dut.to_pad(p(AIB3DKey).porIdx.last).async.expect(1.U)
 		dut.to_pad(p(AIB3DKey).sparesIdx.last).async.expect(0.U)
@@ -196,13 +196,13 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
       
       // Test 2nd, 2nd to last, and spare bumps
 
-		  // Set tx(0) = 0 and tx(2) = 1
-		  dut.adapter("tx_0").poke(0.U)
+		  // Set tx(0) = 1 and tx(2) = 1
+		  dut.adapter("tx_0").poke(1.U)
 		  dut.adapter("tx_2").poke(1.U)
       dut.adapter("tx_4").poke(0.U)
 
-      // Set rx(0) = 0, rx(2) = 1
-		  dut.from_pad(p(AIB3DKey).patchSize-1).data.poke(0.U)
+      // Set rx(0) = 1, rx(2) = 1
+		  dut.from_pad(p(AIB3DKey).patchSize-1).data.poke(1.U)
 		  dut.from_pad(p(AIB3DKey).patchSize-3).data.poke(1.U)
 		  dut.from_pad(p(AIB3DKey).patchSize-5).data.poke(0.U)
 

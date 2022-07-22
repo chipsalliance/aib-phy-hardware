@@ -6,7 +6,6 @@ import chisel3.experimental.noPrefix
 import freechips.rocketchip.config.Parameters
 
 import aib3d._
-import aib3d.adapter.AdapterToRedundancyBundle
 
 /** Wraps a redundancy unit for one direction */
 class RedundancyWrapper(implicit p: Parameters) extends Module {

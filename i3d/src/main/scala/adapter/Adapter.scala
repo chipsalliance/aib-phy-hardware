@@ -2,15 +2,24 @@ package aib3d.adapter
 
 import chisel3._
 
-import chisel3.experimental.Analog
 import freechips.rocketchip.config.Parameters
-import scala.collection.immutable.ListMap
 
 import aib3d._
+import aib3d.redundancy.AdapterToRedundancyBundle
 
-/** This generates the translation from adapter data to redundancy block */
-class AdapterToRedundancyBundle(implicit p: Parameters) extends Record {
-  val elements = p(AIB3DKey).adapterIoMap
-	def apply(elt: String): Data = elements(elt)
-	override def cloneType = (new AdapterToRedundancyBundle).asInstanceOf[this.type]
+class Adapter(implicit p: Parameters) extends Module {
+  // Data
+	val data_in = Input(UInt(p(AIB3DKey).numTxIOs.W))
+	val data_out = Output(UInt(p(AIB3DKey).numRxIOs.W))
+
+	// Clocks
+	val m_ns_fwd_clk = Input(Clock())   // Near-side input for transmitting to far-side
+	val m_fs_fwd_clk = Output(Clock())  // Near-side output received from far-side
+
+  val redundancy = IO(new AdapterToRedundancyBundle)
+
+
+  // Retimers
+  // val tx
 }
+

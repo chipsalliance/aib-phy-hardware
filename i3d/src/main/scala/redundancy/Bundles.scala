@@ -32,3 +32,10 @@ class RedundancyConfigBundle(implicit p: Parameters) extends Bundle {
   // val tx_lpbk_mode = Input(Bool())
   // val rx_lpbk_mode = Input(Bool())
 }
+
+/** This generates the adapter to redundancy data connection */
+class AdapterToRedundancyBundle(implicit p: Parameters) extends Record {
+  val elements = p(AIB3DKey).adapterIoMap
+	def apply(elt: String): Data = elements(elt)
+	override def cloneType = (new AdapterToRedundancyBundle).asInstanceOf[this.type]
+}

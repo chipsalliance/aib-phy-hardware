@@ -20,8 +20,6 @@ class MacBundle(implicit p: Parameters) extends Bundle {
 	val data_out = Output(UInt(p(AIB3DKey).numRxIOs.W))
 
 	// Clocks
-	val m_wr_clk = Input(Clock())       // For data_in
-	val m_rd_clk = Input(Clock())       // For data_out
 	val m_ns_fwd_clk = Input(Clock())   // Near-side input for transmitting to far-side
 	val m_fs_fwd_clk = Output(Clock())  // Near-side output received from far-side
 
