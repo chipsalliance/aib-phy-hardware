@@ -129,7 +129,7 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
     for (i <- 0 until p(AIB3DKey).numRxIOs) {
       if (dut.adapter(s"rx_$i").peek().litValue == 1) println(i)
     }
-    if (dut.adapter("fs_transfer_reset").peek().litValue == 1) println(p(AIB3DKey).numRxIOs)
+    if (dut.adapter("fs_transfer_rstb").peek().litValue == 1) println(p(AIB3DKey).numRxIOs)
     if (dut.adapter("fs_transfer_en").peek().litValue == 1) println(p(AIB3DKey).numRxIOs+1)
   }
 

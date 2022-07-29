@@ -65,14 +65,14 @@ class RedundancyTop(implicit p: Parameters) extends Module {
 	val from_pad = IO(Vec(p(AIB3DKey).patchSize, new RedundancyMuxDataBundle))
 	val to_pad = IO(Vec(p(AIB3DKey).patchSize, Flipped(new RedundancyMuxBundle)))
 	val adapter = IO(Flipped(new AdapterToRedundancyBundle))
-	val csrs = IO(new RedundancyConfigBundle)
+	val cfg = IO(new RedundancyConfigBundle)
 
 	// 1 wrapper for each direction
 	val adapter_to_pad, pad_to_adapter = Module(new RedundancyWrapper)
 
 	// Generate shifts
 	val shifter = Module(new RedundancyShiftLogic)
-	shifter.faulty := csrs.faulty
+	shifter.faulty := cfg.faulty
 	adapter_to_pad.shift := shifter.shift
 	pad_to_adapter.shift := shifter.shift
 
@@ -80,45 +80,61 @@ class RedundancyTop(implicit p: Parameters) extends Module {
   (p(AIB3DKey).padsIoTypes zip adapter_to_pad.in).foreach {
     case(io, a2p) => io._2 match {
       case _:TxSeq =>
-        a2p.tx_en := csrs.pad_en & csrs.pad_rstb
+        a2p.tx_en := cfg.pad_en & cfg.pad_rstb
         a2p.rx_en := false.B
         a2p.async_tx_en := false.B
         a2p.async_rx_en := false.B
-        a2p.wkpu_en := csrs.tx_wkpu
-        a2p.wkpd_en := csrs.tx_wkpd | (!csrs.pad_rstb)
+        a2p.wkpu_en := cfg.tx_wkpu
+        a2p.wkpd_en := cfg.tx_wkpd | (!cfg.pad_rstb)
       case _:TxAsync => 
         a2p.tx_en := false.B
         a2p.rx_en := false.B
-        a2p.async_tx_en := csrs.pad_en & csrs.pad_rstb
+        a2p.async_tx_en := cfg.pad_en & cfg.pad_rstb
         a2p.async_rx_en := false.B
-        a2p.wkpu_en := csrs.tx_wkpu
-        a2p.wkpd_en := csrs.tx_wkpd | (!csrs.pad_rstb)
+        a2p.wkpu_en := cfg.tx_wkpu
+        a2p.wkpd_en := cfg.tx_wkpd | (!cfg.pad_rstb)
       case _:RxSeq =>
         a2p.tx_en := false.B
-        a2p.rx_en := csrs.pad_en & csrs.pad_rstb
+        a2p.rx_en := cfg.pad_en & cfg.pad_rstb
         a2p.async_tx_en := false.B
         a2p.async_rx_en := false.B
-        a2p.wkpu_en := csrs.rx_wkpu
-        a2p.wkpd_en := csrs.rx_wkpu | (!csrs.pad_rstb)
+        a2p.wkpu_en := cfg.rx_wkpu
+        a2p.wkpd_en := cfg.rx_wkpu | (!cfg.pad_rstb)
       case _:RxAsync =>
         a2p.tx_en := false.B
         a2p.rx_en := false.B
         a2p.async_tx_en := false.B
-        a2p.async_rx_en := csrs.pad_en & csrs.pad_rstb
-        a2p.wkpu_en := csrs.rx_wkpu
-        a2p.wkpd_en := csrs.rx_wkpu | (!csrs.pad_rstb)
+        a2p.async_rx_en := cfg.pad_en & cfg.pad_rstb
+        a2p.wkpu_en := cfg.rx_wkpu
+        a2p.wkpd_en := cfg.rx_wkpu | (!cfg.pad_rstb)
+      case _:TxDTR =>  // always enabled
+        a2p.tx_en := false.B
+        a2p.rx_en := false.B
+        a2p.async_tx_en := cfg.pad_rstb
+        a2p.async_rx_en := false.B
+        a2p.wkpu_en := false.B
+        a2p.wkpd_en := !cfg.pad_rstb
+      case _:RxDTR =>  // always enabled
+        a2p.tx_en := false.B
+        a2p.rx_en := false.B
+        a2p.async_tx_en := false.B
+        a2p.async_rx_en := cfg.pad_rstb
+        a2p.wkpu_en := false.B
+        a2p.wkpd_en := !cfg.pad_rstb
       case _:PoR =>
         a2p.tx_en := false.B
         a2p.rx_en := false.B
         if (io._1 == "patch_reset") {
-          a2p.async_tx_en := !csrs.leader
-          a2p.async_rx_en := csrs.leader
-        } else {
-          a2p.async_tx_en := csrs.leader
-          a2p.async_rx_en := !csrs.leader
+          a2p.async_tx_en := !cfg.leader
+          a2p.async_rx_en := cfg.leader
+          a2p.wkpu_en := true.B
+          a2p.wkpd_en := false.B
+        } else {  // patch_detect
+          a2p.async_tx_en := cfg.leader
+          a2p.async_rx_en := !cfg.leader
+          a2p.wkpu_en := false.B
+          a2p.wkpd_en := true.B
         }
-        a2p.wkpu_en := false.B
-        a2p.wkpd_en := true.B
       case _:Spare =>
         a2p.tx_en := false.B
         a2p.rx_en := false.B
@@ -126,7 +142,7 @@ class RedundancyTop(implicit p: Parameters) extends Module {
         a2p.async_rx_en := false.B
         a2p.wkpu_en := false.B
         a2p.wkpd_en := true.B
-      case _ =>  // TODO: bidirectional - needs additional CSRs
+      case _ =>  // TODO: bidirectional - needs additional cfg
     }
   }
 

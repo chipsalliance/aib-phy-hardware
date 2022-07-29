@@ -5,6 +5,11 @@ import chisel3._
 import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.jtag._
 
+import aib3d.adapter._
+import aib3d.deskew._
+import aib3d.io._
+import aib3d.redundancy._
+
 class BumpsBundle(implicit p: Parameters) extends Record {
 	val elements = p(AIB3DKey).padsIoMap
 	def apply(elt: String): Data = elements(elt)
@@ -13,25 +18,19 @@ class BumpsBundle(implicit p: Parameters) extends Record {
 
 class MacBundle(implicit p: Parameters) extends Bundle {
 	// MAC-facing IOs
-	val ns_adapter_rstn = Input(Reset())
+  val dual_mode_select = Input(Bool())  // HI = leader, LO = follower
 
 	// Data
 	val data_in = Input(UInt(p(AIB3DKey).numTxIOs.W))
 	val data_out = Output(UInt(p(AIB3DKey).numRxIOs.W))
 
-	// Clocks
-	val m_ns_fwd_clk = Input(Clock())   // Near-side input for transmitting to far-side
-	val m_fs_fwd_clk = Output(Clock())  // Near-side output received from far-side
-
 	// Handshake
-	val ns_mac_rdy = Input(Bool())  // Near-side ready for data transfer
-	val fs_mac_rdy = Output(Bool()) // Far-side ready to transmit data (TODO = fs_transfer_en?)
+	val ns_transfer_en = Input(Bool())  // Near-side ready for data transfer
+	val fs_transfer_en = Output(Bool()) // Far-side ready to transmit data (TODO = fs_transfer_en?)
 
 	// TODO signals for de-assertion of transfer ready
 
 	// TODO signals for reset and recalibration
-
-	// TODO user-defined shift-register bits  
 }
 
 class ScanBundle(implicit p: Parameters) extends Bundle {
@@ -39,35 +38,50 @@ class ScanBundle(implicit p: Parameters) extends Bundle {
 
 }
 
-class AppBundle(implicit p: Parameters) extends ScanBundle {
-	// Application interface IOs
-	// Leader
-	val o_m_power_on_reset = Output(Bool()) // power_on_reset from leader, qualified by override from m_por_ovrd
-	val m_por_ovrd = Input(Bool())          // Intended for standalone test without an AIB partner
-											// LO = leader not in reset
-											// HI = leader in reset if power_on_reset = 1 (w/ weak pull-up)
-
-	// Follower
-	val i_m_power_on_reset = Input(Bool())  // Controls power_on_reset to leader. Must be stable @ power up.
-	val m_device_detect = Output(Bool())    // From leader's device_detect, qualified by m_device_detect_ovrd
-	val m_device_detect_ovrd = Input(Bool())    // Intended for standalone test without an AIB partner
-												// LO = follower uses device_detect
-												// HI = follower outputs m_device_detect = 1
-
-	// Mode select
-	val dual_mode_select = Input(Bool())    // LO = follower, HI = leader
-}
-
 class Patch(implicit p: Parameters) extends Module {
+  // Clocks separately
+	val m_ns_fwd_clk = IO(Input(Clock()))   // Near-side input for transmitting to far-side
+	val m_fs_fwd_clk = IO(Output(Clock()))  // Near-side output received from far-side (deskewed)
+
 	val bumpio = IO(new BumpsBundle)
 	val macio = IO(new MacBundle)
 	val appio = IO(new AppBundle)
 
-	// TODO: use rocket-chip JTAG?
-	//val jtagio = IO(new JtagControllerIO)  
-	//val jtag = new(JtagTapGenerator)
+  // Adapter
+  val adapter = Module(new Adapter)
+  adapter.app <> appio
+
+  // Redundancy
+  val redundancy = Module(new RedundancyTop)
+
+  // IO cells
+  val iocells = (0 until p(AIB3DKey).patchSize).map{ i =>
+    if (p(AIB3DKey).blackBoxModels) { Module(new IOCellModel(i)).io }
+    else { Module(new IOCellBB(i)).io }
+  }
 
 	// TODO: connect everything
-	// mac/appio <> adapter <> redundancy <> io <> bumpio
-	// macio <> deskew <> adapter
+
+	// macio <> deskew <> adapter (clocks)
+  // DLL: implicit clock is received clock
+  val dll = withClockAndReset(adapter.fs_fwd_clk, adapter.deskewReset)(Module(new DLL))
+  dll.ctrl <> adapter.deskewCtrl
+  dll.clk_loop := dll.clk_out  // thru clock tree
+  adapter.m_ns_fwd_clk := m_ns_fwd_clk
+  adapter.m_fs_fwd_clk := dll.clk_out
+  m_fs_fwd_clk := dll.clk_out
+
+	// mac/appio <> adapter <> redundancy
+  adapter.redundancy <> redundancy.adapter
+  adapter.app <> appio
+  adapter.mac <> macio
+
+  // redundancy <> iocells <> bumps (all signals)
+  iocells.foreach{ c =>
+    c.tx_clk := m_ns_fwd_clk
+    c.rx_clk := dll.clk_out
+  }
+  (iocells zip redundancy.to_pad).foreach{ case(c, r) => c.attachTx(r) }
+  (iocells zip redundancy.from_pad).foreach{ case(c, r) => c.attachRx(r) }
+  (iocells zip bumpio.elements).foreach{ case(c, (_, b)) => c.pad <> b }  
 }

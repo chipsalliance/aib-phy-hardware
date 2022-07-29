@@ -12,12 +12,17 @@ sealed trait AIB3DIO {
   val bumpNum: Int  // bump assignment
   val ioType: Data  // Input, Output, Analog
 }
+// Data
 case class TxSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Output(Bits(1.W)) }
 case class RxSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Input(Bits(1.W)) }
 case class TxAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Output(Bits(1.W)) }
 case class RxAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Input(Bits(1.W)) }
 case class BidirSeq(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
 case class BidirAsync(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
+// Data Transfer Ready
+case class TxDTR(bumpNum: Int) extends AIB3DIO { val ioType: Data = Output(Bits(1.W)) }
+case class RxDTR(bumpNum: Int) extends AIB3DIO { val ioType: Data = Input(Bits(1.W)) }
+// Power on Reset
 case class PoR(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
 case class Spare(bumpNum: Int) extends AIB3DIO { val ioType: Data = Analog(1.W) }
 
@@ -39,35 +44,36 @@ case class AIB3DParams(
   private val clockOffset = 8  // where clocks are placed
   
   // Construct ordered IOs
+  // TODO: this doesn't work properly for unbalanced configs
   private var ios = LinkedHashMap.empty[String, AIB3DIO]
   // 8 Tx pads come first, then Tx clocks, then rest of Tx IOs
   if (numTxIOs > 0) {
     for (i <- 0 until clockOffset) { ios += s"tx_$i" -> TxSeq(ios.size) }
-    ios += "ns_fwd_clk" -> TxSeq(ios.size)
-    ios += "ns_fwd_clkb" -> TxSeq(ios.size)
+    ios += "ns_fwd_clk" -> TxAsync(ios.size)
+    ios += "ns_fwd_clkb" -> TxAsync(ios.size)
     for (i <- 8 until numTxIOs) { ios += s"tx_$i" -> TxSeq(ios.size) }
   }
-  // Near-side handshake
+  // Near-side data transfer ready
   private val firstTxAsync = ios.size
-  ios += "ns_transfer_reset" -> TxAsync(ios.size)
-  ios += "ns_transfer_en" -> TxAsync(ios.size)
+  ios += "ns_transfer_rstb" -> TxDTR(ios.size)  // active low
+  ios += "ns_transfer_en" -> TxDTR(ios.size)
   // Patch detection (power-on reset) on Tx side of spares
   private val firstPoR = ios.size
-  ios += "patch_reset" -> PoR(ios.size)
+  ios += "patch_reset" -> PoR(ios.size)  // active high
   ios += "patch_detect" -> PoR(ios.size)
   // Spares
   private val firstSpare = ios.size
   ios += "spare_0" -> Spare(ios.size)
   ios += "spare_1" -> Spare(ios.size)
-  // Far-side handshake
+  // Far-side data transfer ready
   private val firstRxAsync = ios.size
-  ios += "fs_transfer_en" -> RxAsync(ios.size)
-  ios += "fs_transfer_reset" -> RxAsync(ios.size)
+  ios += "fs_transfer_en" -> RxDTR(ios.size)
+  ios += "fs_transfer_rstb" -> RxDTR(ios.size)  // active low
   // Rx is reverse of Tx
   if (numRxIOs > 0) {
     for (i <- (clockOffset until numRxIOs).reverse) { ios += s"rx_$i" -> RxSeq(ios.size) }
-    ios += "fs_fwd_clkb" -> RxSeq(ios.size)
-    ios += "fs_fwd_clk" -> RxSeq(ios.size)
+    ios += "fs_fwd_clkb" -> RxAsync(ios.size)
+    ios += "fs_fwd_clk" -> RxAsync(ios.size)
     for (i <- (0 until clockOffset).reverse) { ios += s"rx_$i" -> RxSeq(ios.size) }
   }
 
@@ -90,7 +96,9 @@ case class AIB3DParams(
   // TODO: bidir signals not implemented properly
   val adapterIoTypes: ListMap[String, AIB3DIO] = ListMap(ios.flatMap {
     case(n, t) => t match {
-      case _:TxSeq | _:RxSeq | _:TxAsync | _:RxAsync => List(n -> t)
+      case _:TxSeq | _:RxSeq | _:TxAsync | _:RxAsync => List(n -> t)  // keep as-is
+      case io:TxDTR => List(n -> TxAsync(io.bumpNum))  // DTR signals are async
+      case io:RxDTR => List(n -> RxAsync(io.bumpNum))  // DTR signals are async
       case io:BidirSeq => List(s"${n}_out" -> TxSeq(io.bumpNum), s"${n}_in" -> RxSeq(io.bumpNum))
       case io @ (_:BidirAsync | _:PoR) => List(s"${n}_out" -> TxAsync(io.bumpNum), s"${n}_in" -> RxAsync(io.bumpNum))
       case _ => List.empty // no spares
