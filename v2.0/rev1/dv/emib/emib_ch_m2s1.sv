@@ -675,7 +675,7 @@ wire tie_low = 1'b0;
   );
 
   aliasv xalias_sl72 (
-        .PLUS(tie_low),
+        .PLUS(),
         .MINUS(s_aib[72])
   );
 
