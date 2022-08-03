@@ -39,7 +39,7 @@ class Adapter(implicit p: Parameters) extends Module {
   val deskewReset = IO(Output(Reset()))
 
   // To/from redundancy block
-  val redundancy = IO(Flipped(new AdapterToRedundancyBundle))
+  val redundancy = IO(new AdapterToRedundancyBundle)
 
   // App (power-on reset) interface + logic
   val app = IO(new AppBundle)
@@ -51,24 +51,25 @@ class Adapter(implicit p: Parameters) extends Module {
   // Data transfer ready logic
   // TODO: clarify how this doesn't circularly reset everything
   redundancy("ns_transfer_rstb") := !reset.asBool
-  val adapter_rstb = Wire(Bool())
-  adapter_rstb := !reset.asBool && redundancy("fs_transfer_rstb").asUInt.asBool && deskewCtrl.locked
-  // TODO: sync'd resets for particular logic
-  deskewReset := AsyncResetShiftReg(!adapter_rstb, 2)
-  redundancy("ns_transfer_en") := !reset.asBool && deskewCtrl.locked
+  redundancy("ns_transfer_en") := !reset.asBool && deskewCtrl.locked && mac.ns_transfer_en
+  mac.fs_transfer_en := redundancy("fs_transfer_en")
   deskewCtrl.start := redundancy("fs_transfer_en")
+
+  // TODO: sync'd resets for particular logic
+  val adapter_rstb = Wire(Bool())
+  adapter_rstb := !reset.asBool && redundancy("fs_transfer_rstb").asTypeOf(Bool()) && deskewCtrl.locked
+  deskewReset := withClock(redundancy("fs_fwd_clk").asTypeOf(Clock()))(AsyncResetShiftReg(!adapter_rstb, 2))
 
   // Data pass thru
   // TODO: add optional BERT, loopback
   for (i <- 0 until p(AIB3DKey).numTxIOs) {
     redundancy(s"tx_$i") := mac.data_in(i)
   }
-  for (i <- 0 until p(AIB3DKey).numRxIOs) {
-    mac.data_out(i) := redundancy(s"rx_$i")
-  }
+  mac.data_out := VecInit.tabulate(p(AIB3DKey).numRxIOs)(i => redundancy(s"rx_$i")).asUInt
+
   // Clock pass thru
-  redundancy("ns_fwd_clk") := m_ns_fwd_clk
+  redundancy("ns_fwd_clk") := m_ns_fwd_clk.asUInt
   redundancy("ns_fwd_clkb") := !(m_ns_fwd_clk.asBool)
-  fs_fwd_clk := redundancy("fs_fwd_clk")
+  fs_fwd_clk := redundancy("fs_fwd_clk").asTypeOf(Clock())
   redundancy("fs_fwd_clkb") := DontCare
 }

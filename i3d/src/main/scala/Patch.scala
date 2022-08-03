@@ -46,36 +46,32 @@ class Patch(implicit p: Parameters) extends Module {
 	val bumpio = IO(new BumpsBundle)
 	val macio = IO(new MacBundle)
 	val appio = IO(new AppBundle)
+  val cfgio = IO(new RedundancyConfigBundle)  // TODO: these should be CSRs
 
   // Adapter
   val adapter = Module(new Adapter)
-  adapter.app <> appio
+  adapter.app <> appio  // pass-thru
+  adapter.mac <> macio  // pass-thru
 
-  // Redundancy
-  val redundancy = Module(new RedundancyTop)
-
-  // IO cells
-  val iocells = (0 until p(AIB3DKey).patchSize).map{ i =>
-    if (p(AIB3DKey).blackBoxModels) { Module(new IOCellModel(i)).io }
-    else { Module(new IOCellBB(i)).io }
-  }
-
-	// TODO: connect everything
-
-	// macio <> deskew <> adapter (clocks)
-  // DLL: implicit clock is received clock
+  // DLL: implicit clock is received clock, reset is sync'd to its ref clk
   val dll = withClockAndReset(adapter.fs_fwd_clk, adapter.deskewReset)(Module(new DLL))
+  // deskew <> adapter
   dll.ctrl <> adapter.deskewCtrl
   dll.clk_loop := dll.clk_out  // thru clock tree
   adapter.m_ns_fwd_clk := m_ns_fwd_clk
   adapter.m_fs_fwd_clk := dll.clk_out
   m_fs_fwd_clk := dll.clk_out
 
-	// mac/appio <> adapter <> redundancy
-  adapter.redundancy <> redundancy.adapter
-  adapter.app <> appio
-  adapter.mac <> macio
+  // Redundancy
+  val redundancy = Module(new RedundancyTop)
+  adapter.redundancy <> redundancy.adapter  // bundle connect
+  redundancy.cfg <> cfgio
 
+  // IO cells
+  val iocells = (0 until p(AIB3DKey).patchSize).map{ i =>
+    if (p(AIB3DKey).blackBoxModels) { Module(new IOCellModel(i)).io }
+    else { Module(new IOCellBB(i)).io }
+  }
   // redundancy <> iocells <> bumps (all signals)
   iocells.foreach{ c =>
     c.tx_clk := m_ns_fwd_clk
@@ -84,4 +80,6 @@ class Patch(implicit p: Parameters) extends Module {
   (iocells zip redundancy.to_pad).foreach{ case(c, r) => c.attachTx(r) }
   (iocells zip redundancy.from_pad).foreach{ case(c, r) => c.attachRx(r) }
   (iocells zip bumpio.elements).foreach{ case(c, (_, b)) => c.pad <> b }  
+
+	// TODO: connect everything else
 }

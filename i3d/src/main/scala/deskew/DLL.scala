@@ -16,5 +16,8 @@ class DLL extends Module {
   val clk_out = IO(Output(Clock()))
   val ctrl = IO(new DeskewCtrlBundle())
 
+  clk_out := false.B.asClock
+  ctrl.locked := false.B
+
   // val GL
 }
