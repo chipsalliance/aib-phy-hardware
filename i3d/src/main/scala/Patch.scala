@@ -3,6 +3,12 @@ package aib3d
 import chisel3._
 
 import freechips.rocketchip.config.Parameters
+import freechips.rocketchip.diplomacy.LazyModuleImp
+import freechips.rocketchip.interrupts.HasInterruptSources
+import freechips.rocketchip.regmapper._
+import freechips.rocketchip.tilelink.HasTLControlRegMap
+import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
+import freechips.rocketchip.util.ResetCatchAndSync
 import freechips.rocketchip.jtag._
 
 import aib3d.adapter._
@@ -10,76 +16,77 @@ import aib3d.deskew._
 import aib3d.io._
 import aib3d.redundancy._
 
-class BumpsBundle(implicit p: Parameters) extends Record {
-	val elements = p(AIB3DKey).padsIoMap
-	def apply(elt: String): Data = elements(elt)
-	override def cloneType = (new BumpsBundle).asInstanceOf[this.type]
-}
+abstract class Patch(implicit p: Parameters) extends RegisterRouter(
+  RegisterRouterParams(
+    name = "aib3d-patch",
+    compat = Seq("ucbbar,rocketchip"),
+    base = p(AIB3DKey).baseAddress,
+    beatBytes = 8)  // TODO: AVMM is 32-bit
+) with HasInterruptSources {
 
-class MacBundle(implicit p: Parameters) extends Bundle {
-	// MAC-facing IOs
-  val dual_mode_select = Input(Bool())  // HI = leader, LO = follower
+  def nInterrupts = 0
 
-	// Data
-	val data_in = Input(UInt(p(AIB3DKey).numTxIOs.W))
-	val data_out = Output(UInt(p(AIB3DKey).numRxIOs.W))
+  lazy val module = new LazyModuleImp(this) {
 
-	// Handshake
-	val ns_transfer_en = Input(Bool())  // Near-side ready for data transfer
-	val fs_transfer_en = Output(Bool()) // Far-side ready to transmit data (TODO = fs_transfer_en?)
+    // Clocks and reset (implicit ones for CSRs)
+    val m_ns_fwd_clk = IO(Input(Clock()))   // Near-side input for transmitting to far-side
+    val m_fs_fwd_clk = IO(Output(Clock()))  // Near-side output received from far-side (deskewed)
+    val ns_adapter_rstn = IO(Input(Bool())) // Near-side adapter reset (must be on m_ns_fwd_clk domain)
 
-	// TODO signals for de-assertion of transfer ready
+    val bumpio = IO(new BumpsBundle)
+    val macio = IO(new MacBundle)
+    val appio = IO(new AppBundle)
 
-	// TODO signals for reset and recalibration
-}
+    // Adapter + CSRs
+    val adapter = withClockAndReset(m_ns_fwd_clk, !ns_adapter_rstn)(Module(new Adapter))
+    adapter.app <> appio  // pass-thru
+    adapter.mac <> macio  // pass-thru
+    val io_ctrl = RegInit(5.U(4.W))
+    adapter.io_ctrl := io_ctrl
+    val redund = RegInit(p(AIB3DKey).sparesIdx.head.U(adapter.redund.getWidth.W))
+    adapter.redund := redund
 
-class ScanBundle(implicit p: Parameters) extends Bundle {
-	val scan_clk = Input(Clock())
+    // Redundancy
+    val redundancy = Module(new RedundancyTop)
+    adapter.redundancy <> redundancy.adapter  // I/Os
+    adapter.redundancy_cfg <> redundancy.cfg  // config
+    val fs_fwd_clk = redundancy.adapter("fs_fwd_clkb").asTypeOf(Clock())  // 180 deg. sampling
+    
+    // DLL
+    // implicit clock is received clock
+    // implicit reset is sync'd to its ref clk (?)
+    val deskewRst = ResetCatchAndSync(fs_fwd_clk, !ns_adapter_rstn, 2)
+    val dll = withClockAndReset(fs_fwd_clk, deskewRst)(Module(new DLL))
+    dll.clk_loop := dll.clk_out  // thru clock tree
+    adapter.m_fs_fwd_clk := dll.clk_out
+    m_fs_fwd_clk := dll.clk_out
+    // deskew <> adapter
+    dll.ctrl <> adapter.deskewCtrl
 
-}
+    // IO cells
+    val iocells = (0 until p(AIB3DKey).patchSize).map{ i =>
+      if (p(AIB3DKey).blackBoxModels) { Module(new IOCellModel(i)).io }
+      else { Module(new IOCellBB(i)).io }
+    }
+    iocells.foreach{ c =>
+      c.tx_clk := m_ns_fwd_clk
+      c.rx_clk := dll.clk_out
+    }
+    // redundancy <> iocells <> bumps (all signals)
+    (iocells zip redundancy.to_pad).foreach{ case(c, r) => c.attachTx(r) }
+    (iocells zip redundancy.from_pad).foreach{ case(c, r) => c.attachRx(r) }
+    (iocells zip bumpio.elements).foreach{ case(c, (_, b)) => c.pad <> b }
 
-class Patch(implicit p: Parameters) extends Module {
-  // Clocks separately
-	val m_ns_fwd_clk = IO(Input(Clock()))   // Near-side input for transmitting to far-side
-	val m_fs_fwd_clk = IO(Output(Clock()))  // Near-side output received from far-side (deskewed)
-
-	val bumpio = IO(new BumpsBundle)
-	val macio = IO(new MacBundle)
-	val appio = IO(new AppBundle)
-  val cfgio = IO(new RedundancyConfigBundle)  // TODO: these should be CSRs
-
-  // Adapter
-  val adapter = Module(new Adapter)
-  adapter.app <> appio  // pass-thru
-  adapter.mac <> macio  // pass-thru
-
-  // DLL: implicit clock is received clock, reset is sync'd to its ref clk
-  val dll = withClockAndReset(adapter.fs_fwd_clk, adapter.deskewReset)(Module(new DLL))
-  // deskew <> adapter
-  dll.ctrl <> adapter.deskewCtrl
-  dll.clk_loop := dll.clk_out  // thru clock tree
-  adapter.m_ns_fwd_clk := m_ns_fwd_clk
-  adapter.m_fs_fwd_clk := dll.clk_out
-  m_fs_fwd_clk := dll.clk_out
-
-  // Redundancy
-  val redundancy = Module(new RedundancyTop)
-  adapter.redundancy <> redundancy.adapter  // bundle connect
-  redundancy.cfg <> cfgio
-
-  // IO cells
-  val iocells = (0 until p(AIB3DKey).patchSize).map{ i =>
-    if (p(AIB3DKey).blackBoxModels) { Module(new IOCellModel(i)).io }
-    else { Module(new IOCellBB(i)).io }
+    regmap(
+      0x00 -> Seq(RegField(io_ctrl.getWidth, io_ctrl,
+        RegFieldDesc("io_ctrl", "{tx_wkpu, tx_wkpd, rx_wkpu, rx_wkpd} - pulls-down when reset."))),
+      0x08 -> Seq(RegField(redund.getWidth, redund,
+        RegFieldDesc("redund", "Denotes which ubump is faulty (0-indexed). Set to 1st spare for no shift when reset.")))
+    )
   }
-  // redundancy <> iocells <> bumps (all signals)
-  iocells.foreach{ c =>
-    c.tx_clk := m_ns_fwd_clk
-    c.rx_clk := dll.clk_out
-  }
-  (iocells zip redundancy.to_pad).foreach{ case(c, r) => c.attachTx(r) }
-  (iocells zip redundancy.from_pad).foreach{ case(c, r) => c.attachRx(r) }
-  (iocells zip bumpio.elements).foreach{ case(c, (_, b)) => c.pad <> b }  
-
-	// TODO: connect everything else
 }
+
+/** Patch with TileLink interconnect to CSRs */
+class PatchTL(implicit p: Parameters) extends Patch with HasTLControlRegMap
+/** Patch with AXI4 interconnect to CSRs */
+class PatchAXI4(implicit p: Parameters) extends Patch with HasAXI4ControlRegMap

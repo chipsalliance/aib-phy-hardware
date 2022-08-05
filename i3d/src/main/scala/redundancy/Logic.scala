@@ -8,7 +8,7 @@ import freechips.rocketchip.config.Parameters
 import aib3d._
 
 /** Unit 2-input mux for shifting up */
-class RedundancyUpLogic extends Module {
+class RedundancyUpLogic extends RawModule {
 	val shift = IO(Input(Bool()))
 	val in = IO(Vec(2, new RedundancyMuxBundle))  // (idx, idx+2)
 	val out = IO(Flipped(new RedundancyMuxBundle))
@@ -16,7 +16,7 @@ class RedundancyUpLogic extends Module {
 }
 
 /** Unit 3-input mux for shifting down */
-class RedundancyDownLogic extends Module {
+class RedundancyDownLogic extends RawModule {
 	val shift = IO(Input(Bool()))
 	val in = IO(Vec(3, new RedundancyMuxBundle))  // (idx-2, idx, idx+2)
 	val out = IO(Flipped(new RedundancyMuxBundle))
@@ -35,7 +35,7 @@ class RedundancyDownLogic extends Module {
 }
 
 /** Unit 2-input mux for last 2 shift downs */
-class RedundancyEndLogic extends Module {
+class RedundancyEndLogic extends RawModule {
   val shift = IO(Input(Bool()))
   val in = IO(Vec(2, new RedundancyMuxBundle))  // (idx, idx-2)
   val out = IO(Flipped(new RedundancyMuxBundle))
@@ -50,7 +50,7 @@ class RedundancyEndLogic extends Module {
 }
 
 /** Unit 3-input mux for spares */
-class RedundancySpareLogic extends Module {
+class RedundancySpareLogic extends RawModule {
 	val shift = IO(Input(Vec(2, Bool())))  // (idx-2, idx+2)
 	val in = IO(Vec(3, new RedundancyMuxBundle))  // (idx-2, idx, idx+2)
 	val out = IO(Flipped(new RedundancyMuxBundle))
@@ -75,10 +75,12 @@ class RedundancySpareLogic extends Module {
   * Decodes faulty bump number to shift enable signals
   * If faulty = index of either spare or > patch size, no redundancy
   */
-class RedundancyShiftLogic(implicit p: Parameters) extends Module {
-	val faulty = IO(Input(UInt(log2Ceil(p(AIB3DKey).patchSize).W)))
+trait RedundancyShiftLogicIO { this: RawModule =>
+  implicit val p: Parameters  
+  val faulty = IO(Input(UInt(log2Ceil(p(AIB3DKey).patchSize).W)))
 	val shift = IO(Output(UInt(p(AIB3DKey).patchSize.W)))
-
+}
+class RedundancyShiftLogic(implicit val p: Parameters) extends RawModule with RedundancyShiftLogicIO {
   val lastUp = p(AIB3DKey).sparesIdx.head - 1
   val firstDown = p(AIB3DKey).sparesIdx.last + 1
 

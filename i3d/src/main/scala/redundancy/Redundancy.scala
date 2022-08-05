@@ -8,11 +8,13 @@ import freechips.rocketchip.config.Parameters
 import aib3d._
 
 /** Wraps a redundancy unit for one direction */
-class RedundancyWrapper(implicit p: Parameters) extends Module {
+trait RedundancyWrapperIO { this: RawModule =>
+  implicit val p: Parameters
   val shift = IO(Input(UInt(p(AIB3DKey).patchSize.W)))
 	val in = IO(Vec(p(AIB3DKey).patchSize, new RedundancyMuxBundle))
-	val out = IO(Vec(p(AIB3DKey).patchSize, Flipped(new RedundancyMuxBundle)))
-
+	val out = IO(Vec(p(AIB3DKey).patchSize, Flipped(new RedundancyMuxBundle)))  
+}
+class RedundancyWrapper(implicit val p: Parameters) extends RawModule with RedundancyWrapperIO {
 	// Microbumps that connect to only one signal (first 2)
   out(0) <> in(0)
   out(1) <> in(1)
@@ -61,12 +63,14 @@ class RedundancyWrapper(implicit p: Parameters) extends Module {
   * Top-level redundancy unit, sits between adapter and pads 
   * TODO: optionally support loopback
   */
-class RedundancyTop(implicit p: Parameters) extends Module {
+trait RedundancyTopIO { this: RawModule => 
+  implicit val p: Parameters
 	val from_pad = IO(Vec(p(AIB3DKey).patchSize, new RedundancyMuxDataBundle))
 	val to_pad = IO(Vec(p(AIB3DKey).patchSize, Flipped(new RedundancyMuxBundle)))
 	val adapter = IO(Flipped(new AdapterToRedundancyBundle))
-	val cfg = IO(new RedundancyConfigBundle)
-
+	val cfg = IO(new RedundancyConfigBundle)  
+}
+class RedundancyTop(implicit val p: Parameters) extends RawModule with RedundancyTopIO {
 	// 1 wrapper for each direction
 	val adapter_to_pad, pad_to_adapter = Module(new RedundancyWrapper)
 
@@ -80,61 +84,47 @@ class RedundancyTop(implicit p: Parameters) extends Module {
   (p(AIB3DKey).padsIoTypes zip adapter_to_pad.in).foreach {
     case(io, a2p) => io._2 match {
       case _:TxSeq =>
-        a2p.tx_en := cfg.pad_en & cfg.pad_rstb
+        a2p.tx_en := cfg.pad_en
         a2p.rx_en := false.B
         a2p.async_tx_en := false.B
         a2p.async_rx_en := false.B
         a2p.wkpu_en := cfg.tx_wkpu
-        a2p.wkpd_en := cfg.tx_wkpd | (!cfg.pad_rstb)
+        a2p.wkpd_en := cfg.tx_wkpd
       case _:TxAsync => 
-        a2p.tx_en := false.B
-        a2p.rx_en := false.B
-        a2p.async_tx_en := cfg.pad_en & cfg.pad_rstb
-        a2p.async_rx_en := false.B
-        a2p.wkpu_en := cfg.tx_wkpu
-        a2p.wkpd_en := cfg.tx_wkpd | (!cfg.pad_rstb)
-      case _:RxSeq =>
-        a2p.tx_en := false.B
-        a2p.rx_en := cfg.pad_en & cfg.pad_rstb
-        a2p.async_tx_en := false.B
-        a2p.async_rx_en := false.B
-        a2p.wkpu_en := cfg.rx_wkpu
-        a2p.wkpd_en := cfg.rx_wkpu | (!cfg.pad_rstb)
-      case _:RxAsync =>
-        a2p.tx_en := false.B
-        a2p.rx_en := false.B
-        a2p.async_tx_en := false.B
-        a2p.async_rx_en := cfg.pad_en & cfg.pad_rstb
-        a2p.wkpu_en := cfg.rx_wkpu
-        a2p.wkpd_en := cfg.rx_wkpu | (!cfg.pad_rstb)
-      case _:TxDTR =>  // always enabled
         a2p.tx_en := false.B
         a2p.rx_en := false.B
         a2p.async_tx_en := cfg.pad_rstb
         a2p.async_rx_en := false.B
-        a2p.wkpu_en := false.B
-        a2p.wkpd_en := !cfg.pad_rstb
-      case _:RxDTR =>  // always enabled
+        a2p.wkpu_en := cfg.tx_wkpu
+        a2p.wkpd_en := cfg.tx_wkpd
+      case _:RxSeq =>
+        a2p.tx_en := false.B
+        a2p.rx_en := cfg.pad_en
+        a2p.async_tx_en := false.B
+        a2p.async_rx_en := false.B
+        a2p.wkpu_en := cfg.rx_wkpu
+        a2p.wkpd_en := cfg.rx_wkpd
+      case _:RxAsync =>
         a2p.tx_en := false.B
         a2p.rx_en := false.B
         a2p.async_tx_en := false.B
         a2p.async_rx_en := cfg.pad_rstb
-        a2p.wkpu_en := false.B
-        a2p.wkpd_en := !cfg.pad_rstb
-      case _:PoR =>
+        a2p.wkpu_en := cfg.rx_wkpu
+        a2p.wkpd_en := cfg.rx_wkpd
+      case _:TxPoR =>  // always enabled
         a2p.tx_en := false.B
         a2p.rx_en := false.B
-        if (io._1 == "patch_reset") {
-          a2p.async_tx_en := !cfg.leader
-          a2p.async_rx_en := cfg.leader
-          a2p.wkpu_en := true.B
-          a2p.wkpd_en := false.B
-        } else {  // patch_detect
-          a2p.async_tx_en := cfg.leader
-          a2p.async_rx_en := !cfg.leader
-          a2p.wkpu_en := false.B
-          a2p.wkpd_en := true.B
-        }
+        a2p.async_tx_en := cfg.pad_rstb
+        a2p.async_rx_en := false.B
+        a2p.wkpu_en := !cfg.leader
+        a2p.wkpd_en := cfg.leader
+      case _:RxPoR =>  // always enabled
+        a2p.tx_en := false.B
+        a2p.rx_en := false.B
+        a2p.async_tx_en := false.B
+        a2p.async_rx_en := cfg.pad_rstb
+        a2p.wkpu_en := cfg.leader
+        a2p.wkpd_en := !cfg.leader
       case _:Spare =>
         a2p.tx_en := false.B
         a2p.rx_en := false.B
@@ -142,7 +132,8 @@ class RedundancyTop(implicit p: Parameters) extends Module {
         a2p.async_rx_en := false.B
         a2p.wkpu_en := false.B
         a2p.wkpd_en := true.B
-      case _ =>  // TODO: bidirectional - needs additional cfg
+      case _ => throw new Exception("Bidir signals not yet supported.")
+        // TODO: bidirectional - needs additional cfg inputs
     }
   }
 
@@ -152,32 +143,34 @@ class RedundancyTop(implicit p: Parameters) extends Module {
       val signals = p(AIB3DKey).adapterIoTypes.filter{ case(_, t) => t.bumpNum == i }
       // Flags to prevent re-assignments for bidirectional signals
       var a2p_d_uninit, a2p_a_uninit, p2a_d_uninit, p2a_a_uninit = true
-      signals.foreach{ case(name, t) => t match {     
-        case _:TxSeq =>
-          if (!a2p_d_uninit) throw new RebindingException(s"Can't have 2 TxSeq-type signals for bump $i!")
-          a2p_d_uninit = false; a2p.data := adapter(name)
-          if (a2p_a_uninit)     a2p.async := 0.U
-          if (p2a_d_uninit)     p2a.data := DontCare
-          if (p2a_a_uninit)     p2a.async := DontCare
-        case _:TxAsync =>
-          if (!a2p_a_uninit) throw new RebindingException(s"Can't have 2 TxAsync-type signals for bump $i!")         
-          if (a2p_d_uninit)     a2p.data := 0.U
-          a2p_a_uninit = false; a2p.async := adapter(name)
-          if (p2a_d_uninit)     p2a.data := DontCare
-          if (p2a_a_uninit)     p2a.async := DontCare
-        case _:RxSeq =>
-          if (!p2a_d_uninit) throw new RebindingException(s"Can't have 2 RxSeq-type signals for bump $i!")         
-          if (a2p_d_uninit)     a2p.data := 0.U
-          if (a2p_a_uninit)     a2p.async := 0.U
-          p2a_d_uninit = false; adapter(name) := p2a.data
-          if (p2a_a_uninit)     p2a.async := DontCare
-        case _:RxAsync =>
-          if (!p2a_a_uninit) throw new RebindingException(s"Can't have 2 RxAsync-type signals for bump $i!")         
-          if (a2p_d_uninit)     a2p.data := 0.U
-          if (a2p_a_uninit)     a2p.async := 0.U
-          if (p2a_d_uninit)     p2a.data := DontCare
-          p2a_a_uninit = false; adapter(name) := p2a.async
-        case _ =>  // not valid
+      signals.foreach{ case(name, t) => 
+        def badAssign = throw new RebindingException(s"Error: bump $i re-assigned with ${t.getClass.getSimpleName}-type signal!")
+        t match {     
+          case _:TxSeq =>
+            if (!a2p_d_uninit)    badAssign
+            a2p_d_uninit = false; a2p.data := adapter(name)
+            if (a2p_a_uninit)     a2p.async := 0.U
+            if (p2a_d_uninit)     p2a.data := DontCare
+            if (p2a_a_uninit)     p2a.async := DontCare
+          case _:TxAsync | _:TxPoR =>
+            if (!a2p_a_uninit)    badAssign      
+            if (a2p_d_uninit)     a2p.data := 0.U
+            a2p_a_uninit = false; a2p.async := adapter(name)
+            if (p2a_d_uninit)     p2a.data := DontCare
+            if (p2a_a_uninit)     p2a.async := DontCare
+          case _:RxSeq =>
+            if (!p2a_d_uninit)    badAssign
+            if (a2p_d_uninit)     a2p.data := 0.U
+            if (a2p_a_uninit)     a2p.async := 0.U
+            p2a_d_uninit = false; adapter(name) := p2a.data
+            if (p2a_a_uninit)     p2a.async := DontCare
+          case _:RxAsync | _:RxPoR =>
+            if (!p2a_a_uninit)    badAssign
+            if (a2p_d_uninit)     a2p.data := 0.U
+            if (a2p_a_uninit)     a2p.async := 0.U
+            if (p2a_d_uninit)     p2a.data := DontCare
+            p2a_a_uninit = false; adapter(name) := p2a.async
+          case _ =>  // not valid
       }}
   }
 

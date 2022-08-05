@@ -5,7 +5,6 @@ import chisel3._
 import chisel3.experimental.Analog
 
 import aib3d._
-import aib3d.redundancy.{RedundancyMuxBundle, RedundancyMuxDataBundle}
 
 class IOCellBundle extends Bundle {
   // TODO: these must match IO cell generator. Use Record instead?

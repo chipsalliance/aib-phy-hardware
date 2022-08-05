@@ -7,12 +7,35 @@ import org.scalatest.flatspec.AnyFlatSpec
 import freechips.rocketchip.config._
 import aib3d._
 
+
+// Wrap RawModules as Modules for test
+class RedundancyShiftLogicWrapMod(implicit val p: Parameters) extends Module with RedundancyShiftLogicIO {
+  val mod = Module(new RedundancyShiftLogic)
+  mod.faulty := faulty
+  shift := mod.shift
+}
+
+class RedundancyWrapperWrapMod(implicit val p: Parameters) extends Module with RedundancyWrapperIO {
+  val mod = Module(new RedundancyWrapper)
+  mod.shift := shift
+  mod.in <> in
+  mod.out <> out
+}
+
+class RedundancyTopWrapMod(implicit val p: Parameters) extends Module with RedundancyTopIO {
+  val mod = Module(new RedundancyTop)
+  mod.from_pad <> from_pad
+  mod.to_pad <> to_pad
+  mod.adapter <> adapter
+  mod.cfg <> cfg
+}
+
 class RedundancyShiftLogicSpec extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "RedundancyShiftLogic"
 
   it should "generate shift bits properly" in {
     implicit val p: Parameters = new AIB3DBalancedConfig(16)
-    test(new RedundancyShiftLogic()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
+    test(new RedundancyShiftLogicWrapMod()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
       def getShiftBits: Unit = {
         val shift = dut.shift.peek().litValue
         // print bits
@@ -34,7 +57,7 @@ class RedundancyShiftLogicSpec extends AnyFlatSpec with ChiselScalatestTester {
 class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "RedundancyWrapper"
 
-  def debugBits(dut: RedundancyWrapper)(implicit p: Parameters): Unit = {
+  def debugBits(dut: RedundancyWrapperWrapMod)(implicit p: Parameters): Unit = {
     // debug print which bits are 1
     println("data")
     for (i <- (0 until p(AIB3DKey).patchSize).reverse) {
@@ -48,9 +71,9 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
 
   it should "shift up properly" in {
     implicit val p: Parameters = new AIB3DBalancedConfig(16)
-		test(new RedundancyWrapper()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
-      // make 2nd bump faulty (bits 21:2 need to be 1)
-      dut.shift.poke(0x3FFFFC.U)
+		test(new RedundancyWrapperWrapMod()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
+      // make 2nd bump faulty (bits 19:2 need to be 1)
+      dut.shift.poke(0xFFFFC.U)
       dut.in.foreach(_.data.poke(0.U))
       dut.in.foreach(_.async.poke(0.U))
       // set data(0) = 1, should not shift
@@ -63,14 +86,14 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.in(p(AIB3DKey).patchSize-3).data.poke(1.U)
       dut.out(p(AIB3DKey).patchSize-1).data.expect(0.U)
       dut.out(p(AIB3DKey).patchSize-3).data.expect(1.U)
-      // set patch_detect = 1, should shift
-      dut.in(p(AIB3DKey).porIdx.last).async.poke(1.U)
-      dut.out(p(AIB3DKey).porIdx.last).async.expect(0.U)
+      // set ns_patch_por = 1, should shift
+      dut.in(p(AIB3DKey).txCtrlIdx.last).async.poke(1.U)
+      dut.out(p(AIB3DKey).txCtrlIdx.last).async.expect(0.U)
       dut.out(p(AIB3DKey).sparesIdx.last).async.expect(1.U)
-      // set fs_transfer_en = 1, should not shift
-      dut.in(p(AIB3DKey).sparesIdx.end).data.poke(1.U)
-      dut.out(p(AIB3DKey).sparesIdx.end).data.expect(1.U)
-      dut.out(p(AIB3DKey).sparesIdx.end+2).data.expect(0.U)
+      // set fs_patch_por = 1, should not shift
+      dut.in(p(AIB3DKey).rxCtrlIdx.head).data.poke(1.U)
+      dut.out(p(AIB3DKey).rxCtrlIdx.head).data.expect(1.U)
+      dut.out(p(AIB3DKey).rxCtrlIdx.head+2).data.expect(0.U)
 
       debugBits(dut)(p)
     } 
@@ -78,9 +101,9 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
 
   it should "shift down properly" in {
     implicit val p: Parameters = new AIB3DBalancedConfig(16)
-		test(new RedundancyWrapper()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
-      // make 3rd to last bump faulty (bits 41:24 need to be 1)
-      dut.shift.poke(BigInt("3FFFF000000", 16).U)
+		test(new RedundancyWrapperWrapMod()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
+      // make 3rd to last bump faulty (bits 39:22 need to be 1)
+      dut.shift.poke(BigInt("FFFFC00000", 16).U)
       dut.in.foreach(_.data.poke(0.U))
       dut.in.foreach(_.async.poke(0.U))
       // set data(0) and data(2) = 1, should not shift
@@ -94,14 +117,14 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
       // set data(end-3) = 1, should shift
       dut.in(p(AIB3DKey).patchSize-3).data.poke(1.U)
       dut.out(p(AIB3DKey).patchSize-3).data.expect(0.U)
-      // set patch_detect = 1, should not shift
-      dut.in(p(AIB3DKey).porIdx.last).async.poke(1.U)
-      dut.out(p(AIB3DKey).porIdx.last).async.expect(1.U)
+      // set ns_patch_por = 1, should not shift
+      dut.in(p(AIB3DKey).txCtrlIdx.last).async.poke(1.U)
+      dut.out(p(AIB3DKey).txCtrlIdx.last).async.expect(1.U)
       dut.out(p(AIB3DKey).sparesIdx.last).async.expect(0.U)
-      // set fs_transfer_en = 1, should shift
-      dut.in(p(AIB3DKey).sparesIdx.end).data.poke(1.U)
-      dut.out(p(AIB3DKey).sparesIdx.end).data.expect(0.U)
-      dut.out(p(AIB3DKey).sparesIdx.end+2).data.expect(1.U)
+      // set fs_patch_por = 1, should shift
+      dut.in(p(AIB3DKey).rxCtrlIdx.head).data.poke(1.U)
+      dut.out(p(AIB3DKey).rxCtrlIdx.head).data.expect(0.U)
+      dut.out(p(AIB3DKey).rxCtrlIdx.head+2).data.expect(1.U)
 
       debugBits(dut)(p)
     } 
@@ -111,7 +134,7 @@ class RedundancyWrapperSpec extends AnyFlatSpec with ChiselScalatestTester {
 class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
 	behavior of "RedundancyTop"
 
-  def debugTx(dut: RedundancyTop)(implicit p: Parameters): Unit = {
+  def debugTx(dut: RedundancyTopWrapMod)(implicit p: Parameters): Unit = {
     // debug print which bits are 1
     println("data")
     for (i <- 0 until p(AIB3DKey).patchSize) {
@@ -123,52 +146,52 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 
-  def debugRx(dut: RedundancyTop)(implicit p: Parameters): Unit = {
+  def debugRx(dut: RedundancyTopWrapMod)(implicit p: Parameters): Unit = {
     // debug print which bits are 1 (more limited)
     println("rx")
     for (i <- 0 until p(AIB3DKey).numRxIOs) {
       if (dut.adapter(s"rx_$i").peek().litValue == 1) println(i)
     }
-    if (dut.adapter("fs_transfer_rstb").peek().litValue == 1) println(p(AIB3DKey).numRxIOs)
-    if (dut.adapter("fs_transfer_en").peek().litValue == 1) println(p(AIB3DKey).numRxIOs+1)
+    if (dut.adapter("fs_transfer_en").peek().litValue == 1) println(p(AIB3DKey).numRxIOs)
+    if (dut.adapter("fs_patch_por").peek().litValue == 1) println(p(AIB3DKey).numRxIOs+1)
   }
 
-	def shiftUpTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
-		dut.csrs.faulty.poke(2.U)
+	def shiftUpTest(dut: RedundancyTopWrapMod)(implicit p: Parameters): Unit = {
+		dut.cfg.faulty.poke(2.U)
     // Tx should shift
     dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(4).data.expect(1.U)
     // Rx should not shift
     dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(1.U)
-    // patch_detect should shift
-		dut.to_pad(p(AIB3DKey).porIdx.last).async.expect(0.U)
+    // ns_patch_por should shift
+		dut.to_pad(p(AIB3DKey).txCtrlIdx.last).async.expect(0.U)
 		dut.to_pad(p(AIB3DKey).sparesIdx.last).async.expect(1.U)
-    // fs_transfer_en should not shift
+    // fs_patch_por should not shift
     val rxLast = p(AIB3DKey).numRxIOs-1
     dut.adapter(s"rx_$rxLast").expect(0.U)
-    dut.adapter("fs_transfer_en").expect(1.U)
+    dut.adapter("fs_patch_por").expect(1.U)
 	}
 
-  def shiftDownTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
-		dut.csrs.faulty.poke((p(AIB3DKey).patchSize-3).U)
+  def shiftDownTest(dut: RedundancyTopWrapMod)(implicit p: Parameters): Unit = {
+		dut.cfg.faulty.poke((p(AIB3DKey).patchSize-3).U)
     // Tx should not shift
     dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(2).data.expect(1.U)
     // Rx should shift
     dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(0.U)
-    // patch_detect should not shift
-		dut.to_pad(p(AIB3DKey).porIdx.last).async.expect(1.U)
+    // ns_patch_por should not shift
+		dut.to_pad(p(AIB3DKey).txCtrlIdx.last).async.expect(1.U)
 		dut.to_pad(p(AIB3DKey).sparesIdx.last).async.expect(0.U)
-    // fs_transfer_en should shift
+    // fs_patch_por should shift
     val rxLast = p(AIB3DKey).numRxIOs-1
     dut.adapter(s"rx_$rxLast").expect(1.U)
-    dut.adapter("fs_transfer_en").expect(0.U)
+    dut.adapter("fs_patch_por").expect(0.U)
 	}
 
-  def noShiftTest(dut: RedundancyTop)(implicit p: Parameters): Unit = {
-		dut.csrs.faulty.poke(p(AIB3DKey).sparesIdx.head.U)
+  def noShiftTest(dut: RedundancyTopWrapMod)(implicit p: Parameters): Unit = {
+		dut.cfg.faulty.poke(p(AIB3DKey).sparesIdx.head.U)
     // Tx should not shift
     dut.to_pad(0).data.expect(1.U)
 		dut.to_pad(2).data.expect(1.U)
@@ -176,23 +199,23 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
     // Rx should not shift
     dut.adapter("rx_0").expect(1.U)
     dut.adapter("rx_2").expect(1.U)
-    // patch_detect should not shift
-		dut.to_pad(p(AIB3DKey).porIdx.last).async.expect(1.U)
+    // ns_patch_por should not shift
+		dut.to_pad(p(AIB3DKey).txCtrlIdx.last).async.expect(1.U)
 		dut.to_pad(p(AIB3DKey).sparesIdx.last).async.expect(0.U)
-    // fs_transfer_en should not shift
+    // fs_patch_por should not shift
     val rxLast = p(AIB3DKey).numRxIOs-1
     dut.adapter(s"rx_$rxLast").expect(0.U)
-    dut.adapter("fs_transfer_en").expect(1.U)
+    dut.adapter("fs_patch_por").expect(1.U)
 	}
 
 	it should "shift inputs properly" in {
     implicit val p: Parameters = new AIB3DBaseConfig
-		test(new RedundancyTop()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
+		test(new RedundancyTopWrapMod()(p)).withAnnotations(Seq(PrintFullStackTraceAnnotation)) { dut =>
 			println("Testing RedundancyTop")
 			// init inputs
-			dut.csrs.pad_rstb.poke(true.B)
-			dut.csrs.pad_en.poke(true.B)
-			dut.csrs.leader.poke(true.B)
+			dut.cfg.pad_rstb.poke(true.B)
+			dut.cfg.pad_en.poke(true.B)
+			dut.cfg.leader.poke(true.B)
       
       // Test 2nd, 2nd to last, and spare bumps
 
@@ -206,10 +229,10 @@ class RedundancyTopSpec extends AnyFlatSpec with ChiselScalatestTester {
 		  dut.from_pad(p(AIB3DKey).patchSize-3).data.poke(1.U)
 		  dut.from_pad(p(AIB3DKey).patchSize-5).data.poke(0.U)
 
-      // Set patch_detect
-		  dut.adapter("patch_detect_out").poke(1.U)
+      // Set ns_patch_por
+		  dut.adapter("ns_patch_por").poke(1.U)
 
-      // Set fs_transfer_en
+      // Set fs_patch_por
       dut.from_pad(p(AIB3DKey).sparesIdx.end).async.poke(1.U)
       // For shift down test, it'll be configured as data instead
       dut.from_pad(p(AIB3DKey).sparesIdx.end).data.poke(1.U)
