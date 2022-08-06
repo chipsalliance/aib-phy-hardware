@@ -87,6 +87,6 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
 }
 
 /** Patch with TileLink interconnect to CSRs */
-class PatchTL(implicit p: Parameters) extends Patch with HasTLControlRegMap
+class TLPatch(implicit p: Parameters) extends Patch with HasTLControlRegMap
 /** Patch with AXI4 interconnect to CSRs */
-class PatchAXI4(implicit p: Parameters) extends Patch with HasAXI4ControlRegMap
+class AXI4Patch(implicit p: Parameters) extends Patch with HasAXI4ControlRegMap
