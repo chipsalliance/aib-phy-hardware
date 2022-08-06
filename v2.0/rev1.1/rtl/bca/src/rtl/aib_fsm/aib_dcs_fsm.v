@@ -49,6 +49,7 @@ wire [4:0] dcc_p_pusel_intr;
 wire [4:0] dcc_n_pdsel_intr;
 wire [4:0] dcc_n_pusel_intr;
 wire sys_div_clk;
+wire duty_gt_50_sync;
 
 parameter START = 2'b00,
 	  RUN   = 2'b01;
@@ -78,6 +79,16 @@ aib_clk_div_dcs aib_clk_div_dcs(
 .clk_out(sys_div_clk),
 .clk_div_ld_ack_ff(clk_div_ld_ack_ff)
 );
+
+// Start Phase synchronizer
+aib_bit_sync bitsync_duty_gt_50
+(
+.clk      (sys_clk),       // Clock of destination domain
+.rst_n    (rst_n),         // Reset of destination domain
+.data_in  (duty_gt_50),    // Input to be synchronized
+.data_out (duty_gt_50_sync)   // Synchronized output
+);
+
 //as output and keep override signal
 assign p_pd_chng  = ~(dcs_code[1] & dcs_code[0]);
 assign n_pu_chng  = (dcs_code[1:0] == 2'b00 || dcs_code[1:0] == 2'b01);
@@ -135,7 +146,7 @@ always@(posedge sys_div_clk or negedge rst_n)
 	      begin
 	       duty_gt_50_cnt <= duty_gt_50_cnt + 1'b1;
 	       if(duty_gt_50_cnt == 5'b0_0110 || duty_gt_50_cnt == 5'b0_1110)
-		dcs_comp[duty_gt_50_cnt[3]] <= chopen_intr^duty_gt_50;
+		dcs_comp[duty_gt_50_cnt[3]] <= chopen_intr^duty_gt_50_sync;
 	       else
 		dcs_comp <= dcs_comp;
 	       if(duty_gt_50_cnt == 5'b0_1000 || duty_gt_50_cnt == 5'b0_0000)

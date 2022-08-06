@@ -19,12 +19,14 @@ module phase_adjust_fsm(input ref_clk, //2GHz clock freeval_cntuency
 reg        [6:0] div_sel;
 reg        [6:0] avg_cnt;
 reg        [15:0][3:0] samp_data;
-reg        [15:0][4:0] samp_data_diff;
+reg        [15:0][3:0] samp_data_diff;
 reg        [7:0] samp_data_avg;
 reg        [1:0] phase_adjust_curst;
 reg        [1:0] phase_adjust_nxst;
-reg              phase_detect;
-reg        [4:0] max_val;
+wire             phase_detect;
+wire             phase_detect_sync;
+wire             start_phase_sync;
+reg        [3:0] max_val;
 reg        [3:0] eval_cnt; 
 wire             max_value;
 wire             phase_value;
@@ -45,6 +47,15 @@ localparam [1:0] AVG_0 = 2'd0;
 localparam [1:0] AVG_1 = 2'd1;
 localparam [1:0] AVG_2 = 2'd2;
 localparam [1:0] AVG_3 = 2'd3;
+
+// Start Phase synchronizer
+aib_bit_sync bitsync_start_phase
+(
+.clk      (sys_clk),       // Clock of destination domain
+.rst_n    (rst_n),         // Reset of destination domain
+.data_in  (start_phase_lock),    // Input to be synchronized
+.data_out (start_phase_sync)   // Synchronized output
+);
 
 //Data Muxing b/w Register Data and internal logic data
 assign phase_locked   = phase_adjust_ovrd_sel ? phase_locked_ovrd   : phase_locked_intr;
@@ -92,12 +103,12 @@ always@(posedge sys_clk or negedge rst_n)
     samp_data_avg       <= 8'b0000_0000;
     phase_sel_code_intr <= 4'b0000;
     phase_locked_intr   <= 1'b0;
-    max_val             <= 5'b00000;
+    max_val             <= 4'b0000;
     eval_cnt            <= 4'b0000;
     for(i=0; i<16; i=i+1)
       begin
         samp_data[i]      <= 4'b0000;
-        samp_data_diff[i] <= 5'b0_0000;
+        samp_data_diff[i] <= 4'b0000;
       end
    end
   else
@@ -110,7 +121,7 @@ always@(posedge sys_clk or negedge rst_n)
                for(i=0; i<16; i=i+1) 
     		begin
                  samp_data[i]      <= 4'b0000;
-                 samp_data_diff[i] <= 5'b0_0000;
+                 samp_data_diff[i] <= 4'b0000;
 		end
 	      end
       RUN   : begin
@@ -136,14 +147,33 @@ always@(posedge sys_clk or negedge rst_n)
 	       end
              end
       EVALUATE : begin
-		  samp_data_diff[0] <= samp_data[0] - samp_data[15];
-		  for(i=1; i<16; i=i+1) 
-		   begin
-		    samp_data_diff[i] <= samp_data[i] - samp_data[i-1]; 
-		   end
-
-		   max_val <= samp_data_diff[0];
-		   if(samp_data_diff[eval_cnt] > max_val)
+                  
+                  if(samp_data[0] >=  samp_data[15])
+                    begin
+                      samp_data_diff[0] <= samp_data[0] - samp_data[15];
+                    end
+                  else
+                    begin
+                      samp_data_diff[0] <= 4'b0000;
+                    end
+                  
+                  for(i=1; i<16; i=i+1)
+                    begin: diff_calculation_register
+                      if(samp_data[i] >=  samp_data[i-1])
+                        begin
+                          samp_data_diff[i] <= samp_data[i]  - samp_data[i-1];
+                        end
+                      else
+                        begin
+                          samp_data_diff[i] <= 4'b0000;
+                        end
+                    end // block diff_calculation_register
+                 
+                   if(eval_cnt == 0)
+                     begin
+                       max_val <= samp_data_diff[0];
+                     end
+		   else if(samp_data_diff[eval_cnt] > max_val)
 		    begin
 		     max_val        <= samp_data_diff[eval_cnt];
 		     phase_sel_code_intr <= eval_cnt;
@@ -167,7 +197,7 @@ always@(*)
   phase_adjust_nxst = 2'b00;
   case(phase_adjust_curst)
    START    : begin
-	       if(start_phase_lock)
+	       if(start_phase_sync)
 		phase_adjust_nxst = RUN;
 	       else
 		phase_adjust_nxst = START;
@@ -185,7 +215,7 @@ always@(*)
 		phase_adjust_nxst = EVALUATE;
 	      end
    STOP     : begin
-	       if(!start_phase_lock)
+	       if(!start_phase_sync)
 		phase_adjust_nxst = START;
     	       else
 		phase_adjust_nxst = STOP;
@@ -193,14 +223,17 @@ always@(*)
   endcase
  end
 
-  always@(posedge ref_clk or negedge rst_n)
-   begin
-    if(!rst_n)
-     phase_detect <= 1'b0;
-    else if(phase_adjust_curst == RUN)
-     phase_detect <= sample_clk;
-    else
-     phase_detect <= 1'b0;
-   end
+// Phase detect synchronizer
+aib_bit_sync bitsync_phase_detect
+(
+.clk      (ref_clk),       // Clock of destination domain
+.rst_n    (rst_n),         // Reset of destination domain
+.data_in  (sample_clk),    // Input to be synchronized
+.data_out (phase_detect_sync)   // Synchronized output
+);
+
+
+
+assign phase_detect = (phase_adjust_curst == RUN) & phase_detect_sync;
 
 endmodule

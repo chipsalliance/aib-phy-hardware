@@ -370,7 +370,7 @@
         bit [40*24-1:0]  din_40b_lo = 0;
         bit [40*24-1:0]  din_40b_hi = 0;
 
-        while (mrk_gen < 8) begin
+        while (mrk_gen < 20) begin
           @(posedge intf_m1.m_ns_fwd_clk);
               intf_m1.gen1_data_in = {24{40'h0}};
           @(posedge intf_s1.m_ns_fwd_clk);

@@ -15,3 +15,4 @@ vlogan -sverilog  +v2k -full64 -timescale=1ps/1ps +define+VCS+AIB_TOP_PIN96+TIME
 vlogan -sverilog  +v2k -full64  -timescale=1ps/1ps +define+VCS+SL_AIB_BCA+MS_AIB_GEN1 -f ../flist/tb_rtl.cf -l compile_tb.log
 
 vcs -debug_acc+all -full64 +lint=TFIPC-L +error+100 +lint=PCWM  -top top_tb -l vcs.log
+./simv

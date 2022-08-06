@@ -86,7 +86,7 @@ phase_adjust_fsm i_rx_analog(
 	.enable(rx_en),
 	.sel_avg(sel_avg),
 	.phase_locked(rx_ana_phase_locked),
-	.phase_sel_code(rx_ana_phase_sel_code)
+	.phase_sel_code(rx_adapt_phase_sel_code)
 	 );
 
 phase_adjust_fsm i_rx_adapt(
@@ -101,7 +101,7 @@ phase_adjust_fsm i_rx_adapt(
 	.enable(rx_en),
 	.sel_avg(sel_avg),
 	.phase_locked(rx_adapt_phase_locked),
-	.phase_sel_code(rx_adapt_phase_sel_code)
+	.phase_sel_code(rx_ana_phase_sel_code)
 	 );
 
 endmodule

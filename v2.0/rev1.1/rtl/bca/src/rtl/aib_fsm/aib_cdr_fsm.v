@@ -6,6 +6,7 @@ module aib_cdr_fsm(
 	input phase_detect, //RxDLL output
 	input sys_clk,         //System CLock,
 	input rst_n,
+	input scan_mode,
 	input rx_en,
 	input cdr_ovrd_sel,
 	input cdr_lock_ovrd,
@@ -47,6 +48,26 @@ wire [6:0] picode_odd_intr;
 reg picode_update_intr;
 reg  cdr_lock_intr; 
 integer i;
+wire sync_rst_n;
+wire phase_detect_sync;
+
+//Reset Synchronizer
+aib_rst_sync cdr_rst_sync
+(
+.clk         (sys_clk),         // Destination clock of reset to be synced
+.i_rst_n     (rst_n),   // Asynchronous reset input
+.scan_mode   (scan_mode), // Scan enable
+.sync_rst_n  (sync_rst_n)       // Synchronized reset output
+);
+
+// Phase detect synchronizer
+aib_bit_sync bitsync_phase_detect
+(
+.clk      (sys_clk),       // Clock of destination domain
+.rst_n    (sync_rst_n),         // Reset of destination domain
+.data_in  (phase_detect),    // Input to be synchronized
+.data_out (phase_detect_sync)   // Synchronized output
+);
 
 //Data Muxing b/w Register Data and internal logic data
 assign picode_even   = cdr_ovrd_sel ? picode_even_ovrd : picode_even_intr;
@@ -77,16 +98,16 @@ always@(*)
    endcase
  end
 
-always @ (posedge sys_clk or negedge rst_n)
+always @ (posedge sys_clk or negedge sync_rst_n)
  begin
-  if(!rst_n)
+  if(!sync_rst_n)
    cdr_lock_curst[1:0] <= 2'b00;
   else
    cdr_lock_curst[1:0] <= cdr_lock_nxst[1:0];
  end
 
- always@(posedge sys_clk or negedge rst_n)
-  if(!rst_n)
+ always@(posedge sys_clk or negedge sync_rst_n)
+  if(!sync_rst_n)
    begin
     picode_refp      <= 6'b00_0000;
     picode_refn      <= 5'b0_0000;
@@ -155,7 +176,7 @@ always @ (posedge sys_clk or negedge rst_n)
 	      else if(rx_en)
 	       begin
      	 	avg_cnt 	 <= avg_cnt + 1'b1;
-	       if(phase_detect)
+	       if(phase_detect_sync)
     		phase_detect_cnt <= phase_detect_cnt + 1'b1;
 	       else
      	 	phase_detect_cnt <= phase_detect_cnt;

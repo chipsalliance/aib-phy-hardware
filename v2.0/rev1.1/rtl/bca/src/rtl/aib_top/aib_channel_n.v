@@ -418,6 +418,8 @@ wire [101:0] even_data_frm_red;
 wire [101:0] odd_data_frm_red;
 
 wire       tx_clk_adapter;
+wire       tx_clk_adapter_buf;
+wire       tx_clk_adapter_rtl;
 wire       tx_dll_lock;
 wire       phdet_cdr_out;
 wire       rx_dll_lock;
@@ -434,10 +436,17 @@ wire [101:0] fault_stdby;
 wire [101:0] wkpu_en;
 wire [101:0] wkpd_en;
 wire         rclk_adapt;
+wire         rclk_adapt_buf;
+wire         rclk_adapt_rtl;
 wire         sr_clk_in_int;
+wire         piclk_soc;
+wire         piclk_soc_buf;
+wire         piclk_soc_rtl;
 
 wire         tx_clk_even;
+wire         tx_clk_even_buf;
 wire         piclk_odd;
+wire         piclk_odd_buf;
 wire         tx_adapt_phase_locked;
 wire         tx_ana_phase_locked;
 wire         rx_adapt_phase_locked;
@@ -1007,7 +1016,7 @@ aib_rst_sync tclkdiv_rst_sync
 
 aib_rst_sync rclkdiv_rst_sync
 (
-.clk         (fs_fwd_clk),         // Destination clock of reset to be synced
+.clk         (piclk_soc_buf),         // Destination clock of reset to be synced
 .i_rst_n     (csr_async_rstn),   // Asynchronous reset input
 .scan_mode   (i_scan_mode),        // Scan enable
 .sync_rst_n  (rclk_div_rstn)       // Synchronized reset output
@@ -1030,7 +1039,7 @@ aib_clk_div  txchn_clk_div (
 aib_clk_div  rxchn_clk_div (
 // Inputs
 .rst_n            (rclk_div_rstn), // Asynchronous reset
-.clk              (fs_fwd_clk),    // Rx clock from bump
+.clk              (piclk_soc_buf),    // Rx clock from bump
 .scan_mode        (i_scan_mode),   // Scan enable
 .clk_div_ld       (rx_clk_div_ld), // Rx Clock divider enable from avalon int.
 .clk_div_1_onehot (rx_clk_div_1),  // Onehot enable for Rx clock divided by 1
@@ -1066,7 +1075,8 @@ assign cdr_phase_detect       = phdet_cdr_out;
 //  ADAPTER INSTANCE
 //------------------------------------------------------------------------------
 
-assign m_fs_fwd_clk = rclk_adapt;
+assign m_fs_fwd_clk = rclk_adapt_buf; 
+assign fs_fwd_clk   = piclk_soc_rtl;
 
 aib_adapter aib_adapt (
 // Inputs
@@ -1086,13 +1096,13 @@ aib_adapter aib_adapt (
 .aibio_dout(aibio_dout[79:0]),   //to IO buffer
 
 // Inputs
-.tx_clk_adapter(tx_clk_adapter),
+.tx_clk_adapter(tx_clk_adapter_rtl),
 .m_wr_clk(m_wr_clk),
 .m_rd_clk(m_rd_clk),
 .fs_fwd_clk_div (fs_fwd_clk_div),
 
 // Inputs
-.rclk_adapt(rclk_adapt),
+.rclk_adapt(rclk_adapt_rtl), 
 
 // Outputs
 .ms_tx_transfer_en(ms_tx_transfer_en),
@@ -1375,6 +1385,46 @@ ntl2_cnt_val_sync_i
 .data_out(ntl2_cnt_val_sync[15:0])
 );
 
+// Clock buffer
+clk_buf_cel i_piclk_odd(
+.clkout (piclk_odd_buf),
+.clk    (piclk_odd)
+);
+
+clk_buf_cel i_rclk_adapt(
+.clkout (rclk_adapt_buf),
+.clk    (rclk_adapt)
+);
+
+clk_buf_cel i_piclk_soc(
+.clkout (piclk_soc_buf),
+.clk    (piclk_soc)
+);
+
+clk_buf_cel i_tx_clk_even(
+.clkout (tx_clk_even_buf),
+.clk    (tx_clk_even)
+);
+
+clk_buf_cel i_tx_clk_adapter(
+.clkout (tx_clk_adapter_buf),
+.clk    (tx_clk_adapter)
+);
+
+clk_resize_cel i_tx_clk_resize(
+.clkout (tx_clk_adapter_rtl),
+.clk    (tx_clk_adapter_buf)
+);
+
+clk_resize_cel i_rclk_resize(
+.clkout (rclk_adapt_rtl),
+.clk    (rclk_adapt_buf)
+);
+
+clk_resize_cel i_piclk_resize(
+.clkout (piclk_soc_rtl),
+.clk    (piclk_soc_buf)
+);
 //------------------------------------------------------------------------------
 // NTL FSM
 //------------------------------------------------------------------------------
@@ -1441,11 +1491,11 @@ aib_clk_div_sys i_aib_clk_div(
 //------------------------------------------------------------------------------
 phase_adjust_fsm_top i_phase_adjust_fsm(
 .m_ns_fwd_clk(m_ns_fwd_clk),
-.tx_clk_adapter(tx_clk_adapter),
-.tx_clk_even(tx_clk_even),
-.rx_clk_ana(piclk_odd),
-.rclk_adapt(rclk_adapt),
-.fs_fwd_clk(fs_fwd_clk),
+.tx_clk_adapter(tx_clk_adapter_buf),
+.tx_clk_even(tx_clk_even_buf),
+.rx_clk_ana(piclk_odd_buf),
+.rclk_adapt(rclk_adapt_buf),
+.fs_fwd_clk(piclk_soc_buf),
 .ck_sys(ck_sys), 
 .reset_n(sys_div_rstn), 
 .phase_tx_adapt_ovrd_sel(tdll_ovrd_pi_adpclk_code),
@@ -1483,6 +1533,7 @@ phase_adjust_fsm_top i_phase_adjust_fsm(
 aib_cdr_fsm i_cdr_fsm(
 .sys_clk(ck_sys), 
 .rst_n(cdr_start), 
+.scan_mode(i_scan_mode), 
 .phase_detect(cdr_phase_detect), //RX DLL Output
 .rx_en(1'b1), 
 .cdr_ovrd_sel(cdr_ovrd_sel_ff), 
@@ -1802,9 +1853,9 @@ dcs_ppdsel_code_sync_i
 //------------------------------------------------------------------------------
 aib_dcs_fsm i_dcs_fsm(
 .sys_clk(ck_sys),
-.rst_n(i_conf_done), //TBD
+.rst_n(sys_div_rstn), 
 .duty_gt_50(dc_gt_50),
-.dcs_en(i_conf_done), //TBD 
+.dcs_en(1'b1), 
 .dcs_ovrd_sel(dcs1_sel_ovrd_sync),
 .dcs_ovrd_lock(dcs1_lock_ovrd_sync), 
 .dcs_ovrd_chopen(dcs1_chopen_ovrd_sync),
@@ -1849,7 +1900,7 @@ assign flpb_txpll_mux_sel = f_lpbk & ~i_scan_mode;
 
 clk_mux clk_mux_txpll(
 // Inputs
-.clk1   (fs_fwd_clk),    // s=1
+.clk1   (piclk_soc_buf),    // s=1
 .clk2   (m_ns_fwd_clk),  // s=0
 .s      (flpb_txpll_mux_sel),
 // Outputs
@@ -2096,7 +2147,7 @@ aibio_ana_top aibio_ana_top(
 .phdet_cdr_out      (phdet_cdr_out),
 .rx_dll_lock        (rx_dll_lock),
 .piclk_adapter      (rclk_adapt),
-.piclk_soc          (fs_fwd_clk),
+.piclk_soc          (piclk_soc),
 .piclk_odd          (piclk_odd),
 .rx_dll_anaviewout  (rx_dll_anaviewout),
 .digviewout         (digviewout),
@@ -2122,7 +2173,7 @@ aibio_ana_top aibio_ana_top(
 //DCS CBB
 //------Input pins------//
 .clkdiv          (dcs1_clkdiv_sel[1:0]),
-.reset           (i_conf_done), 
+.reset           (~sys_div_rstn), 
 .sel_clkp        (dcs1_sel_clkp),
 .sel_clkn        (dcs1_sel_clkn),
 .en_single_ended (dcs1_en_single_ended),

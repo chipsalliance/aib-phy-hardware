@@ -87,6 +87,8 @@ ${AIB2_RTL_ROOT}/behavior/clk_and4_cel.v
 ${AIB2_RTL_ROOT}/behavior/clk_den_flop.v
 ${AIB2_RTL_ROOT}/behavior/clk_inv_cel.v
 ${AIB2_RTL_ROOT}/behavior/dmux_cell.v
+${AIB2_RTL_ROOT}/behavior/clk_buf_cel.v
+${AIB2_RTL_ROOT}/behavior/clk_resize_cel.v
 ${AIB2_RTL_ROOT}/src/rtl/common/aib_cdc_data_mux.v
 ${AIB2_RTL_ROOT}/src/rtl/aibadapt/aibadapt_sr/aib_sr_fsm.v
 ${AIB2_RTL_ROOT}/src/rtl/aibadapt/aibadapt_sr/aib_sr_master.v
