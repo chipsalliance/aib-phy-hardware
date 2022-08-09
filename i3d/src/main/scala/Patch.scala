@@ -8,7 +8,7 @@ import freechips.rocketchip.interrupts.HasInterruptSources
 import freechips.rocketchip.regmapper._
 import freechips.rocketchip.tilelink.HasTLControlRegMap
 import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
-import freechips.rocketchip.util.ResetCatchAndSync
+import freechips.rocketchip.util.{ResetCatchAndSync, GenRegDescsAnno, ElaborationArtefacts}
 import freechips.rocketchip.jtag._
 
 import aib3d.adapter._
@@ -87,6 +87,6 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
 }
 
 /** Patch with TileLink interconnect to CSRs */
-class TLPatch(implicit p: Parameters) extends Patch with HasTLControlRegMap
+class TLPatch(implicit p: Parameters) extends Patch with HasTLControlRegMap 
 /** Patch with AXI4 interconnect to CSRs */
 class AXI4Patch(implicit p: Parameters) extends Patch with HasAXI4ControlRegMap
