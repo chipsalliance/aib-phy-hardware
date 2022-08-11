@@ -138,6 +138,6 @@ class AIB3DAllRxConfig(val numRx: Int) extends Config ((site, here, up) => {
   case AIB3DKey => AIB3DParams(0, numRx)
 })
 
-class AIB3DBiDirConfig(val numIOs: Int) extends Config ((site, here, up) => {  // TODO: to be implemented properly
+class AIB3DBiDirConfig(val numIOs: Int) extends Config ((site, here, up) => {
   case AIB3DKey => AIB3DParams(numIOs, numIOs)
 })

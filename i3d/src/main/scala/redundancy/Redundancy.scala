@@ -144,7 +144,9 @@ class RedundancyTop(implicit val p: Parameters) extends RawModule with Redundanc
       // Flags to prevent re-assignments for bidirectional signals
       var a2p_d_uninit, a2p_a_uninit, p2a_d_uninit, p2a_a_uninit = true
       signals.foreach{ case(name, t) => 
-        def badAssign = throw new RebindingException(s"Error: bump $i re-assigned with ${t.getClass.getSimpleName}-type signal!")
+        def badAssign = throw new RebindingException(
+          s"Error: bump $i re-assigned with ${t.getClass.getSimpleName}-type signal!"
+        )
         t match {     
           case _:TxSeq =>
             if (!a2p_d_uninit)    badAssign

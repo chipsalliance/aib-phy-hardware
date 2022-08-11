@@ -8,13 +8,14 @@ import freechips.rocketchip.interrupts.HasInterruptSources
 import freechips.rocketchip.regmapper._
 import freechips.rocketchip.tilelink.HasTLControlRegMap
 import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
-import freechips.rocketchip.util.{ResetCatchAndSync, GenRegDescsAnno, ElaborationArtefacts}
+import freechips.rocketchip.util.{ResetCatchAndSync, ElaborationArtefacts}
 import freechips.rocketchip.jtag._
 
 import aib3d.adapter._
 import aib3d.deskew._
 import aib3d.io._
 import aib3d.redundancy._
+import aib3d.stage._
 
 abstract class Patch(implicit p: Parameters) extends RegisterRouter(
   RegisterRouterParams(
@@ -77,12 +78,24 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     (iocells zip redundancy.from_pad).foreach{ case(c, r) => c.attachRx(r) }
     (iocells zip bumpio.elements).foreach{ case(c, (_, b)) => c.pad <> b }
 
+    // CSR memory mapping
     regmap(
       0x00 -> Seq(RegField(io_ctrl.getWidth, io_ctrl,
         RegFieldDesc("io_ctrl", "{tx_wkpu, tx_wkpd, rx_wkpu, rx_wkpd} - pulls-down when reset."))),
       0x08 -> Seq(RegField(redund.getWidth, redund,
         RegFieldDesc("redund", "Denotes which ubump is faulty (0-indexed). Set to 1st spare for no shift when reset.")))
     )
+
+    // Documentation/collateral + annotations
+    val thisMod = Module.currentModule.get.asInstanceOf[RawModule]
+    // Bump map
+    ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(p(AIB3DKey).padsIoTypes))
+    ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(p(AIB3DKey).padsIoTypes))
+    GenBumpMapAnno.anno(thisMod, p(AIB3DKey).padsIoTypes)
+    // TODO: constraints
+
+    // Module name should always be Patch regardless of protocol
+    override def desiredName = "Patch"
   }
 }
 

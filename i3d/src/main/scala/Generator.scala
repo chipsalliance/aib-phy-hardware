@@ -2,49 +2,13 @@ package aib3d
 
 import chisel3._
 
-import chisel3.stage.{ChiselStage, ChiselGeneratorAnnotation}
-import firrtl.{AnnotationSeq, EmittedVerilogCircuitAnnotation, EmittedVerilogModuleAnnotation, VerilogEmitter}
-import firrtl.options.{Phase, PhaseManager, Dependency, Shell, Stage, StageOptions}
-import firrtl.options.PhaseManager.PhaseDependency
-import firrtl.stage.RunFirrtlTransformAnnotation
-import freechips.rocketchip.util.{ElaborationArtefacts, HasRocketChipStageUtils}
+import chisel3.stage.ChiselGeneratorAnnotation
 import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.amba.axi4._
 
-/** Adapted from rocket-chip's GenerateArtefacts Phase w/o targetDir annotation requirement */
-class GenerateArtefacts extends Phase with HasRocketChipStageUtils {
-
-  override val prerequisites = Seq(Dependency[chisel3.stage.phases.Elaborate])  // LazyModuleImp must be resolved
-
-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
-    val targetDir = "."
-
-    ElaborationArtefacts.files.foreach { case (extension, contents) =>
-      writeOutputFile(targetDir, s"TLPatch.${extension}", contents ())
-    }
-
-    annotations
-  }
-
-}
-
-/** Custom Stage with extra Phases */
-class AIB3DStage extends ChiselStage {
-  override val targets: Seq[PhaseDependency] = Seq(
-    Dependency[chisel3.stage.phases.Checks],
-    Dependency[chisel3.stage.phases.Elaborate],
-    Dependency[chisel3.stage.phases.AddImplicitOutputFile],
-    Dependency[chisel3.stage.phases.AddImplicitOutputAnnotationFile],
-    Dependency[chisel3.stage.phases.MaybeAspectPhase],
-    Dependency[chisel3.stage.phases.Emitter],
-    Dependency[chisel3.stage.phases.Convert],
-    Dependency[chisel3.stage.phases.MaybeFirrtlStage],
-    Dependency[firrtl.stage.phases.Compiler],
-    Dependency[GenerateArtefacts]
-  )
-}
+import aib3d.stage._
 
 /** Connect dummy ClientNode (SourceNode) for diplomacy */
 trait AIB3DDummyNode {
