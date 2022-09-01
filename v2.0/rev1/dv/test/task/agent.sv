@@ -97,6 +97,7 @@
         static int pkts_gen = 0;
         bit [(320*24-1):0] data_320;
         bit [(80*24-1):0] data;
+        bit [(80*24-1):0] din_rotate = 0;
         integer i;
         while (pkts_gen < run_for_n_pkts_ms1) begin
             data_320 = tx_data_gen(2'b11, 1'b1, 1'b0);
@@ -105,8 +106,16 @@
             end
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, data);
             @(posedge intf_m1.m_ns_fwd_clk[0]);
-            intf_m1.data_in <= data;
-            sl1_rcv_80b_q.push_back(data);
+            intf_m1.data_in = data;
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_rotate[(i*80) +: 80]  =  data[(23-i)*80 +:80];
+               end
+            `else
+               din_rotate =  data;
+            `endif
+
+            sl1_rcv_80b_q.push_back(din_rotate);
             pkts_gen++;
         end
   endtask
@@ -115,6 +124,7 @@
         static int pkts_gen = 0;
         bit [(320*24-1):0] data_320;
         bit [(80*24-1):0] data;
+        bit [(80*24-1):0] din_rotate = 0;
         integer i;
         while (pkts_gen < run_for_n_pkts_sl1) begin
             data_320 = tx_data_gen(2'b11, 1'b1, 1'b0);
@@ -123,8 +133,16 @@
             end
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, data);
             @(posedge intf_s1.m_ns_fwd_clk[0]);
-            intf_s1.data_in <= data;
-            ms1_rcv_80b_q.push_back(data);
+            intf_s1.data_in  = data;
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_rotate[(i*80) +: 80]  =  data[(23-i)*80 +:80];
+               end
+            `else
+               din_rotate =  data;
+            `endif
+
+            ms1_rcv_80b_q.push_back(din_rotate);
             pkts_gen++;
         end
   endtask
@@ -137,14 +155,24 @@
   task ms1_aib2_f2f_s_xmit ();
         static int pkts_gen = 0;
         bit [320*24-1:0] din = 0;
+        bit [320*24-1:0] din_rotate = 0;
+        integer i;
 	while (pkts_gen < run_for_n_pkts_ms1) begin
             din = tx_data_gen(sl1_rx_fifo_mode, 1'b1, 1'b0);
             $display ("[%t] ms1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_m1.m_wr_clk);
-            intf_m1.data_in_f <=  din;
+            intf_m1.data_in_f =  din;
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_rotate[(i*320) +: 320]  =  din[(23-i)*320 +:320];
+               end
+            `else
+               din_rotate =  din;
+            `endif
+            $display ("[%t] ms1 Generating din_rotate[%d] = %x \n", $time, pkts_gen, din_rotate);
             if (ms1_lpbk == 1'b1)
                  ms1_rcv_320b_q.push_back(din);
-            else sl1_rcv_320b_q.push_back(din);
+            else sl1_rcv_320b_q.push_back(din_rotate);
             pkts_gen++;
         end
   endtask
@@ -152,14 +180,23 @@
   task sl1_aib2_f2f_s_xmit ();
         static int pkts_gen = 0;
         bit [320*24-1:0] din = 0;
+        bit [320*24-1:0] din_rotate = 0;
+        integer i;
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(ms1_rx_fifo_mode, 1'b1, 1'b0);
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_s1.m_wr_clk);
-            intf_s1.data_in_f <=  din;
+            intf_s1.data_in_f =  din;
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_rotate[(i*320) +: 320] =  din[(23-i)*320 +:320];
+               end
+            `else
+               din_rotate =  din;
+            `endif
             if (sl1_lpbk == 1'b1)
                  sl1_rcv_320b_q.push_back(din);
-            else ms1_rcv_320b_q.push_back(din);
+            else ms1_rcv_320b_q.push_back(din_rotate);
             pkts_gen++;
         end
   endtask
@@ -173,10 +210,11 @@
   task ms1_aib2_usr_f2to4_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
-        integer j;
+        integer i,j;
         bit [320*24-1:0] din = 0;
         bit [320*24-1:0] din_hi = 0;
         bit [320*24-1:0] din_lo = 0;
+        bit [320*24-1:0] din_rotate = 0;
 
         while (mrk_gen < 4) begin
           @(posedge intf_m1.m_wr_clk);
@@ -198,7 +236,15 @@
             intf_m1.data_in_f = din_lo;
             @(posedge intf_m1.m_wr_clk);
             intf_m1.data_in_f = din_hi;
-            sl1_rcv_320b_q.push_back(din);
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_rotate[(i*320) +: 320] =  din[(23-i)*320 +:320];
+               end
+            `else
+               din_rotate =  din;
+            `endif
+
+            sl1_rcv_320b_q.push_back(din_rotate);
             pkts_gen++;
         end
   endtask
@@ -206,10 +252,12 @@
   task sl1_aib2_usr_f4to2_xmit ();
         static int pkts_gen = 0;
         static int mrk_gen = 0;
-        integer j;
+        integer i,j;
         bit [320*24-1:0] din = 0;
         bit [320*24-1:0] din_lo = 0;
         bit [320*24-1:0] din_hi = 0;
+        bit [320*24-1:0] din_lo_rotate = 0;
+        bit [320*24-1:0] din_hi_rotate = 0;
 
         while (mrk_gen < 4) begin
           @(posedge intf_s1.m_wr_clk);
@@ -225,8 +273,19 @@
                din_hi[(j*320) +: 320] = {160'h0, din[(j*320+160) +: 160]};
                din_lo[(j*320) +: 320] = {160'h0, din[(j*320) +: 160]};
             end
-            ms1_rcv_320b_q.push_back(din_lo);
-            ms1_rcv_320b_q.push_back(din_hi);
+
+            `ifdef M2S2_ROTATE
+               for (i=0; i<24; i++) begin
+                 din_hi_rotate[(i*320) +: 320] =  din_hi[(23-i)*320 +:320];
+                 din_lo_rotate[(i*320) +: 320] =  din_lo[(23-i)*320 +:320];
+               end
+            `else
+               din_hi_rotate =  din_hi;
+               din_lo_rotate =  din_lo;
+            `endif
+
+            ms1_rcv_320b_q.push_back(din_lo_rotate);
+            ms1_rcv_320b_q.push_back(din_hi_rotate);
             pkts_gen++;
         end
   endtask
@@ -380,8 +439,13 @@
         while (pkts_gen < run_for_n_pkts_ms1) begin
             din = tx_data_gen(sl1_rx_fifo_mode, 1'b0, 1'b1);
             for (j=0; j<24; j++) begin
-               din_40b_hi[(j*40) +: 40] = din[(j*320+40) +: 40];
-               din_40b_lo[(j*40) +: 40] = din[(j*320) +: 40];
+               `ifdef M1S2_ROTATE 
+                  din_40b_hi[(j*40) +: 40] = din[((23-j)*320+40) +: 40];
+                  din_40b_lo[(j*40) +: 40] = din[((23-j)*320) +: 40];
+               `else
+                  din_40b_hi[(j*40) +: 40] = din[(j*320+40) +: 40];
+                  din_40b_lo[(j*40) +: 40] = din[(j*320) +: 40];
+               `endif
             end
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din_40b_lo);
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din_40b_hi);
@@ -408,7 +472,11 @@
         while (pkts_gen < run_for_n_pkts_ms1) begin
             din = tx_data_gen(sl1_rx_fifo_mode, 1'b0, 1'b1);
             for (j=0; j<24; j++) begin
-               din_40b[(j*40) +: 40] = din[j*320 +: 40];
+               `ifdef M1S2_ROTATE
+                  din_40b[(j*40) +: 40] = din[(23-j)*320 +: 40];
+               `else
+                  din_40b[(j*40) +: 40] = din[j*320 +: 40];
+               `endif
             end
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din_40b);
             @(posedge intf_m1.m_ns_fwd_clk);
@@ -434,8 +502,13 @@
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(2'b01, 1'b1, 1'b1);
             for (j=0; j<24; j++) begin
-               din_40b_hi[(j*40) +: 40] = din[(j*320+40) +: 40];
-               din_40b_lo[(j*40) +: 40] = din[(j*320) +: 40];
+               `ifdef M1S2_ROTATE
+                 din_40b_hi[(j*40) +: 40] = din[((23-j)*320+40) +: 40];
+                 din_40b_lo[(j*40) +: 40] = din[((23-j)*320) +: 40];
+               `else
+                 din_40b_hi[(j*40) +: 40] = din[(j*320+40) +: 40];
+                 din_40b_lo[(j*40) +: 40] = din[(j*320) +: 40];
+               `endif
             end
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_s1.m_wr_clk);
@@ -461,7 +534,11 @@
         while (pkts_gen < run_for_n_pkts_sl1) begin
             din = tx_data_gen(2'b00, 1'b1, 1'b1);
             for (j=0; j<24; j++) begin
-               din_40b[(j*40) +: 40] = din[(j*320) +: 40];
+               `ifdef M1S2_ROTATE
+                  din_40b[(j*40) +: 40] = din[((23-j)*320) +: 40];
+               `else
+                  din_40b[(j*40) +: 40] = din[(j*320) +: 40];
+               `endif
             end
             $display ("[%t] sl1 Generating data[%d] = %x \n", $time, pkts_gen, din);
             @(posedge intf_s1.m_wr_clk);
@@ -749,8 +826,9 @@
                     else            eq_chk_dbi = eq_chk;
                     if ((|eq_chk_dbi) == 1'b1) begin
                         err_count++;
-                        $display ("[%t] ms1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_m1.data_out_f, data_exp);
-                        $display ("[%t] ms1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
+                        $display ("[%t] ms1 DATA COMPARE ERROR: received = %x\n", $time, intf_m1.data_out_f);
+                        $display ("[%t] ms1 DATA COMPARE ERROR: expected = %x\n", $time, data_exp);
+                  //    $display ("[%t] ms1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
                     end
                 end
             end
@@ -784,8 +862,9 @@
                     else            eq_chk_dbi = eq_chk;
                     if (|eq_chk_dbi == 1'b1) begin
                         err_count++;
-                        $display ("[%t] sl1 DATA COMPARE ERROR: received = %x | expected = %x\n", $time, intf_s1.data_out_f, data_exp);
-                        $display ("[%t] sl1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
+                        $display ("[%t] sl1 DATA COMPARE ERROR: received = %x\n", $time, intf_s1.data_out_f);
+                        $display ("[%t] sl1 DATA COMPARE ERROR: expected = %x\n", $time, data_exp);
+                   //   $display ("[%t] sl1 DATA COMPARE ERROR: checksum  =  %x\n", $time, eq_chk);
                     end
                 end
             end

@@ -41,6 +41,7 @@ test vector: fifo1x_test.inc
 
 Note: Cadence ncsim example is provided. Commands to run:
 ./run_compile_bca_ncsim
+./run_compile_bca_rotate -- If due to chiplet physical layout, so that Ch0 <-> Ch23 ... rotation are required 
 
 ==========================================================
 2) AIB2.0 Gen1 Leader BCA or AIB2.0 model <---->  AIB1.0 Follower (FPGA MAIB rev1.1)
@@ -58,6 +59,8 @@ test vector: fifo2x_test_slaib1.inc
    The leader is 40 bit register mode in 1GHZ
    The Follower is 2xFIFO mode with 80 bit or
                    1XFIFO mode with 40 bit
+   This is only used to connect a legacy leader AIB 1.0 to BCA AIB2.0 Follower.
+   In this case, the BCA AIB2.0 HM is rotated physically.  Ch0 <-> Ch23 ...
 ==========================================================
 command to run
 ./run_compile_m1bca
