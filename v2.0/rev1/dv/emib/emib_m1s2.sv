@@ -1,4 +1,4 @@
-module emib_m1s2 (
+module emib_m1s2 # ( parameter ROTATE = 0) (
 	inout [101:0] s_ch0_aib,
 	inout [101:0] s_ch1_aib,
 	inout [101:0] s_ch2_aib,
@@ -50,7 +50,8 @@ module emib_m1s2 (
 
 	);
 
-`ifdef M1S2_ROTATE
+generate
+if (ROTATE == 1) begin
 
  emib_ch_m1s2  ch0 (
         .s_aib(s_ch23_aib),
@@ -171,7 +172,8 @@ module emib_m1s2 (
         .s_aib(s_ch0_aib),
         .m_aib(m_ch23_aib)
         );
-`else
+end
+else begin
  emib_ch_m1s2  ch0 (
         .s_aib(s_ch0_aib),
         .m_aib(m_ch0_aib)
@@ -291,5 +293,6 @@ module emib_m1s2 (
         .s_aib(s_ch23_aib),
         .m_aib(m_ch23_aib)
         );
-`endif
+end
+endgenerate
 endmodule

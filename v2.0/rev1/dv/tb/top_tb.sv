@@ -123,7 +123,11 @@ bit [1023:0] status;
 
     // 24 channel Embedded Multi-Die Interconnect Bridge (EMIB) For future use
 `ifdef MS_AIB_GEN1
-    emib_m1s2 dut_emib (
+   `ifdef M1S2_ROTATE 
+      emib_m1s2 #(.ROTATE(1)) dut_emib (
+   `else
+      emib_m1s2 #(.ROTATE(0)) dut_emib (
+   `endif
         `include "dut_emib.inc"
        );
 `elsif SL_AIB_GEN1
@@ -131,7 +135,11 @@ bit [1023:0] status;
         `include "dut_emib.inc"
        );
 `else
-    emib_m2s2 dut_emib (
+    `ifdef M2S2_ROTATE
+       emib_m2s2 #(.ROTATE(1)) dut_emib (
+    `else
+       emib_m2s2 #(.ROTATE(0)) dut_emib (
+    `endif
         `include "dut_emib.inc"
        );
 `endif
