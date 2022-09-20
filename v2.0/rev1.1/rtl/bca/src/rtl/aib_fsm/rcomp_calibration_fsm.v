@@ -38,8 +38,18 @@ wire sys_div_clk;
 wire rcomp_max_value;
 reg rcomp_cal_done_intr;
 wire [RCOMP_WIDTH-1:0]rcomp_cal_code_intr; 
+wire                  pad_data_sync;
 
-//====================================
+// PAD data from replica synchronized
+aib_bit_sync pad_data_sync_i
+(
+.clk      (sys_clk),      // Clock of destination domain
+.rst_n    (1'b1),         // Reset of destination domain
+.data_in  (pad_data),     // Input to be synchronized
+.data_out (pad_data_sync) // Synchronized output
+);
+
+//===================================
 //Clock Divider for Div-1,2,4,8,16,32
 //====================================
 aib_clk_div_rcomp i_aib_clk_div_rcomp(
@@ -95,7 +105,7 @@ always@(posedge sys_div_clk or negedge rst_n)
     		   rcomp_cal_en       <= 1'b1;
 	          end
      COUNT      : begin
-		   comp_data <= {comp_data[0], pad_data};
+		   comp_data <= {comp_data[0], pad_data_sync};
 		   rcomp_cal_en   <= 1'b1;
      		   if(comp_data[0] != comp_data[1])
   		    begin

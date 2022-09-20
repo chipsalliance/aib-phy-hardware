@@ -2,7 +2,10 @@
 // Copyright (C) 2022 HCL Technologies Ltd.
 // Copyright (C) 2022 Blue Cheetah Analog Design, Inc.
 
-module aib_bert_gen(
+module aib_bert_gen #(
+parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
+)
+(
 // Inputs
 input            clk,                 // Tx BERT clock
 input            rstn,                // Active low asynchronous reset
@@ -30,6 +33,12 @@ localparam [2:0] PRBS23  = 3'b010; // PRBS23 selected
 localparam [2:0] PRBS31  = 3'b011; // PRBS31 selected
 localparam [2:0] PTRN127 = 3'b100; // 127-bit pattern selected
 localparam [2:0] PTRN128 = 3'b101; // 127-bit pattern selected
+
+// Reset value of Linear feedback shift register
+localparam [127:0] LFSR_RST = 
+                     BERT_BUF_MODE_EN                             ?
+                     128'hffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff :
+                     128'hffff_fffe_0000_0000_0000_0000_0000_0000;
 
 // Internal Regs
 reg  [127:0] lfsr_buffer_ff;    // Linear feedback shift register (LFSR)
@@ -371,19 +380,21 @@ always @(posedge clk or negedge rstn)
   begin
     if(!rstn) // Async reset
       begin
-        lfsr_buffer_ff[127:0] <= 128'hffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
+        lfsr_buffer_ff[127:0] <= LFSR_RST[127:0];
       end
     else if(tx_rst_pulse) // TX BERT reset
       begin
-        lfsr_buffer_ff[127:0] <= 128'hffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
+        lfsr_buffer_ff[127:0] <= LFSR_RST[127:0];
       end
     else if(tx_bert_run_ff) // Generation is enabled
       begin
-        lfsr_buffer_ff[127:0] <= lfsr_buffer_next[127:0];
+        lfsr_buffer_ff[127:0] <= lfsr_buffer_next[127:0] &
+                                 {31'h7fff_ffff,{97{BERT_BUF_MODE_EN}}};
       end
     else // Generation is disabled 
       begin
-        lfsr_buffer_ff[127:0] <= tx_seed_in[127:0];
+        lfsr_buffer_ff[127:0] <= tx_seed_in[127:0] &
+                                 {31'h7fff_ffff,{97{BERT_BUF_MODE_EN}}};
       end
    end
 

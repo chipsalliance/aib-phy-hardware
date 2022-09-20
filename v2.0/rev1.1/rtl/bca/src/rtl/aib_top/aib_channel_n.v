@@ -6,7 +6,8 @@
 module aib_channel_n 
  #(
     parameter SCAN_STR_PER_CH = 10, // Scan data input and data output size
-    parameter NBR_LANES = 40         // Number  of lanes 
+    parameter NBR_LANES = 40,       // Number  of lanes
+    parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
     )
  ( 
 // Power supply pins
@@ -1078,7 +1079,8 @@ assign cdr_phase_detect       = phdet_cdr_out;
 assign m_fs_fwd_clk = rclk_adapt_buf; 
 assign fs_fwd_clk   = piclk_soc_rtl;
 
-aib_adapter aib_adapt (
+aib_adapter #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_adapt (
 // Inputs
 .atpg_mode(i_scan_mode),
 .dual_mode_select(dual_mode_select),
@@ -1855,7 +1857,7 @@ aib_dcs_fsm i_dcs_fsm(
 .sys_clk(ck_sys),
 .rst_n(sys_div_rstn), 
 .duty_gt_50(dc_gt_50),
-.dcs_en(1'b1), 
+.dcs_en(sys_div_rstn), 
 .dcs_ovrd_sel(dcs1_sel_ovrd_sync),
 .dcs_ovrd_lock(dcs1_lock_ovrd_sync), 
 .dcs_ovrd_chopen(dcs1_chopen_ovrd_sync),

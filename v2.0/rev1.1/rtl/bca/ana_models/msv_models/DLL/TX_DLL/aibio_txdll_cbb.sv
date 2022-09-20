@@ -57,10 +57,25 @@ wire jtag_en;
 wire dll_en_int;
 wire dll_enb_int;
 
+wire dll_clk_inp;
+wire dll_clk_inn;
+wire pulseclk_odd_int;
+wire pulseclk_even_int;
+wire clk_adapter_int;
+wire clk_soc_int;
+
 assign dll_en_int = dll_en & pwrgood_in;
 assign dll_enb_int= ~dll_en_int;
 
-//assign dll_lock_en = dll_en & dll_reset ;
+`ifdef POST_WORST
+	localparam delay_inpclk_select = 80.73;
+	localparam delay_pulsegen = 132;
+	localparam delay_outclk_select = 114.96;
+`else
+	localparam delay_inpclk_select = 0.0;
+	localparam delay_pulsegen = 0.0;
+	localparam delay_outclk_select = 0.0;
+`endif
 
 aibio_inpclk_select_txdll inpclk_select
 		(
@@ -75,12 +90,15 @@ aibio_inpclk_select_txdll inpclk_select
 		.o_clkn(clkn)
 		);
 
+assign #(delay_inpclk_select) dll_clk_inp = clkp;
+assign #(delay_inpclk_select) dll_clk_inn = clkn;
+
 aibio_dll_top dll_top
 		(
 		.vddcq(vddcq),
 		.vss(vss),
-		.i_clkp(clkp),
-		.i_clkn(clkn),
+		.i_clkp(dll_clk_inp),
+		.i_clkn(dll_clk_inn),
 		.i_clkp_cdr(),
 		.i_clkn_cdr(),
 		.i_dll_biasctrl(dll_biasctrl),
@@ -128,8 +146,8 @@ aibio_pulsegen_top pulsegen
 		.i_dll_odd_phase2_sel(dll_odd_phase2_sel),
 		.o_clk_even(),
 		.o_clk_odd(),
-		.o_pulseclk_even(pulseclk_even),
-		.o_pulseclk_odd(pulseclk_odd)
+		.o_pulseclk_even(pulseclk_even_int),
+		.o_pulseclk_odd(pulseclk_odd_int)
 		);
 
 aibio_clock_dist piclk_dist
@@ -150,10 +168,15 @@ aibio_outclk_select outclk_select
 		.i_clkphb(clkphb),
 		.i_adapter_code(dll_ckadapter_code),
 		.i_soc_code(dll_cksoc_code),
-		.o_clk_adapter(clk_adapter),
-		.o_clk_soc(clk_soc)
+		.o_clk_adapter(clk_adapter_int),
+		.o_clk_soc(clk_soc_int)
 		);
 
 assign jtag_en = inp_cksel[1] && inp_cksel[0] ;
+
+assign #(delay_pulsegen) pulseclk_even = pulseclk_even_int;
+assign #(delay_pulsegen) pulseclk_odd = pulseclk_odd_int;
+assign #(delay_outclk_select) clk_soc = clk_soc_int;
+assign #(delay_outclk_select) clk_adapter = clk_adapter_int;
 
 endmodule

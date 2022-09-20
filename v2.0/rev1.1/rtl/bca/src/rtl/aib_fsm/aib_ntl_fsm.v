@@ -39,6 +39,7 @@ module aib_ntl_fsm(
  reg  ntl_tx_en;
  reg  ntl_rx_en;
  wire pad_cond;
+ wire pad_cond_sync;
  reg [15:0] ntl_count_value_intr;
  reg 	   ntl_done_intr;
 
@@ -48,6 +49,15 @@ module aib_ntl_fsm(
            STOP  = 2'b11;
 
 assign pad_cond = ~(rx_data_even[pad_num] & rx_data_odd[pad_num]);
+
+// PAD condition synchronized
+aib_bit_sync pad_cond_sync_i
+(
+.clk      (sys_clk),      // Clock of destination domain
+.rst_n    (1'b1),         // Reset of destination domain
+.data_in  (pad_cond),     // Input to be synchronized
+.data_out (pad_cond_sync) // Synchronized output
+);
 
 //pad0, pad101, pad50 and pad60
 //Data Muxing b/w Register Data and internal logic data
@@ -95,7 +105,7 @@ always@(posedge sys_clk or negedge rst_n)
 		end
               end
        RUN  : begin
-	       if(pad_cond == 1'b1) 
+	       if(pad_cond_sync == 1'b1) 
 	        ntl_count_value_intr <= ntl_count_value_intr;
 	       else
 	        ntl_count_value_intr <= ntl_count_value_intr + 1'b1;
@@ -124,7 +134,7 @@ always@(*)
 		ntl_nxst = INIT;
 	      end
    RUN      : begin
-	       if(pad_cond == 1'b1)
+	       if(pad_cond_sync == 1'b1)
 		ntl_nxst = STOP;
     	       else
 		ntl_nxst = RUN;

@@ -74,13 +74,34 @@ assign dll_enb_int= ~dll_en_int;
 assign pi_capctrlb_1 = ~pi_capctrl[1];
 assign pi_capctrlb_0 = ~pi_capctrl[0];
 
-//assign dll_lock_en = dll_en & dll_reset ;
 assign dll_en_int = dll_en & pwrgood_in;
 
 real ph_diff;
 real ph_diff_lock;
 
 wire jtag_en;
+
+wire dll_clk_inp;
+wire dll_clk_inn;
+wire dll_clk_cdr_inp;
+wire dll_clk_cdr_inn;
+
+wire piclk_adapter_int;
+wire piclk_soc_int;
+
+`ifdef POST_WORST
+	localparam delay_inpclk_select_norm = 66.0;
+	localparam delay_inpclk_select_lpbk = 92.88;
+	localparam delay_outclk_select = 114.96;
+`else
+	localparam delay_inpclk_select_norm = 0.0;
+	localparam delay_inpclk_select_lpbk = 0.0;
+	localparam delay_outclk_select = 0.0;
+`endif
+
+real delay_inpclk_select;
+
+assign delay_inpclk_select = (inp_cksel === 2'b01) ? delay_inpclk_select_norm : delay_inpclk_select_lpbk ;
 
 aibio_inpclk_select inclk_selector
 		(
@@ -99,6 +120,11 @@ aibio_inpclk_select inclk_selector
 		.o_cdr_clkp(cdr_clkp),
 		.o_cdr_clkn(cdr_clkn)
 		);
+
+assign #(delay_inpclk_select) dll_clk_inp = clkp;
+assign #(delay_inpclk_select) dll_clk_inn = clkn;
+assign #(delay_inpclk_select_norm) dll_clk_cdr_inp = cdr_clkp;
+assign #(delay_inpclk_select_norm) dll_clk_cdr_inn = cdr_clkn;
 
 aibio_dll_top DLL
 		(
@@ -179,8 +205,8 @@ aibio_outclk_select outclk_selector
 		.i_clkphb(clkphb),
 		.i_adapter_code(dll_piadapter_code),
 		.i_soc_code(dll_pisoc_code),
-		.o_clk_adapter(piclk_adapter),
-		.o_clk_soc(piclk_soc)
+		.o_clk_adapter(piclk_adapter_int),
+		.o_clk_soc(piclk_soc_int)
 		);
 
 aibio_lock_detector lock_detector
@@ -192,7 +218,7 @@ aibio_lock_detector lock_detector
 		.i_dn(dn),
 		.i_upb(upb),
 		.i_dnb(dnb),
-		.i_reset(dll_reset), 
+		.i_reset(dll_reset),
 		.i_lockthresh(dll_lockthresh[1:0]),
 		.i_lockctrl(dll_lockctrl),
 		.o_dll_lock(dll_lock)
@@ -201,5 +227,8 @@ aibio_lock_detector lock_detector
 assign ph_diff_lock = (dll_lock) ? ph_diff : 0.0;
 
 assign jtag_en = inp_cksel[1] && inp_cksel[0] ;
+
+assign #(delay_outclk_select) piclk_soc = piclk_soc_int;
+assign #(delay_outclk_select) piclk_adapter = piclk_adapter_int;
 
 endmodule

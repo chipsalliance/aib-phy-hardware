@@ -22,6 +22,25 @@ assign rstb = ~i_reset;
 
 assign clk_int = (i_sdr_mode) ? i_piclk_180 : i_piclk_90;
 
+`ifdef POST_WORST
+	localparam t_setup = 0.0;
+	localparam t_hold = 0.0;
+	localparam t_clk2q = 0.0;
+`else
+	localparam t_setup = 0.0;
+	localparam t_hold = 0.0;
+	localparam t_clk2q = 0.0;
+`endif
+
+sampler #(t_setup,t_hold,t_clk2q)
+			i_cdr_phdet
+			(
+			.data_in(i_cdr_clk),
+			.clk(clk_int),
+			.rst(rstb),
+			.data_out(o_cdr_phdet)
+			);
+/*
 always @(posedge clk_int or negedge rstb)
 begin
 	if(!rstb)
@@ -33,5 +52,6 @@ begin
 		o_cdr_phdet <= i_cdr_clk;
 	end
 end
+*/
 
 endmodule

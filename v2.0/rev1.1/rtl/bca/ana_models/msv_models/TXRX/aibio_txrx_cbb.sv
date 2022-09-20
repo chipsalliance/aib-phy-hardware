@@ -64,10 +64,10 @@ wire d_even_clk;
 wire d_odd_clk;
 wire d_odd_clk_int;
 
-wire clkeven_int;
+wire cktx_even_int;
+wire cktx_odd_int;
 
-reg idata;
-wire idatab;
+wire idata;
 wire data;
 
 wire rx_out_even_int;
@@ -80,9 +80,36 @@ wire wkpd;
 wire wkpu;
 
 reg tx_datain_even_latch;
+
+reg sel;
+
+real delay_evn_clk;
+real delay_odd_clk;
+`ifdef POST_WORST
+	localparam t_setup_tx_sampler_even = 82.3;
+	localparam t_hold_tx_sampler_even = 36.41;
+	localparam t_clk2q_tx_sampler_even = 0.0;
+	localparam t_setup_tx_sampler_odd_sync = 148.9;
+	localparam t_hold_tx_sampler_odd_sync = 0.001;
+	localparam t_clk2q_tx_sampler_odd_sync = 0.0;
+	localparam t_setup_tx_sampler_odd = 0.0;
+	localparam t_hold_tx_sampler_odd = 0.0;
+	localparam t_clk2q_tx_sampler_odd = 0.0;
+`else
+	localparam t_setup_tx_sampler_even = 0.0;
+	localparam t_hold_tx_sampler_even = 0.0;
+	localparam t_clk2q_tx_sampler_even = 0.0;
+	localparam t_setup_tx_sampler_odd_sync = 0.0;
+	localparam t_hold_tx_sampler_odd_sync = 0.0;
+	localparam t_clk2q_tx_sampler_odd_sync = 0.0;
+	localparam t_setup_tx_sampler_odd = 0.0;
+	localparam t_hold_tx_sampler_odd = 0.0;
+	localparam t_clk2q_tx_sampler_odd = 0.0;
+`endif
+
 //----------------Serialiser--------------------//
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
+sampler #(t_setup_tx_sampler_even,t_hold_tx_sampler_even,t_clk2q_tx_sampler_even)
 			i_tx_sampler_even
 			(
 			.data_in(tx_datain_even),
@@ -91,7 +118,7 @@ sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
 			.data_out(d_even_clk)
 			);
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
+sampler #(t_setup_tx_sampler_odd_sync,t_hold_tx_sampler_odd_sync,t_clk2q_tx_sampler_odd_sync)
 			i_tx_sampler_odd_sync
 			(
 			.data_in(tx_datain_odd),
@@ -100,7 +127,7 @@ sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
 			.data_out(d_odd_clk_int)
 			);
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
+sampler #(t_setup_tx_sampler_odd,t_hold_tx_sampler_odd,t_clk2q_tx_sampler_odd)
 			i_tx_sampler_odd
 			(
 			.data_in(d_odd_clk_int),
@@ -109,32 +136,54 @@ sampler #(.t_setup(20),.t_hold(20),.t_clk2q(45))
 			.data_out(d_odd_clk)
 			);
 
-assign #45 clkeven_int = cktx_even;
-assign idatab = !idata;
+assign delay_evn_clk = (t_clk2q_tx_sampler_even > t_hold_tx_sampler_even) ? t_clk2q_tx_sampler_even : t_hold_tx_sampler_even;
+assign delay_odd_clk = (t_clk2q_tx_sampler_odd > t_hold_tx_sampler_odd) ? t_clk2q_tx_sampler_odd : t_hold_tx_sampler_odd;
+
+assign #(delay_evn_clk) cktx_even_int = cktx_even;
+assign #(delay_evn_clk) cktx_odd_int = cktx_odd;
+//assign #(delay_odd_clk) cktx_odd_int = cktx_odd;
 
 initial begin
-	idata = 1'b0;
+//	idata = 1'b0;
+	sel = 1'b0;
 end
 
-always@(posedge cktx_even or posedge cktx_odd)
- begin
-  if(cktx_even)
-   idata <= tx_datain_even;
-  else if(cktx_odd)
-   idata <= d_odd_clk_int;
+/*
+always@(posedge cktx_even_int or posedge cktx_odd_int)
+begin
+  if(cktx_even_int)
+   idata = d_even_clk;
+  else if(cktx_odd_int)
+   idata = d_odd_clk;
   else
-   idata <= idata;
+   idata = idata;
+ end
+*/
+
+
+always@(posedge cktx_even_int or posedge cktx_odd_int)
+begin
+  if(cktx_even_int)
+   sel = 1'b1;
+  else if(cktx_odd_int)
+   sel = 1'b0;
+  else
+   sel = sel;
  end
 
-//----------------Serialiser Ends---------------------------//
 
+assign idata = (sel === 1'b1) ? d_even_clk :
+					(sel === 1'b0) ? d_odd_clk : 1'b0;
+
+//----------------Serialiser Ends---------------------------//
+/*
 always @(posedge cktx_even)
 begin
 	tx_datain_even_latch <= tx_datain_even;
 end
-
+*/
 assign data = tx_async_en ? tx_async   :
-				  sdr_mode_en ? tx_datain_even_latch :
+				  sdr_mode_en ? d_even_clk :
 					idata;
 
 //--------------Transmitter Enable logic--------------------//
@@ -186,7 +235,31 @@ pad_out_logic i_pad_out_logic
 
 //----------------Receiver--------------------------//
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(40))
+`ifdef POST_WORST
+	localparam t_setup_rx_sampler_even = 0.0;
+	localparam t_hold_rx_sampler_even = 0.0;
+	localparam t_clk2q_rx_sampler_even = 0.0;
+	localparam t_setup_rx_sampler_odd = 0.0;
+	localparam t_hold_rx_sampler_odd = 0.0;
+	localparam t_clk2q_rx_sampler_odd = 317;
+	localparam t_setup_rx_sampler_even_sync = 0.0;
+	localparam t_hold_rx_sampler_even_sync = 0.0;
+	localparam t_clk2q_rx_sampler_even_sync = 308;
+`else
+	localparam t_setup_rx_sampler_even = 0.0;
+	localparam t_hold_rx_sampler_even = 0.0;
+	localparam t_clk2q_rx_sampler_even = 0.0;
+	localparam t_setup_rx_sampler_odd = 0.0;
+	localparam t_hold_rx_sampler_odd = 0.0;
+	localparam t_clk2q_rx_sampler_odd = 0.0;
+	localparam t_setup_rx_sampler_even_sync = 0.0;
+	localparam t_hold_rx_sampler_even_sync = 0.0;
+	localparam t_clk2q_rx_sampler_even_sync = 0.0;
+`endif
+
+
+
+sampler #(t_setup_rx_sampler_even,t_hold_rx_sampler_even,t_clk2q_rx_sampler_even)
 			i_rx_sampler_even
 			(
 			.data_in(xx_pad),
@@ -195,7 +268,7 @@ sampler #(.t_setup(20),.t_hold(20),.t_clk2q(40))
 			.data_out(rx_out_even_int)
 			);
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(40))
+sampler #(t_setup_rx_sampler_odd,t_hold_rx_sampler_odd,t_clk2q_rx_sampler_odd)
 			i_rx_sampler_odd
 			(
 			.data_in(xx_pad),
@@ -204,7 +277,7 @@ sampler #(.t_setup(20),.t_hold(20),.t_clk2q(40))
 			.data_out(rx_out_odd)
 			);
 
-sampler #(.t_setup(20),.t_hold(20),.t_clk2q(40))
+sampler #(t_setup_rx_sampler_even_sync,t_hold_rx_sampler_even_sync,t_clk2q_rx_sampler_even_sync)
 			i_rx_sampler_even_sync
 			(
 			.data_in(rx_out_even_int),

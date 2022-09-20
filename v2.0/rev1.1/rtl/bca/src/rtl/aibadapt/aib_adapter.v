@@ -3,7 +3,10 @@
 // Copyright (C) 2022 Blue Cheetah Analog Design, Inc.
 // Copyright (C) 2021 Intel Corporation. 
 
-module aib_adapter (
+module aib_adapter #(
+parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
+)
+(
 
 input          dual_mode_select, // mode select: 0 follower and 1 leader
 input          m_gen2_mode,      // Indicates generation mode (1: gen 2.0)
@@ -570,7 +573,8 @@ aib_sr_sl
     );
 
 
-aib_bert_cdc aib_bert_cdc(
+aib_bert_cdc #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_bert_cdc(
 //------------------------------------------------------------------------------
 //                    Interface with RX BERT
 //------------------------------------------------------------------------------
@@ -704,7 +708,8 @@ aib_bert_cdc aib_bert_cdc(
 .rxrd_rstn        (rxrd_rstn)
 );
 
-aib_rx_bert aib_rx_bert(
+aib_rx_bert #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_rx_bert(
 // Inputs
 .clk             (rxfifo_rd_clk),         // Rx BERT clock
 .rstn            (rxrd_fifo_rstn),        // Active low asynchronous reset 
@@ -736,7 +741,8 @@ aib_rx_bert aib_rx_bert(
 .rbert_running_ff (rx_bertgen_en[3:0]) // RX BERT checker is running
 );
 
-aib_tx_bert aib_tx_bert(
+aib_tx_bert #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_tx_bert(
 // Inputs
 .clk               (txfifo_wr_clk),         // TX BERT clock
 .rstn              (txwr_fifo_rstn),        // Active low asynchronous reset

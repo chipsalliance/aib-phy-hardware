@@ -33,6 +33,23 @@ assign enb = ~i_clk_en;
 
 nor U1(net43,enb,i_reset);
 
+`ifdef POST_WORST
+	localparam t_setup_ff1 = 0.0;
+	localparam t_hold_ff1 = 0.0;
+	localparam t_clk2q_ff1 = 0.0;
+	localparam t_setup_ff2 = 0.0;
+	localparam t_hold_ff2 = 0.0;
+	localparam t_clk2q_ff2 = 0.0;
+`else
+	localparam t_setup_ff1 = 0.0;
+	localparam t_hold_ff1 = 0.0;
+	localparam t_clk2q_ff1 = 0.0;
+	localparam t_setup_ff2 = 0.0;
+	localparam t_hold_ff2 = 0.0;
+	localparam t_clk2q_ff2 = 0.0;
+`endif
+
+/*
 flop i_ff1
 	(
 	.vdd(vddcq),
@@ -52,7 +69,25 @@ flop i_ff2
 	.o(ff2_out),
 	.in(ff1_out)
 	);
+*/
 
+sampler #(t_setup_ff1,t_hold_ff1,t_clk2q_ff1)
+			i_ff1
+			(
+			.data_in(i_update),
+			.clk(net13),
+			.rst(net43),
+			.data_out(ff1_out)
+			);
+
+sampler #(t_setup_ff2,t_hold_ff2,t_clk2q_ff2)
+			i_ff2
+			(
+			.data_in(ff1_out),
+			.clk(net13),
+			.rst(net43),
+			.data_out(ff2_out)
+			);
 /*
 always @(posedge net13 or resetb_combined)
 begin
@@ -280,7 +315,7 @@ end
 
 endmodule
 
-
+/*
 module flop
 	(
 	input logic vdd,
@@ -304,7 +339,7 @@ begin
 end
 
 endmodule
-
+*/
 
 module latch
 	(

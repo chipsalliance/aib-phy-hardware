@@ -35,6 +35,7 @@ wire       [6:0] div_sel_dec;
 reg              phase_locked_intr;
 reg        [3:0] phase_sel_code_intr;
 reg        [3:0] samp_data_in;
+reg              phase_detect_ff;
 
 integer i;
 
@@ -223,16 +224,20 @@ always@(*)
   endcase
  end
 
+// Register to sample adjusted clock wirh respect of reference clock
+always@(posedge ref_clk)
+  begin: phase_detect_register
+    phase_detect_ff <= sample_clk;
+  end // block: phase_detect_register
+
 // Phase detect synchronizer
 aib_bit_sync bitsync_phase_detect
 (
-.clk      (ref_clk),       // Clock of destination domain
-.rst_n    (rst_n),         // Reset of destination domain
-.data_in  (sample_clk),    // Input to be synchronized
-.data_out (phase_detect_sync)   // Synchronized output
+.clk      (sys_clk),           // Clock of destination domain
+.rst_n    (1'b1),              // Reset of destination domain
+.data_in  (phase_detect_ff),   // Input to be synchronized
+.data_out (phase_detect_sync)  // Synchronized output
 );
-
-
 
 assign phase_detect = (phase_adjust_curst == RUN) & phase_detect_sync;
 

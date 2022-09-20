@@ -31,8 +31,19 @@ parameter START      = 3'b000,
 reg [2:0] offset_curst, offset_nxst;
 reg [4:0] edge_detect_up_value, edge_detect_down_value;
 reg [1:0] comp_data;
-
 reg [5:0] sum;
+wire      cal_data_sync;
+
+// Calibration data synchronized
+aib_bit_sync cal_data_sync_i
+(
+.clk      (sys_clk),      // Clock of destination domain
+.rst_n    (1'b1),         // Reset of destination domain
+.data_in  (cal_data),     // Input to be synchronized
+.data_out (cal_data_sync) // Synchronized output
+);
+
+
 
 always@(posedge sys_clk or negedge rst_n)
  begin
@@ -62,7 +73,7 @@ always@(posedge sys_clk or negedge rst_n)
 		   sum           <= 5'b0_0000;
 	          end
      UP_COUNT   : begin
-		   comp_data <= {comp_data[0], cal_data};
+		   comp_data <= {comp_data[0], cal_data_sync};
      		   if(comp_data[0] != comp_data[1])
 		    edge_detect_up_value[4:0] <= offs_cal_code[4:0]-1'b1;
 		   else
@@ -74,7 +85,7 @@ always@(posedge sys_clk or negedge rst_n)
 		   offs_cal_code[4:0] <= CAL_CODE_CNT[4:0];
  		  end
      DOWN_COUNT : begin
-		   comp_data <= {comp_data[0], cal_data};
+		   comp_data <= {comp_data[0], cal_data_sync};
      		   if(comp_data[0] != comp_data[1])
 		    edge_detect_down_value[4:0] <= offs_cal_code[4:0]+1'b1;
 		   else

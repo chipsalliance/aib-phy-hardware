@@ -10,7 +10,8 @@ module aib_phy_top #(
     parameter NBR_LANES = 40,       // Number of lanes
     parameter MS_SSR_LEN = 81,      // Data size for leader side band
     parameter SL_SSR_LEN = 73,      // Data size for follower side band
-    parameter SCAN_STR_PER_CH = 10  // Scan data input and data output size
+    parameter SCAN_STR_PER_CH = 10 ,// Scan data input and data output size
+    parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
     )
  ( 
 
@@ -393,7 +394,9 @@ aib_avmm_glue_logic aib_avmm_glue_logic(
 .o_rdata    (o_cfg_avmm_rdata[31:0])
 );
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) ) 
 aib_channel0
  ( 
      .vddc2 (vddc2),
@@ -491,7 +494,9 @@ aib_channel0
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) ) 
 aib_channel1
  (   
      .vddc2 (vddc2),
@@ -587,7 +592,9 @@ aib_channel1
      );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel2
  (
      .vddc2 (vddc2),
@@ -684,7 +691,9 @@ aib_channel2
 
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel3
  (
      .vddc2 (vddc2),
@@ -780,7 +789,9 @@ aib_channel3
      );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel4
  (
      .vddc2 (vddc2),
@@ -876,7 +887,9 @@ aib_channel4
      );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel5
  (
      .vddc2 (vddc2),
@@ -972,7 +985,9 @@ aib_channel5
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel6
  (
      .vddc2 (vddc2),
@@ -1068,7 +1083,9 @@ aib_channel6
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel7
  (
      .vddc2 (vddc2),
@@ -1164,7 +1181,9 @@ aib_channel7
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel8
  (
      .vddc2 (vddc2),
@@ -1260,7 +1279,9 @@ aib_channel8
      );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel9
  (
      .vddc2 (vddc2),
@@ -1356,7 +1377,9 @@ aib_channel9
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel10
  (
      .vddc2 (vddc2),
@@ -1452,7 +1475,9 @@ aib_channel10
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel11
  (
      .vddc2 (vddc2),
@@ -1548,7 +1573,9 @@ aib_channel11
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel12
  (
      .vddc2 (vddc2),
@@ -1644,7 +1671,9 @@ aib_channel12
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel13
  (
      .vddc2 (vddc2),
@@ -1740,7 +1769,9 @@ aib_channel13
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel14
  (
      .vddc2 (vddc2),
@@ -1837,7 +1868,9 @@ aib_channel14
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel15
  (
      .vddc2 (vddc2),
@@ -1933,7 +1966,9 @@ aib_channel15
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel16
  (
      .vddc2 (vddc2),
@@ -2030,7 +2065,9 @@ aib_channel16
 
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel17
  (
      .vddc2 (vddc2),
@@ -2126,7 +2163,9 @@ aib_channel17
      );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel18
  (
      .vddc2 (vddc2),
@@ -2222,7 +2261,9 @@ aib_channel18
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel19
  (
      .vddc2 (vddc2),
@@ -2318,7 +2359,9 @@ aib_channel19
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel20
  (
      .vddc2 (vddc2),
@@ -2414,7 +2457,9 @@ aib_channel20
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel21
  (
      .vddc2 (vddc2),
@@ -2510,7 +2555,9 @@ aib_channel21
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel22
  (
      .vddc2 (vddc2),
@@ -2606,7 +2653,9 @@ aib_channel22
       );
 
 
-aib_channel_n #(.NBR_LANES(NBR_LANES), .SCAN_STR_PER_CH(SCAN_STR_PER_CH)) 
+aib_channel_n #( .NBR_LANES (NBR_LANES),
+                 .SCAN_STR_PER_CH (SCAN_STR_PER_CH),
+                 .BERT_BUF_MODE_EN (BERT_BUF_MODE_EN) )  
 aib_channel23
  (
      .vddc2 (vddc2),

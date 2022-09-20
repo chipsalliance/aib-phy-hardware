@@ -2,7 +2,10 @@
 // Copyright (C) 2022 HCL Technologies Ltd.
 // Copyright (C) 2022 Blue Cheetah Analog Design, Inc.
 
-module aib_bert_chk(
+module aib_bert_chk #(
+parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
+)
+(
 input            clk,                  // Rx BERT clock
 input            rstn,                 // Active low asynchronous reset 
 input            rx_rst_pulse,         // Resets synchronously RX BERT logic
@@ -373,11 +376,13 @@ always @(posedge clk or negedge rstn)
       end
     else if(rbert_running_ff  | rx_start_pulse)
       begin
-        lfsr_buf_ff[127:0] <= lfsr_buf_next[127:0];
+        lfsr_buf_ff[127:0] <= lfsr_buf_next[127:0] &
+                              {31'h7fff_ffff,{97{BERT_BUF_MODE_EN}}};
       end
     else if(seed_in_en)
       begin
-        lfsr_buf_ff[127:0] <= seed_data_in[127:0];
+        lfsr_buf_ff[127:0] <= seed_data_in[127:0] &
+                              {31'h7fff_ffff,{97{BERT_BUF_MODE_EN}}};
       end
   end // block: lfsr_buf_register
 

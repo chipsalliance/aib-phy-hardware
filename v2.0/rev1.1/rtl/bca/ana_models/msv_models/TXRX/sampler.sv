@@ -1,12 +1,15 @@
 `timescale 1ps/1fs
 
-module sampler #(parameter real t_setup=20, parameter real t_hold=20, parameter real t_clk2q=40)
-		(
-		input data_in,
-		input rst,
-		input clk,
-		output data_out
-		);
+module sampler(data_in,rst,clk,data_out);
+
+input data_in;
+input rst;
+input clk;
+output data_out;
+
+parameter t_setup = 0.0;
+parameter t_hold = 0.0;
+parameter t_clk2q = 0.0;
 
 reg data_1;
 
@@ -15,6 +18,8 @@ reg q1,q2,q3;
 reg q3_prev;
 
 wire clk_1;
+
+real clk2q_delay;
 
 assign #(t_setup) data_1 = data_in;
 assign #(t_hold) clk_1 = clk;
@@ -81,7 +86,9 @@ begin
 	end
 end
 
-assign #(t_clk2q - t_hold) data_out = ((q1==q2) && (q2==q3) &&(q1==q3)) ? q3 : q3_prev;
+assign clk2q_delay = (t_clk2q > t_hold) ? (t_clk2q - t_hold) : 0.0;
+
+assign #(clk2q_delay) data_out = ((q1==q2) && (q2==q3) &&(q1==q3)) ? q3 : q3_prev;
 
 endmodule
 

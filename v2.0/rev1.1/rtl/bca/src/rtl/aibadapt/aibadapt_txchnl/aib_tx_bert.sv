@@ -2,7 +2,10 @@
 // Copyright (C) 2022 HCL Technologies Ltd.
 // Copyright (C) 2022 Blue Cheetah Analog Design, Inc.
 
-module aib_tx_bert(
+module aib_tx_bert #(
+parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
+)
+(
 input          clk,               // TX BERT clock
 input          rstn,              // Active low asynchronous reset
 input [ 3:0]   tx_start_pulse,    // Start pulse to enable LFSR and Pattern 
@@ -95,7 +98,8 @@ localparam   FIFO_4X   = 2'b10;       //Quarter Rate
 //------------------------------------------------------------------------------
 
 // BERT generator 0
-aib_bert_gen aib_bert_gen0(
+aib_bert_gen #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_bert_gen0(
 // Inputs
 .clk            (clk),             
 .rstn           (rstn),            
@@ -112,7 +116,8 @@ aib_bert_gen aib_bert_gen0(
 );
 
 // BERT generator 1
-aib_bert_gen aib_bert_gen1(
+aib_bert_gen #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_bert_gen1(
 // Inputs
 .clk            (clk),             
 .rstn           (rstn),            
@@ -129,7 +134,8 @@ aib_bert_gen aib_bert_gen1(
 );
 
 // BERT generator 2
-aib_bert_gen aib_bert_gen2(
+aib_bert_gen #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_bert_gen2(
 // Inputs
 .clk            (clk),             
 .rstn           (rstn),            
@@ -146,7 +152,8 @@ aib_bert_gen aib_bert_gen2(
 );
 
 // BERT generator 3
-aib_bert_gen aib_bert_gen3(
+aib_bert_gen #(.BERT_BUF_MODE_EN (BERT_BUF_MODE_EN))
+aib_bert_gen3(
 // Inputs
 .clk            (clk),             
 .rstn           (rstn),            

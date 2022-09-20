@@ -2,7 +2,10 @@
 // Copyright (C) 2022 HCL Technologies Ltd.
 // Copyright (C) 2022 Blue Cheetah Analog Design, Inc.
  
-module aib_bert_cdc(
+module aib_bert_cdc #(
+parameter [0:0] BERT_BUF_MODE_EN = 1  // Enables Buffer mode for BERT
+)
+(
 //------------------------------------------------------------------------------
 //                    Interface with RX BERT
 //------------------------------------------------------------------------------
@@ -703,7 +706,7 @@ assign seedp0_0_acc = (txacc_addr_sync_ff[5:0] == SEEDP0_0[5:0]) &
 assign seedp0_0_rd = seedp0_0_acc   &  txacc_rdwr_sync_ff;
 assign seedp0_0_wr = seedp0_0_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp0_0_be[3:0] = {4{seedp0_0_wr}};
+assign seedp0_0_be[3:0] = {4{seedp0_0_wr & BERT_BUF_MODE_EN}};
 
 assign seedp0_0_rdata[31:0] = 32'h0;
 
@@ -715,7 +718,7 @@ assign seedp1_0_acc = (txacc_addr_sync_ff[5:0] == SEEDP1_0[5:0]) &
 assign seedp1_0_rd = seedp1_0_acc   &  txacc_rdwr_sync_ff;
 assign seedp1_0_wr = seedp1_0_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp1_0_be[3:0] = {4{seedp1_0_wr}};
+assign seedp1_0_be[3:0] = {4{seedp1_0_wr & BERT_BUF_MODE_EN}};
 
 assign seedp1_0_rdata[31:0] = 32'h0;
 
@@ -727,7 +730,7 @@ assign seedp2_0_acc = (txacc_addr_sync_ff[5:0] == SEEDP2_0[5:0]) &
 assign seedp2_0_rd = seedp2_0_acc   &  txacc_rdwr_sync_ff;
 assign seedp2_0_wr = seedp2_0_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp2_0_be[3:0] = {4{seedp2_0_wr}};
+assign seedp2_0_be[3:0] = {4{seedp2_0_wr & BERT_BUF_MODE_EN}};
 
 assign seedp2_0_rdata[31:0] = 32'h0;
 
@@ -751,7 +754,7 @@ assign seedp0_1_acc = (txacc_addr_sync_ff[5:0] == SEEDP0_1[5:0]) &
 assign seedp0_1_rd = seedp0_1_acc   &  txacc_rdwr_sync_ff;
 assign seedp0_1_wr = seedp0_1_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp0_1_be[3:0] = {4{seedp0_1_wr}};
+assign seedp0_1_be[3:0] = {4{seedp0_1_wr & BERT_BUF_MODE_EN}};
 
 assign seedp0_1_rdata[31:0] = 32'h0;
 
@@ -763,7 +766,7 @@ assign seedp1_1_acc = (txacc_addr_sync_ff[5:0] == SEEDP1_1[5:0]) &
 assign seedp1_1_rd = seedp1_1_acc   &  txacc_rdwr_sync_ff;
 assign seedp1_1_wr = seedp1_1_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp1_1_be[3:0] = {4{seedp1_1_wr}};
+assign seedp1_1_be[3:0] = {4{seedp1_1_wr & BERT_BUF_MODE_EN}};
 
 assign seedp1_1_rdata[31:0] = 32'h0;
 
@@ -775,7 +778,7 @@ assign seedp2_1_acc = (txacc_addr_sync_ff[5:0] == SEEDP2_1[5:0]) &
 assign seedp2_1_rd = seedp2_1_acc   &  txacc_rdwr_sync_ff;
 assign seedp2_1_wr = seedp2_1_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp2_1_be[3:0] = {4{seedp2_1_wr}};
+assign seedp2_1_be[3:0] = {4{seedp2_1_wr & BERT_BUF_MODE_EN}};
 
 assign seedp2_1_rdata[31:0] = 32'h0;
 
@@ -799,7 +802,7 @@ assign seedp0_2_acc = (txacc_addr_sync_ff[5:0] == SEEDP0_2[5:0]) &
 assign seedp0_2_rd = seedp0_2_acc   &  txacc_rdwr_sync_ff;
 assign seedp0_2_wr = seedp0_2_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp0_2_be[3:0] = {4{seedp0_2_wr}};
+assign seedp0_2_be[3:0] = {4{seedp0_2_wr & BERT_BUF_MODE_EN}};
 
 assign seedp0_2_rdata[31:0] = 32'h0;
 
@@ -811,7 +814,7 @@ assign seedp1_2_acc = (txacc_addr_sync_ff[5:0] == SEEDP1_2[5:0]) &
 assign seedp1_2_rd = seedp1_2_acc   &  txacc_rdwr_sync_ff;
 assign seedp1_2_wr = seedp1_2_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp1_2_be[3:0] = {4{seedp1_2_wr}};
+assign seedp1_2_be[3:0] = {4{seedp1_2_wr & BERT_BUF_MODE_EN}};
 
 assign seedp1_2_rdata[31:0] = 32'h0;
 
@@ -823,7 +826,7 @@ assign seedp2_2_acc = (txacc_addr_sync_ff[5:0] == SEEDP2_2[5:0]) &
 assign seedp2_2_rd = seedp2_2_acc   &  txacc_rdwr_sync_ff;
 assign seedp2_2_wr = seedp2_2_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp2_2_be[3:0] = {4{seedp2_2_wr}};
+assign seedp2_2_be[3:0] = {4{seedp2_2_wr & BERT_BUF_MODE_EN}};
 
 assign seedp2_2_rdata[31:0] = 32'h0;
 
@@ -848,7 +851,7 @@ assign seedp0_3_acc = (txacc_addr_sync_ff[5:0] == SEEDP0_3[5:0]) &
 assign seedp0_3_rd = seedp0_3_acc   &  txacc_rdwr_sync_ff;
 assign seedp0_3_wr = seedp0_3_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp0_3_be[3:0] = {4{seedp0_3_wr}};
+assign seedp0_3_be[3:0] = {4{seedp0_3_wr & BERT_BUF_MODE_EN}};
 
 assign seedp0_3_rdata[31:0] = 32'h0;
 
@@ -860,7 +863,7 @@ assign seedp1_3_acc = (txacc_addr_sync_ff[5:0] == SEEDP1_3[5:0]) &
 assign seedp1_3_rd = seedp1_3_acc   &  txacc_rdwr_sync_ff;
 assign seedp1_3_wr = seedp1_3_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp1_3_be[3:0] = {4{seedp1_3_wr}};
+assign seedp1_3_be[3:0] = {4{seedp1_3_wr & BERT_BUF_MODE_EN}};
 
 assign seedp1_3_rdata[31:0] = 32'h0;
 
@@ -872,7 +875,7 @@ assign seedp2_3_acc = (txacc_addr_sync_ff[5:0] == SEEDP2_3[5:0]) &
 assign seedp2_3_rd = seedp2_3_acc   &  txacc_rdwr_sync_ff;
 assign seedp2_3_wr = seedp2_3_acc   & ~txacc_rdwr_sync_ff;
 
-assign seedp2_3_be[3:0] = {4{seedp2_3_wr}};
+assign seedp2_3_be[3:0] = {4{seedp2_3_wr & BERT_BUF_MODE_EN}};
 
 assign seedp2_3_rdata[31:0] = 32'h0;
 
@@ -1161,7 +1164,7 @@ always @(posedge txfifo_wr_clk or negedge txwr_rstn)
       end
     else if(gen_ptrn_sel_be[0])
       begin
-        gen0_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[2:0];
+        gen0_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[2:0] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1173,7 +1176,7 @@ always @(posedge txfifo_wr_clk or negedge txwr_rstn)
       end
     else if(gen_ptrn_sel_be[1])
       begin
-        gen1_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[10:8];
+        gen1_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[10:8] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1185,7 +1188,7 @@ always @(posedge txfifo_wr_clk or negedge txwr_rstn)
       end
     else if(gen_ptrn_sel_be[2])
       begin
-        gen2_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[18:16];
+        gen2_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[18:16] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1197,7 +1200,7 @@ always @(posedge txfifo_wr_clk or negedge txwr_rstn)
       end
     else if(gen_ptrn_sel_be[3])
       begin
-        gen3_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[26:24];
+        gen3_ptrn_sel_ff[2:0]  <= txwdata_sync_ff[26:24] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1399,7 +1402,7 @@ always @(posedge rxfifo_rd_clk or negedge rxrd_rstn)
       end
     else if(chk_ptrn_sel_be[0])
       begin
-        chk0_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[2:0];
+        chk0_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[2:0] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1411,7 +1414,7 @@ always @(posedge rxfifo_rd_clk or negedge rxrd_rstn)
       end
     else if(chk_ptrn_sel_be[1])
       begin
-        chk1_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[10:8];
+        chk1_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[10:8] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1423,7 +1426,7 @@ always @(posedge rxfifo_rd_clk or negedge rxrd_rstn)
       end
     else if(chk_ptrn_sel_be[2])
       begin
-        chk2_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[18:16];
+        chk2_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[18:16] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
@@ -1435,7 +1438,7 @@ always @(posedge rxfifo_rd_clk or negedge rxrd_rstn)
       end
     else if(chk_ptrn_sel_be[3])
       begin
-        chk3_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[26:24];
+        chk3_ptrn_sel_ff[2:0] <= rxwdata_sync_ff[26:24] & {BERT_BUF_MODE_EN,2'b11};
       end
   end
 
