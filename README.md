@@ -86,3 +86,4 @@ Main directory structure is below.  Read the README.txt files in the subdirector
 v2.0/rev1.1/rtl/maib_rev1.1
 24 channel Agilex with no AUX. The device_detect and power_on_reset signals go through a microbumped AUX channel on Agilex just like Stratix 10. 
 This model presents a MAIB MAC interface to FPGA soft IP, just like Quartus will provide.
+The AUX connection of device_detect and power_on-reset is in the testbench.
