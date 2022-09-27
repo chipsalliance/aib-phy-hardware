@@ -52,7 +52,7 @@ Use this for interop simulations with Stratix 10.
 ## Version 2.0
 
 v2.0/rev1 is a behavioral model of AIB 2.0.
-v2.0/ rev1.1 is RTL extracted from an actual AIB 2.0 design. Functionally rev1 and rev1.1 are intended to be equivalent. rev1 simulates a lot faster than rev1.1, so some people prefer to use rev1. For a tapeout, a user should run rev1.1 for final verification.
+v2.0/rev1.1 is RTL extracted from an actual AIB 2.0 design. Functionally rev1 and rev1.1 are intended to be equivalent. rev1 simulates a lot faster than rev1.1, so some people prefer to use rev1. For a tapeout, a user should run rev1.1 for final verification.
 
 #### Version 2.0 (v2.0/rev1)
 AIB 2.0 behavior RTL based on AIB spec 2.0.
