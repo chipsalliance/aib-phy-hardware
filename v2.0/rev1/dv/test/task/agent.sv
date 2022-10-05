@@ -90,6 +90,154 @@
      end
   endtask
 
+  task ms_phase_adjust_wrkarnd ();
+     integer i_m1;
+     logic [31:0] rdata = 32'h0;
+     logic [31:0] wdata = 32'h0;
+     logic [23:0] rx_soc_clk_lock = 32'h0;
+     begin
+       //1. Done during configuration phase, set vcalcode_ovrd bit of calvref register 33c
+       //2. Poll the rx_soc_clk_lock bit of rxdll2 (344) register until the bit is set by the hardware
+            while (rx_soc_clk_lock !== 24'hff_ffff) begin
+              #1000ns;
+              for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h344}, 4'hf, rdata);
+                rx_soc_clk_lock[i_m1] = rdata[27];
+              end
+              $display("%0t: leader rx_soc_clk_lock polling:  rx_soc_clk_lock =  %x", $time, rx_soc_clk_lock);
+            end 
+       //3. Read rx_soc_clkph_code[3:0] field of rxdll2 reg
+       //4. If the value read in step 3 is less then 2, plus 14, else, minus 2.
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h344}, 4'hf, rdata);
+                rdata[19:16] = (rdata[11:8] >= 2) ? (rdata[11:8]-2) : (14+rdata[11:8]);
+                avmm_if_m1.cfg_write({i_m1,11'h344}, 4'hf, rdata);
+            end
+       //5. Read rx_adp_clkph_code[3:0] field of rxdll2 register
+       //6. Write the value read in step 5 plus 6
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h344}, 4'hf, rdata);
+                rdata[23:20] = rdata[15:12] + 6;
+                avmm_if_m1.cfg_write({i_m1,11'h344}, 4'hf, rdata);
+            end
+       //7. Read tx_adp_clkph_code[3;0] field of txdll2 register 350
+       //8. Write the value read in step 7 plus 8 into txpi_ack_code [3:0] field of txdll1 register. Only LSB 4 bit.
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h350}, 4'hf, rdata);
+                wdata[11:8] = rdata[23:20]+8;
+                avmm_if_m1.cfg_read({i_m1, 11'h34C}, 4'hf, rdata);
+                rdata[11:8]=wdata[11:8];
+                avmm_if_m1.cfg_write({i_m1,11'h34C}, 4'hf, rdata);
+            end
+       //9. Read tx_soc_clkph_code[3:0] field of txdll2 register 350
+       //10.If the value read in step 9 is less than 2, write the value read in step 9 plus 14 into txpi_socclk_code[3:0]
+       //   Otherwise, write the value minus 2 into txpi_socclk_code[3:0] field of txdll2 register.
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h350}, 4'hf, rdata);
+                rdata[3:0]=(rdata[19:16] >= 2) ? (rdata[19:16]-2) : (14+rdata[19:16]);;
+                avmm_if_m1.cfg_write({i_m1,11'h350}, 4'hf, rdata);
+            end
+       //11. Set rxpi_sclk_code_ovrd, rxpi_aclk_code_ovrd, rxsoc_lock_ovrd and rxadp_lock_ovrd bits of rxdll2 register.
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h344}, 4'hf, rdata);
+                rdata[31]=1; //rpi_aclk_code_ovrd
+                rdata[30]=1; //rpi_sclk_code_ovrd
+                rdata[29]=1; //rxapd_lock_ovrd
+                rdata[28]=1; //rxsoc_lock_ovrd
+                avmm_if_m1.cfg_write({i_m1, 11'h344}, 4'hf, rdata);
+            end
+       //12. Set txpi_aclk_code_ovrd and txsoc_lock_ovrd bits of txdll2 register
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h350}, 4'hf, rdata);
+                rdata[31] = 1; // txpi_aclk_code_ovrd
+                rdata[27] = 1; // txadp_lock_ovrd
+                rdata[28] = 1; // txpi_sclk_code_ovrd
+                rdata[26] = 1; // txsoc_lock_ovrd
+                avmm_if_m1.cfg_write({i_m1, 11'h350}, 4'hf, rdata);
+            end
+       //13. Clear vcalcode_ovrd bit of calvref register
+            for (i_m1=0; i_m1<24; i_m1++) begin
+                avmm_if_m1.cfg_read({i_m1, 11'h33C}, 4'hf, rdata);
+                rdata[30] = 0;
+                avmm_if_m1.cfg_write({i_m1, 11'h33C}, 4'hf, rdata);
+            end
+     end
+  endtask
+
+  task sl_phase_adjust_wrkarnd ();
+     integer i_s1;
+     logic [31:0] rdata = 32'h0;
+     logic [31:0] wdata = 32'h0;
+     logic [23:0] rx_soc_clk_lock = 32'h0;
+     begin
+       //1. Done during configuration phase, set vcalcode_ovrd bit of calvref register 33c
+       //2. Poll the rx_soc_clk_lock bit of rxdll2 (344) register until the bit is set by the hardware
+            while (rx_soc_clk_lock !== 24'hff_ffff) begin
+              #1000ns;
+              for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h344}, 4'hf, rdata);
+                rx_soc_clk_lock[i_s1] = rdata[27];
+              end
+              $display("%0t: leader rx_soc_clk_lock polling:  rx_soc_clk_lock =  %x", $time, rx_soc_clk_lock);
+            end 
+       //3. Read rx_soc_clkph_code[3:0] field of rxdll2 reg
+       //4. If the value read in step 3 is less then 2, plus 14, else, minus 2.
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h344}, 4'hf, rdata);
+                rdata[19:16] = (rdata[11:8] >= 2) ? (rdata[11:8]-2) : (14+rdata[11:8]);
+                avmm_if_s1.cfg_write({i_s1,11'h344}, 4'hf, rdata);
+            end
+       //5. Read rx_adp_clkph_code[3:0] field of rxdll2 register
+       //6. Write the value read in step 5 plus 6
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h344}, 4'hf, rdata);
+                rdata[23:20] = rdata[15:12] + 6;
+                avmm_if_s1.cfg_write({i_s1,11'h344}, 4'hf, rdata);
+            end
+       //7. Read tx_adp_clkph_code[3;0] field of txdll2 register 350
+       //8. Write the value read in step 7 plus 8 into txpi_ack_code [3:0] field of txdll1 register. Only LSB 4 bit.
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h350}, 4'hf, rdata);
+                wdata[11:8] = rdata[23:20]+8;
+                avmm_if_s1.cfg_read({i_s1, 11'h34C}, 4'hf, rdata);
+                rdata[11:8]=wdata[11:8];
+                avmm_if_s1.cfg_write({i_s1,11'h34C}, 4'hf, rdata);
+            end
+       //9. Read tx_soc_clkph_code[3:0] field of txdll2 register 350
+       //10.If the value read in step 9 is less than 2, write the value read in step 9 plus 14 into txpi_socclk_code[3:0]
+       //   Otherwise, write the value minus 2 into txpi_socclk_code[3:0] field of txdll2 register.
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h350}, 4'hf, rdata);
+                rdata[3:0]=(rdata[19:16] >= 2) ? (rdata[19:16]-2) : (14+rdata[19:16]);;
+                avmm_if_s1.cfg_write({i_s1,11'h350}, 4'hf, rdata);
+            end
+       //11. Set rxpi_sclk_code_ovrd, rxpi_aclk_code_ovrd, rxsoc_lock_ovrd and rxadp_lock_ovrd bits of rxdll2 register.
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h344}, 4'hf, rdata);
+                rdata[31]=1; //rpi_aclk_code_ovrd
+                rdata[30]=1; //rpi_sclk_code_ovrd
+                rdata[29]=1; //rxapd_lock_ovrd
+                rdata[28]=1; //rxsoc_lock_ovrd
+                avmm_if_s1.cfg_write({i_s1, 11'h344}, 4'hf, rdata);
+            end
+       //12. Set txpi_aclk_code_ovrd and txsoc_lock_ovrd bits of txdll2 register
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h350}, 4'hf, rdata);
+                rdata[31] = 1; // txpi_aclk_code_ovrd
+                rdata[27] = 1; // txadp_lock_ovrd
+                rdata[28] = 1; // txpi_sclk_code_ovrd
+                rdata[26] = 1; // txsoc_lock_ovrd
+                avmm_if_s1.cfg_write({i_s1, 11'h350}, 4'hf, rdata);
+            end
+       //13. Clear vcalcode_ovrd bit of calvref register
+            for (i_s1=0; i_s1<24; i_s1++) begin
+                avmm_if_s1.cfg_read({i_s1, 11'h33C}, 4'hf, rdata);
+                rdata[30] = 0;
+                avmm_if_s1.cfg_write({i_s1, 11'h33C}, 4'hf, rdata);
+            end
+     end
+  endtask
+
 ////////////////////////////////////////////////////////
 /* AIB2.0 MS <-> AIB2.0 SL  in register mode 80b <-80b*/
 ///////////////////////////////////////////////////

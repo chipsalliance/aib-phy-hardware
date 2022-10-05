@@ -63,13 +63,10 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
           avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
           avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_000b);
           avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h60a1_0000);
-	  /*
-          avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
-          avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
-          avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
-          avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
-          avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
-	  */
+        `ifdef SL_AIB_BCA 
+         //1. During configuration phase, set vcalcode_ovrd bit of calvref register. BCA only
+            avmm_if_s1.cfg_write({i_s1,11'h33C}, 4'hf, 32'h4000_0000);
+        `endif
       end
 
       ms1_tx_fifo_mode = 2'b00;
@@ -90,6 +87,17 @@ always #(FWD_CYCLE/2)  sl_fwd_clk  = ~sl_fwd_clk;
 
       duts_wakeup ();
       status = "Waiting for link up";
+
+      $display("\n////////////////////////////////////////////////////////////////////////////");
+      $display("%0t: Waiting for Phase Adjust Work around if use BCA, Skip otherwise", $time);
+      $display("////////////////////////////////////////////////////////////////////////////\n");
+      
+      fork
+
+       `ifdef SL_AIB_BCA
+          sl_phase_adjust_wrkarnd ();
+       `endif
+      join
 
       $display("\n////////////////////////////////////////////////////////////////////////////");
       $display("%0t: Waiting for link up", $time);

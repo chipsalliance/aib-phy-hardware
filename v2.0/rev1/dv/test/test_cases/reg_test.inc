@@ -38,25 +38,19 @@ integer i_m1, i_s1;
             avmm_if_m1.cfg_write({i_m1,11'h208}, 4'hf, 32'h0600_0000);
             avmm_if_m1.cfg_write({i_m1,11'h210}, 4'hf, 32'h0000_0006);      
             avmm_if_m1.cfg_write({i_m1,11'h218}, 4'hf, 32'h6060_0000);
-/*
-            avmm_if_m1.cfg_write({i_m1,11'h21c}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h31c}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h320}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h324}, 4'hf, 32'h0000_0000);
-            avmm_if_m1.cfg_write({i_m1,11'h328}, 4'hf, 32'h0000_0000);
-*/
+        `ifdef MS_AIB_BCA 
+         //1. During configuration phase, set vcalcode_ovrd bit of calvref register. BCA only
+            avmm_if_m1.cfg_write({i_m1,11'h33C}, 4'hf, 32'h4000_0000);
+        `endif
         end
         for (i_s1=0; i_s1<24; i_s1++) begin
             avmm_if_s1.cfg_write({i_s1,11'h208}, 4'hf, 32'h0600_0000);
             avmm_if_s1.cfg_write({i_s1,11'h210}, 4'hf, 32'h0000_0006);
             avmm_if_s1.cfg_write({i_s1,11'h218}, 4'hf, 32'h6060_0000);
-/*
-            avmm_if_s1.cfg_write({i_s1,11'h21c}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h31c}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h320}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h324}, 4'hf, 32'h0000_0000);
-            avmm_if_s1.cfg_write({i_s1,11'h328}, 4'hf, 32'h0000_0000);
-*/
+        `ifdef SL_AIB_BCA 
+         //1. During configuration phase, set vcalcode_ovrd bit of calvref register. BCA only
+            avmm_if_s1.cfg_write({i_s1,11'h33C}, 4'hf, 32'h4000_0000);
+        `endif
         end
       join
 
@@ -69,6 +63,19 @@ integer i_m1, i_s1;
 
       duts_wakeup ();
       status = "Waiting for link up";
+
+      $display("\n////////////////////////////////////////////////////////////////////////////");
+      $display("%0t: Waiting for Phase Adjust Work around if use BCA, Skip otherwise", $time);
+      $display("////////////////////////////////////////////////////////////////////////////\n");
+      
+      fork
+       `ifdef MS_AIB_BCA 
+          ms_phase_adjust_wrkarnd ();
+       `endif
+       `ifdef SL_AIB_BCA
+          sl_phase_adjust_wrkarnd ();
+       `endif
+      join
 
       $display("\n////////////////////////////////////////////////////////////////////////////");
       $display("%0t: Waiting for link up", $time);
