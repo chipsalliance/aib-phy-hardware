@@ -1,9 +1,16 @@
 ## Advanced Interface Bus (AIB) PHY
-This repository contains the RTL and cell models for the AIB interface.  See the [AIB Spec](https://github.com/chipsalliance/AIB-specification/blob/master/AIB_Specification%202_0_DRAFT3.pdf) and [AIB Usage Note](https://github.com/chipsalliance/aib-phy-hardware/blob/master/docs/AIB_Usage_Note_v1_2_1.pdf) for information about AIB.
+This repository contains the RTL and cell models for the AIB interface.  See the [AIB Spec](https://github.com/chipsalliance/AIB-specification) for the AIB Specification.
 
-January 29, 2020, Version 1.0 (Initial release of the rev1 and rev2)
+September 26, 2022
 
-## Revision 1 (rev1)
+AIB 1.0 Users (Spec rev 1.2) should go to Version 1.0 v1.0/rev2. 
+
+AIB 2.0 Users (Spec rev 2.0.3) should go to Version 2.0 v2.0. 
+
+
+## Version 1.0
+
+#### Version 1.0, Revision 1 (v1.0/rev1)
 The rev1 open source AIB release is the same as the original moved from https://github.com/intel/aib-phy-hardware.
 
 The rev1 directory structure is:                                    
@@ -15,11 +22,10 @@ The rev1 directory structure is:
     ├── ndsimslv
 ```
 See README.txt under rev1 and subdirectories for detail.                  
-The design and simulation directories and contents are the same as previously released.
 New users should start with rev1 for quickest ramp up.                                   
 
-## Revision 2 (rev2)
-Rev2 has multi-die AIB instances and test benches recommended for advanced users.
+#### Version 1.0, Revision 2 (v1.0/rev2)
+Rev2 has multi-die AIB instances and test benches.
 
 Main directory structure is below.  Read the README.txt files in the subdirectories for details.
 
@@ -36,13 +42,22 @@ Main directory structure is below.  Read the README.txt files in the subdirector
         ├── v2_common
         ├── v2_master
         └── v2_slave
+```
 
-## Version 2.0 (rev1)
-Feb. 09, 2021, Version 2.0 (Initial release of the AIB 2.0 Model and DV)
-Previous revision 1.0 and revision 2.0 pushed down to version 1.0.
+#### Version 1, FPGA Main Die AIB (MAIB)
+v1.0/rev2/rtl/v1_slave 
+24 channel S10 MAIB Plus AUX (AUX only uses four pins)
+Use this for interop simulations with Stratix 10.
 
-## Version 2.0 (rev1.1)
-June 02, 2022 (Added MAIB 1.1 model and its DV suite)
+## Version 2.0
+
+v2.0/rev1 is a behavioral model of AIB 2.0.
+v2.0/rev1.1 is RTL extracted from an actual AIB 2.0 design. Functionally rev1 and rev1.1 are intended to be equivalent. rev1 simulates a lot faster than rev1.1, so some people prefer to use rev1. For a tapeout, a user should run rev1.1 for final verification.
+
+#### Version 2.0 (v2.0/rev1)
+AIB 2.0 behavior RTL based on AIB spec 2.0.
+
+#### Version 2.0 (v2.0/rev1.1)
 Main directory structure is below.  Read the README.txt files in the subdirectories for details.
 
 ```aib-phy-hardware
@@ -67,4 +82,8 @@ Main directory structure is below.  Read the README.txt files in the subdirector
         ├── dv
         └── rtl        -- MAIB 1.1 model
 ```
-
+#### FPGA Main Die AIB (MAIB)
+v2.0/rev1.1/rtl/maib_rev1.1
+24 channel Agilex with no AUX. The device_detect and power_on_reset signals go through a microbumped AUX channel on Agilex just like Stratix 10. 
+This model presents a MAIB MAC interface to FPGA soft IP, just like Quartus will provide.
+The AUX connection of device_detect and power_on-reset is in the testbench.
