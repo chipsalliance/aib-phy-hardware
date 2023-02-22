@@ -1,0 +1,9 @@
+{"vcs1":{"timestamp_begin":1677092255.733482046, "rt":110.22, "ut":6.61, "st":0.35}}
+{"vcselab":{"timestamp_begin":1677092365.999837598, "rt":105.07, "ut":1.28, "st":0.10}}
+{"link":{"timestamp_begin":1677092471.138933375, "rt":0.79, "ut":0.14, "st":0.08}}
+{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1677092255.304556881}
+{"VCS_COMP_START_TIME": 1677092255.304556881}
+{"VCS_COMP_END_TIME": 1677092472.209719830}
+{"VCS_USER_OPTIONS": "-sverilog +v2k -full64 +vcs+vcdpluson -timescale=1ps/1ps +define+VCS+BEHAVIORAL+TIMESCALE_EN+ALTR_HPS_INTEL_MACROS_OFF -f ./multidie.f ./top.sv ./dut_io.sv ./test.sv -l compile.log"}
+{"vcs1": {"peak_mem": 39645}}
+{"stitch_vcselab": {"peak_mem": 41218}}

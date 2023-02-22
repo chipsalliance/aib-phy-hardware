@@ -1,0 +1,1164 @@
+Command: vcs -sverilog +v2k -full64 +vcs+vcdpluson -timescale=1ps/1ps +define+VCS+BEHAVIORAL+TIMESCALE_EN+ALTR_HPS_INTEL_MACROS_OFF \
+-f ./multidie.f ./top.sv ./dut_io.sv ./test.sv -l compile.log
+*** Using c compiler gcc instead of cc ...
+                         Chronologic VCS (TM)
+         Version T-2022.06_Full64 -- Wed Feb 22 10:57:36 2023
+
+                    Copyright (c) 1991 - 2022 Synopsys, Inc.
+   This software and the associated documentation are proprietary to Synopsys,
+ Inc. This software may only be used in accordance with the terms and conditions
+ of a written license agreement with Synopsys, Inc. All other use, reproduction,
+   or distribution of this software is strictly prohibited.  Licensed Products
+     communicate with Synopsys servers for the purpose of providing software
+    updates, detecting software piracy and verifying that customers are using
+    Licensed Products in conformity with the applicable License Key for such
+  Licensed Products. Synopsys will use information gathered in connection with
+    this process to deliver software updates and pursue software pirates and
+                                   infringers.
+
+ Inclusivity & Diversity - Visit SolvNetPlus to read the "Synopsys Statement on
+            Inclusivity and Diversity" (Refer to article 000036315 at
+                        https://solvnetplus.synopsys.com)
+
+Parsing design file '../../aib_lib/c3lib/rtl/defines/c3lib_dv_defines.sv'
+Parsing design file '../../aib_lib/c3dfx/rtl/defines/c3dfx.vh'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_8ph_intp.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_crsdlyline.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_dll.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_dlyline64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_dlyline.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_dly.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_gry2thm64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_helper.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_interpolator.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_phasedet.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_top.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_custom.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_lock_dly.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dlycell_dcc.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_svt16_scdffcdn_cust.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_svt16_scdffsdn_cust.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ulvt16_2xarstsyncdff1_b2.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ulvt16_dffcdn_cust.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_cmos_nand_x64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_top_wrp.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_str_align.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree_mimic.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_cmos_nand_x64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_8ph_intp.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_dlyline64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_gry2thm64.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dll_ibkmux.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dlycell_dll.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dlycell_dll_c.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_scan_iomux.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_2to4dec.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_analog.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_avmm1.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_avmm2.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_buffx1_top.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_buffx1.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree_avmm_mimic.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree_avmm_pcs.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree_avmm.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clktree_pcs.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_cmos_fine_dly.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_cmos_nand_x1.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_ip8phs.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_digital.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_inv_split_align.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_lvshift.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_preclkbuf.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_quadph_code_gen.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_rxanlg.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_rxdatapath_rx.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_rxdig.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_top.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_txanlg.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_txdatapath_tx.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_txdig.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_nd2d0_custom.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_split_align.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/structured.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ff_r.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ff_p.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ff_rp.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_latch.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_red_custom_dig.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_str_ff.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_sync_ff.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_top_dummy.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_esd.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_str_ioload.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_red_custom_dig2.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_red_clkmux2.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_red_clkmux3.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_lvshift_lospeed.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_lvshift_diff.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_triinv_dig.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_interface.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_rambit_buf.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_signal_buf.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_data_buf.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_rxdat_mimic.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_txdat_mimic.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dcc_dly_rep.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dly_mimic.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_cmos_8ph_interpolator_rep.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_cmos_8ph_interpolator.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_nand_delay_line_min_rep.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_cmos_nand_x1.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_cmos_nand_x128.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_nand_delay_line_min.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_io_nand_x128_delay_line.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_clkmux2.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_sync_2ff.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_sync_3ff.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_aliasv.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_aliasd.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_ulvt16_dffsdn_cust.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_opio_esd.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_anaio_esd.v'
+Parsing design file '../../aib_lib/aibcr3_lib/rtl/aibcr3_dlycell_dcc_rep.v'
+Parsing design file '../../aib_lib/c3lib/rtl/basic/pulse_stretch/cdclib_pulse_stretch.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/avmm/c3_avmm_rdl_intf.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/avmm/c3lib_cfgcsr_fastslow_pulse_meta.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/avmm/c3lib_cfgcsr_slowfast_pulse_meta.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/avmm/c3lib_avmm_pulse_cross.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/async_fifo/c3lib_async_fifo.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/bit_synchronizer/c3lib_bitsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync2_lvt_bitsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync2_ulvt_bitsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/bit_synchronizer/c3lib_sync3_ulvt_bitsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/gray_code/c3lib_bintogray.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/gray_code/c3lib_graytobin.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/level_synchronizer/c3lib_lvlsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/reset_synchronizer/c3lib_rstsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/vector_synchronizer/c3lib_vecsync.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/vector_synchronizer/c3lib_vecsync_handshake.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/cdc/glitch_free_mux/c3lib_gf_clkmux.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_buf/c3lib_ckinv_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_buf/c3lib_ckbuf_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_buf/c3lib_ckand2_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_gater/c3lib_ckg_async_posedge_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_gater/c3lib_ckg_negedge_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_gater/c3lib_ckg_posedge_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_mux/c3lib_mux2_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_mux/c3lib_mux3_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_mux/c3lib_mux4_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv2_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv4_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ctn/clock_divider/c3lib_ckdiv8_ctn.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_and2_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_buf_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_mux2_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_nand2_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_or2_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_tie_bus_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_tieh_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_tiel_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_mtieh_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_mtiel_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/lcell/c3lib_dff_scan_lcell.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ecc/c3lib_ecc_dec_c39_d32.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ecc/c3lib_ecc_dec_c88_d80.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ecc/c3lib_ecc_enc_d32_c39.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/ecc/c3lib_ecc_enc_d80_c88.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync2_reset_lvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync2_reset_ulvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync3_reset_ulvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync2_set_lvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync2_set_ulvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync3_set_ulvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_tie0_svt_1x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_tie1_svt_1x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_mtie0_ds.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_mtie1_ds.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_or2_svt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_nand2_svt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_mux2_svt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckmux4_ulvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckmux4_lvt_gate.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckinv_lvt_12x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckinv_svt_8x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckg_lvt_8x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_ckbuf_lvt_4x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_buf_svt_4x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_and2_svt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_and2_svt_4x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_dff0_reset_lvt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_dff0_set_lvt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_dff0_scan_reset_svt_2x.sv'
+Parsing design file '../../aib_lib/c3lib/rtl/primitives/c3lib_sync_metastable_behav_gate.sv'
+Parsing design file '../../aib_lib/c3dfx/rtl/tcm/c3dfx_tcm_wrap.sv'
+Parsing design file '../../aib_lib/c3dfx/rtl/tcm/c3dfx_tcm.sv'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm1_async.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm1clk_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm1_config.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_hwcfg_dec.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_cfg_csr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_usr_csr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm1_transfer.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm1.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm2_async.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm2clk_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm2_config.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm2_transfer.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm2.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_async.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_cfg_rdmux.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmmclk_dcg.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmmclk_gate.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_cmdbuilder.sv'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_dec_arb.sv'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_decode.sv'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_rdfifo.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmmrst_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm_usr32_exp.sv'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_avmm.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_hrdrst_clkctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_avmm/c3aibadapt_hrdrst_rstctrl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_async_capture_bit.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_async_capture_bus.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkand2.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkgate_high.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkgate.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkinv.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkmux2_cell.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_clkmux2.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_cp_comp_cntr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_cp_dist_dw.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_cp_dist_pair_dw.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_cp_dist_pair.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_cp_dist.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_dft_clk_ctlr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_latency_measure.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_occ_clkgate.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_occ_enable_logic.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_occ_gray_cntr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_occ_test_ctlregs.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_parity_checker.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_parity_gen.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_pulse_stretch.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_dprio_status_sync_regs.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_cmn/c3aibadapt_cmn_shadow_status_regs.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync_capture.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync_direct.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync_rsvd_capture.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync_rsvd_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxasync.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxchnl_testbus.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxchnl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxclk_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxclk_gate.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_asn.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_async_fifo.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_cp_bond.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_del_sm.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_fifo_ptr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_fifo_ram.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_fifo.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_map.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rx_dprio.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_rxeq_sm.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_txeq_sm.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp_txeq.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxdp.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_rxchnl/c3aibadapt_rxrst_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_fsr_in.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_fsr_out.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr_async_capture_bit.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr_async_capture_bus.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_srclk_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr_in_bit.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr_out_bit.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_srrst_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr_sm.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_sr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_ssr_in.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_sr/c3aibadapt_ssr_out.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_async_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_hip_async_capture.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_hip_async_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync_capture.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync_direct.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync_rsvd_capture.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync_rsvd_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync_update.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txasync.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txchnl_testbus.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txchnl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txclk_ctl.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txclk_gate.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_async_fifo.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_cp_bond.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_fifo_ptr.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_fifo_ram.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_fifo.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_map.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_tx_dprio.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txdp_word_align.v'
+Parsing design file '../../aib_lib/c3aibadapt/rtl/c3aibadapt_txchnl/c3aibadapt_txrst_ctl.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_redundancy.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_jtag_bscan.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_bsr_red_wrap.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_half_cycle_code_gen.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_self_lock_assertion.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_dll_ctrl.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_dll_core.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_dll_pnr.v'
+Parsing design file '../../aib_lib/aibcr3pnr_lib/rtl/aibcr3pnr_rstsync.sv'
+Parsing design file '../../aib_lib/c3dfx/rtl/tcb/c3dfx_aibadaptwrap_tcb.sv'
+Parsing design file '../../aib_lib/c3aibadapt_wrap/rtl/c3aibadapt_wrap.v'
+Parsing design file '../../aib_lib/c3aibadapt_wrap/rtl/c3aib_master.sv'
+Parsing design file '../../maib_rtl/s10aib/rtl/ndaibadapt_wrap.v'
+Parsing design file '../../maib_rtl/s10aib/rtl/an.v'
+Parsing design file '../../maib_rtl/s10aib/rtl/s10aib.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm1_async.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm1_config.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm1_dprio_mapping.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm1_transfer.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm1.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm2_async.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm2_transfer.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm2.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_async_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmmclk_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_cmdfifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_cmn_intf.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_dprio_reg.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_rdfifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmmrst_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_avmm_async.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_hrdrst_rstctrl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_avmm/hdpldadapt_hrdrst_clkctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_fsr_in.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_fsr_out.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_srclk_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_sr_in_bit.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_sr_out_bit.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_srrst_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_sr_sm.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_sr.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_ssr_in.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_sr/hdpldadapt_ssr_out.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_async_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async_reserved_capture.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async_reserved_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_hip_async_capture.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_hip_async_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async_capture.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async_direct.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_async.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_chnl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_txclk_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_async_fifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_fifo_ram.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_fifo_pointers.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_chnl_testbus.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_cp_bond.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_dv_gen.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_fifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_frame_gen.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_word_mark.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_txrst_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_tx_chnl/hdpldadapt_tx_datapath_pulse_stretch.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async_reserved_capture.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async_reserved_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async_capture.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async_direct.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async_update.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_async.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_chnl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rxclk_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_asn.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_async_fifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_cp_bond.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_fifo.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_fifo_ram.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_fifo_pointers.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_insert_sm.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_del_sm.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_word_align.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rxrst_ctl.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_datapath_pulse_stretch.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_rx_chnl/hdpldadapt_rx_chnl_testbus.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_async_capture_bit.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_cp_comp_cntr.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_cp_dist_pair_dw.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_cp_dist.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_async_capture_bus.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_cp_dist_dw.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_cp_dist_pair.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_latency_measure.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_pulse_stretch.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_parity_gen.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_parity_checker.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkand2.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkdelay_map.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkdelay.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkdelay_cell.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkgate.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkinv.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkmux2_cell.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkmux2.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_clkor2.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_dft_clock_controller.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_occ_clkgate.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_occ_enable_logic.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_occ_gray_code_counter.v'
+Parsing design file '../../maib_rtl/hdpldadapt/rtl/hdpldadapt_cmn/hdpldadapt_cmn_occ_test_control_register.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_bintogray.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_bintogray_inc8.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_bitsync2.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_reset_type_l_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_reset_type_n_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_reset_type_w_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_set_type_l_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_set_type_n_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync2_set_type_w_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_bitsync4.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync4_reset_type_l_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync4_reset_type_w_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync4_set_type_l_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_sync4_set_type_w_gate.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_graytobin.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_graytobin_inc2.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_graytobin_inc8.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_rst_n_sync.v'
+Parsing design file '../../maib_rtl/cdclib/rtl/block_function/cdclib_rst_n_sync_core.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_csr_reg_bit.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_csr_reg_nbits.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_csr_reg_nregs.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_cmn_non_scan_reg.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_readdata_mux.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_stat_interface_top.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_csr_test_mux.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_cmn_clk_mux.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_reg_bit.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_reg_nbits.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_reg_nregs.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_stat_reg_chnl.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_ctrl_stat_reg_top.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_dis_ctrl_cvp.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_readdata_sel.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_status_reg_nbits.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_status_reg_nregs.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_status_sync_regs.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_shadow_status_regs.v'
+Parsing design file '../../maib_rtl/cfg_shared/rtl/block_function/cfg_dprio_shadow_status_nregs.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_top_wrp.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_top.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_dly_rep.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dly_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_io_dly_interpolator_rep.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_io_nand_delay_line_min_rep.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_latch.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_hgy_latch.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_ff_r.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_ff_rp.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_2ff_scan.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_aliasd.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_aliasv.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_2to4dec.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_analog.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_avmm1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_avmm2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_buffx1_top.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_buffx1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clkbuf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree_avmm.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree_avmm_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree_avmm_pcs.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clktree_pcs.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_cmos_fine_dly.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_cmos_nand_x6.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_cmos_nand_x1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_d8xsesdd1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_d8xsesdd2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_5b_b2tc_x1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_5b_b2tc.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_dll.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_ff.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_fine_dly.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_mux.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_top.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_digital.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dll_phdet.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dll_custom.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_inv_split_align.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_quadph_code_gen.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_preclkbuf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_rxdatapath_rx.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_rxdig.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_str_align.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_txdatapath_tx.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_txdig.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_rxanlg.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_txanlg.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_fine_dly_x1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_fine_dly_x1.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_dly_inv.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_fine_dly_inv.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_str_ff.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_helper.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_str_clktree_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_dly.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_red_custom_dig.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_str_preclkbuf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_nand_x64_delay_line.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_str_clktree.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_sync_ff.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_cmos_nand_x64.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_signal_buf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_red_custom_dig2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_avmm_rst_sync.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_data_buf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_interface.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_rambit_buf.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_inv.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_nand2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_nor2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_red_clkmux2.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_red_clkmux3.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_txdat_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_rxdat_mimic.v'
+Parsing design file '../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_clkmux2.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_mux.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_ip16phs.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_16ph_decode.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_misc.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_output.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_latch_in.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_mux_pair.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_interp_pdn.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_min_interp_mux.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_min_ip16phs.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_min_output.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_min_misc.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_min_pdn.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_dly_interpolator.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_dly_interpclk.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_ip8phs_3in.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x1.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x128.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x64_decode.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x128_decode.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x6.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_nand_x128_delay_line.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x64.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_cmos_nand_x4.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_split_align.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_dll_phdet.v'
+Parsing design file '../../maib_rtl/io_common_custom/rtl/block_function/io_nand_delay_line_min.v'
+Parsing design file '../../maib_rtl/soc_std_macro/rtl/block_function/i14socnd/soc_simulation_defines.v'
+Parsing design file '../../maib_rtl/soc_std_macro/rtl/block_function/i14socnd/altr_hps_ckinv.v'
+Parsing design file '../../maib_rtl/soc_std_macro/rtl/block_function/i14socnd/altr_hps_ckmux21.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_redundancy.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_jtag_bscan.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_bsr_red_wrap.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_half_cycle_code_gen.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_self_lock_assertion.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_ctrl.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_core.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_pnr.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_atech_clkgate_cgc00.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_atech_clkgate_cgc01.v'
+Parsing design file '../../maib_rtl/aibndpnr_lib/rtl/block_function/aibndpnr_dll_atech_clkmux.v'
+Parsing design file './top.sv'
+Parsing included file '../../aib_lib/c3dfx/rtl/defines/c3dfx.vh'.
+Back to file './top.sv'.
+Parsing included file 'ndut_declare.sv'.
+Back to file './top.sv'.
+Parsing included file 'ndut_default.sv'.
+Back to file './top.sv'.
+Parsing included file 'nda_drv.sv'.
+Back to file './top.sv'.
+Parsing included file 'nda_port.sv'.
+Back to file './top.sv'.
+Parsing design file './dut_io.sv'
+Parsing design file './test.sv'
+Top Level Modules:
+       aibcr3_svt16_scdffsdn_cust
+       aibcr3_2to4dec
+       aibcr3_clktree_avmm_mimic
+       aibcr3_cmos_fine_dly
+       aibcr3_cmos_nand_x1
+       aibcr3_inv_split_align
+       aibcr3_preclkbuf
+       aibcr3_quadph_code_gen
+       aibcr3_nd2d0_custom
+       aibcr3_split_align
+       sa_invg0_ulvt
+       sa_invg1_ulvt
+       sa_invg2_ulvt
+       sa_invg2_hs_ulvt
+       sa_invg4_ulvt
+       sa_invg4_hs_ulvt
+       sa_invg8_ulvt
+       sa_invg0_elvt
+       sa_invg1_elvt
+       sa_invg2_elvt
+       sa_invg2_hs_elvt
+       sa_invg4_elvt
+       sa_invg4_hs_elvt
+       sa_invg8_elvt
+       sa_buf00_ulvt
+       sa_buf01_ulvt
+       sa_nd2g1_ulvt
+       sa_nd3g1_ulvt
+       sa_nd4g1_ulvt
+       sa_nd2g1_elvt
+       sa_nd3g1_elvt
+       sa_nd4g1_elvt
+       sa_nr2g1_ulvt
+       sa_nr3g1_ulvt
+       sa_nr4g1_ulvt
+       sa_nr2g1_elvt
+       sa_nd2_hs_ulvt
+       sa_nr2_hs_ulvt
+       sa_nd2_cl_ulvt
+       sa_nr2_cl_ulvt
+       sa_xnr2_hs_ulvt
+       sa_xor2_hs_ulvt
+       sa_frncnp_elvt
+       sa_frncnp_ulvt
+       sa_frnc_ulvt
+       sa_frnc_ulvt_hp
+       sa_sdff_1x
+       sa_sdffrr_1x
+       sa_sdffrr_1x_tx
+       sa_sdffrr
+       sa_sdl_en_2x
+       sa_triinv1_ulvt
+       sa_triinv2_ulvt
+       sa_triinv2_elvt
+       sa_muxnd21_ulvt
+       sa_muxnd41_ulvt
+       sa_muxnd21_buf_ulvt
+       sa_muxnd41_buf_ulvt
+       sa_muxpas21_ulvt
+       sa_muxpas41_ulvt
+       sa_muxtri21_ulvt
+       sa_muxtri31_ulvt
+       sa_muxtri41_ulvt
+       sa_muxtri81_ulvt
+       sa_txgate_ulvt
+       sa_txgate_elvt
+       sa_lvshift_ulvt
+       sa_decap4_ulvt
+       sa_decap8_ulvt
+       aibcr3_ff_p
+       aibcr3_ff_rp
+       aibcr3_sync_ff
+       aibcr3_str_ioload
+       aibcr3_red_clkmux2
+       aibcr3_red_clkmux3
+       aibcr3_lvshift_lospeed
+       aibcr3_triinv_dig
+       aibcr3_io_nand_delay_line_min_rep
+       aibcr3_io_nand_delay_line_min
+       aibcr3_io_nand_x128_delay_line
+       aibcr3_clkmux2
+       aibcr3_sync_2ff
+       aibcr3_aliasv
+       aibcr3_opio_esd
+       aibcr3_anaio_esd
+       cdclib_pulse_stretch
+       c3lib_cfgcsr_fastslow_pulse_meta
+       c3lib_cfgcsr_slowfast_pulse_meta
+       c3lib_avmm_pulse_cross
+       c3lib_async_fifo
+       c3lib_lvlsync
+       c3lib_vecsync
+       c3lib_ckg_async_posedge_ctn
+       c3lib_mux3_ctn
+       c3lib_buf_lcell
+       c3lib_mux2_lcell
+       c3lib_or2_lcell
+       c3lib_tie_bus_lcell
+       c3lib_tieh_lcell
+       c3lib_tiel_lcell
+       c3lib_mtieh_lcell
+       c3lib_mtiel_lcell
+       c3lib_dff_scan_lcell
+       c3lib_ecc_dec_c39_d32
+       c3lib_ecc_dec_c88_d80
+       c3lib_ecc_enc_d32_c39
+       c3lib_ecc_enc_d80_c88
+       c3lib_ckmux4_ulvt_gate
+       c3lib_ckinv_lvt_12x
+       c3lib_ckbuf_lvt_4x
+       c3lib_and2_svt_2x
+       c3lib_dff0_reset_lvt_2x
+       c3lib_dff0_set_lvt_2x
+       c3aibadapt_avmmclk_gate
+       c3aibadapt_cmn_clkand2
+       c3aibadapt_cmn_clkgate_high
+       c3aibadapt_cmn_clkinv
+       c3aibadapt_cmn_clkmux2
+       c3aibadapt_cmn_dft_clk_ctlr
+       c3aibadapt_cmn_occ_clkgate
+       c3aibadapt_rxclk_gate
+       c3aibadapt_rxdp_del_sm
+       c3aibadapt_rx_dprio
+       c3aibadapt_sr_async_capture_bit
+       c3aibadapt_sr_async_capture_bus
+       c3aibadapt_txclk_gate
+       c3aibadapt_tx_dprio
+       c3aib_master
+       hdpldadapt_avmm_async_update
+       cdclib_graytobin_inc2
+       cfg_dprio_shadow_status_nregs
+       aibnd_ff_rp
+       aibnd_aliasv
+       aibnd_clkbuf
+       aibnd_clktree_avmm_mimic
+       aibnd_clktree_mimic
+       aibnd_dcc_5b_b2tc
+       aibnd_dcc_fine_dly
+       aibnd_inv_split_align
+       aibnd_quadph_code_gen
+       aibnd_preclkbuf
+       aibnd_fine_dly_x1
+       aibnd_fine_dly_inv
+       io_ip16phs
+       io_cmos_16ph_decode
+       io_interp_misc
+       io_interp_output
+       io_interp_mux_pair
+       io_interp_pdn
+       io_min_interp_mux
+       io_min_ip16phs
+       io_min_output
+       io_min_misc
+       io_min_pdn
+       io_cmos_nand_x64
+       top
+TimeScale is 100 fs / 1 fs
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/io_common_custom/rtl/block_function/io_interp_output.v, 60
+io_interp_output, "an_io_double_edge_ff xdouble_edge_ff( .clk_in (interp_clk[1:0]),  .reset_n (enable),  .test_enable_n (test_enable_n),  .data_in ({dirty_clk_out[1], (~dirty_clk_out[0])}),  .data_out (int_clk_out[1:0]));"
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/io_common_custom/rtl/block_function/io_min_output.v, 35
+io_min_output, "an_io_double_edge_ff xdouble_edge_ff( .clk_in (interp_clk[1:0]),  .test_enable_n (test_enable_n),  .reset_n (enable),  .data_in (2'b1),  .data_out (int_clk_out[1:0]));"
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/io_common_custom/rtl/block_function/io_dll_phdet.v, 36
+io_dll_phdet, "an_io_phdet_ff_ln xsampling_up( .dp (i_del_p),  .dn (i_del_n),  .clk_p (phase_clk),  .rst_n (dll_reset_n),  .q (t_up));"
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/io_common_custom/rtl/block_function/io_dll_phdet.v, 44
+io_dll_phdet, "an_io_phdet_ff_ln xsampling_dn( .dp (phase_clkb),  .dn (phase_clk),  .clk_p (i_del_n),  .rst_n (dll_reset_n),  .q (t_down));"
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/aibnd_lib/rtl/block_function/aibnd_dcc_helper.v, 29
+aibnd_dcc_helper, "an_io_phdet_ff_ln x2( .q (q),  .clk_p (clk),  .dn (datab),  .dp (data),  .rst_n (syncrstb));"
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+../../maib_rtl/s10aib/rtl/s10aib.v, 148
+s10aib, "ndaibadapt_wrap ndut( .io_aib0 (iopad_rx[0]),  .io_aib1 (iopad_rx[1]),  .io_aib10 (iopad_rx[10]),  .io_aib11 (iopad_rx[11]),  .io_aib12 (iopad_rx[12]),  .io_aib13 (iopad_rx[13]),  .io_aib14 (iopad_rx[14]),  .io_aib15 (iopad_rx[15]),  .io_aib16 (iopad_rx[16]),  .io_aib17 (iopad_rx[17]),  .io_aib18 (iopad_rx[18]),  .io_aib19 (iopad_rx[19]),  .io_aib2 (iopad_rx[2]),  .io_aib20 (iopad_tx[0]),  .io_aib21 (iopad_tx[1]),  .io_aib22 (iopad_tx[2]),  .io_aib23 (iopad_tx[3]),  .io_aib24 (iopad_tx[4]),  .io_aib25 (iopad_tx[5]),  .io_aib26 (iopad_tx[6]),  .io_aib27 (iopad_tx[7]),  .io_aib28 (iopad_tx[8]),  .io_aib29 (iopad_tx[9]),  .io_aib3 (iopad_rx[3]),  .io_aib30 (iopad_tx[10]),  .io_aib31 (iopad_tx[11]),  .io_aib32 (iopad_tx[12]),  .io_aib33 (iopad_tx[13]),  .io ... "
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+
+Warning-[TFIPC] Too few instance port connections
+nda_port.sv, 9
+top, "s10aib s10_wrap( .iopad_ns_mac_rdy (ms_iopad_fs_mac_rdy),  .iopad_fs_mac_rdy (ms_iopad_ns_mac_rdy),  .iopad_ns_adapter_rstn (ms_iopad_fs_adapter_rstn),  .iopad_fs_adapter_rstn (ms_iopad_ns_adapter_rstn),  .iopad_tx (ms_iopad_rx),  .iopad_ns_fwd_clk (ms_iopad_fs_fwd_clk),  .iopad_ns_fwd_clkb (ms_iopad_fs_fwd_clkb),  .iopad_ns_rcv_clk (ms_iopad_fs_rcv_clk),  .iopad_ns_rcv_clkb (ms_iopad_fs_rcv_clkb),  .iopad_rx (ms_iopad_tx),  .iopad_fs_fwd_clk (ms_iopad_ns_fwd_clk),  .iopad_fs_fwd_clkb (ms_iopad_ns_fwd_clkb),  .iopad_fs_fwd_div2_clk (ms_iopad_ns_fwd_div2_clk),  .iopad_fs_fwd_div2_clkb (ms_iopad_ns_fwd_div2_clkb),  .iopad_fs_rcv_clk (ms_iopad_ns_rcv_clk),  .iopad_fs_rcv_clkb (ms_iopad_ns_rcv_clkb),  .iopad_fs_rcv_div2_clk (ms_iopad_ns_rcv_div2_clk),  .iop ... "
+  The above instance has fewer port connections than the module definition.
+  Please use '+lint=TFIPC-L' to print out detailed information of unconnected 
+  ports.
+
+Notice: Ports coerced to inout, use -notice for details
+Starting vcs inline pass...
+
+335 modules and 2 UDPs read.
+recompiling module aibcr3_dcc_8ph_intp
+recompiling module aibcr3_dcc_dly
+recompiling module aibcr3_dcc_gry2thm64
+recompiling module aibcr3_dcc_interpolator
+recompiling module aibcr3_svt16_scdffcdn_cust
+recompiling module aibcr3_svt16_scdffsdn_cust
+recompiling module aibcr3_io_cmos_nand_x64
+recompiling module aibcr3_top_wrp
+recompiling module aibcr3_cmos_nand_x64
+recompiling module aibcr3_dlycell_dll
+recompiling module aibcr3_scan_iomux
+recompiling module aibcr3_2to4dec
+recompiling module aibcr3_avmm1
+recompiling module aibcr3_avmm2
+recompiling module aibcr3_buffx1_top
+recompiling module aibcr3_clktree_avmm_mimic
+recompiling module aibcr3_cmos_fine_dly
+recompiling module aibcr3_cmos_nand_x1
+recompiling module aibcr3_io_ip8phs
+recompiling module aibcr3_inv_split_align
+recompiling module aibcr3_lvshift
+recompiling module aibcr3_preclkbuf
+recompiling module aibcr3_quadph_code_gen
+recompiling module aibcr3_nd2d0_custom
+recompiling module aibcr3_split_align
+recompiling module sa_invg0_ulvt
+recompiling module sa_invg1_ulvt
+recompiling module sa_invg2_ulvt
+recompiling module sa_invg2_hs_ulvt
+recompiling module sa_invg4_ulvt
+recompiling module sa_invg4_hs_ulvt
+recompiling module sa_invg8_ulvt
+recompiling module sa_invg0_elvt
+recompiling module sa_invg1_elvt
+recompiling module sa_invg2_elvt
+recompiling module sa_invg2_hs_elvt
+recompiling module sa_invg4_elvt
+recompiling module sa_invg4_hs_elvt
+recompiling module sa_invg8_elvt
+recompiling module sa_buf00_ulvt
+recompiling module sa_buf01_ulvt
+recompiling module sa_nd2g1_ulvt
+recompiling module sa_nd3g1_ulvt
+recompiling module sa_nd4g1_ulvt
+recompiling module sa_nd2g1_elvt
+recompiling module sa_nd3g1_elvt
+recompiling module sa_nd4g1_elvt
+recompiling module sa_nr2g1_ulvt
+recompiling module sa_nr3g1_ulvt
+recompiling module sa_nr4g1_ulvt
+50 of 335 modules done
+recompiling module sa_nr2g1_elvt
+recompiling module sa_nd2_hs_ulvt
+recompiling module sa_nr2_hs_ulvt
+recompiling module sa_nd2_cl_ulvt
+recompiling module sa_nr2_cl_ulvt
+recompiling module sa_xnr2_hs_ulvt
+recompiling module sa_xor2_hs_ulvt
+recompiling module sa_frncnp_elvt
+recompiling module sa_frncnp_ulvt
+recompiling module sa_frnc_ulvt
+recompiling module sa_frnc_ulvt_hp
+recompiling module sa_sdff_1x
+recompiling module sa_sdffrr_1x
+recompiling module sa_sdffrr_1x_tx
+recompiling module sa_sdffrr
+recompiling module sa_sdl_en_2x
+recompiling module sa_triinv1_ulvt
+recompiling module sa_triinv2_ulvt
+recompiling module sa_triinv2_elvt
+recompiling module sa_muxnd21_ulvt
+recompiling module sa_muxnd41_ulvt
+recompiling module sa_muxnd21_buf_ulvt
+recompiling module sa_muxnd41_buf_ulvt
+recompiling module sa_muxpas21_ulvt
+recompiling module sa_muxpas41_ulvt
+recompiling module sa_muxtri21_ulvt
+recompiling module sa_muxtri31_ulvt
+recompiling module sa_muxtri41_ulvt
+recompiling module sa_muxtri81_ulvt
+recompiling module sa_txgate_ulvt
+recompiling module sa_txgate_elvt
+recompiling module sa_lvshift_ulvt
+recompiling module sa_decap4_ulvt
+recompiling module sa_decap8_ulvt
+recompiling module aibcr3_ff_p
+recompiling module aibcr3_ff_rp
+recompiling module aibcr3_latch
+recompiling module aibcr3_str_ff
+recompiling module aibcr3_sync_ff
+recompiling module aibcr3_str_ioload
+recompiling module aibcr3_red_clkmux2
+recompiling module aibcr3_red_clkmux3
+recompiling module aibcr3_lvshift_lospeed
+recompiling module aibcr3_lvshift_diff
+recompiling module aibcr3_triinv_dig
+recompiling module aibcr3_interface
+recompiling module aibcr3_signal_buf
+recompiling module aibcr3_dcc_dly_rep
+recompiling module aibcr3_dly_mimic
+recompiling module aibcr3_io_cmos_8ph_interpolator
+100 of 335 modules done
+recompiling module aibcr3_io_nand_delay_line_min_rep
+recompiling module aibcr3_io_nand_delay_line_min
+recompiling module aibcr3_io_nand_x128_delay_line
+recompiling module aibcr3_clkmux2
+recompiling module aibcr3_sync_2ff
+recompiling module aibcr3_aliasv
+recompiling module aibcr3_opio_esd
+recompiling module aibcr3_anaio_esd
+recompiling module cdclib_pulse_stretch
+recompiling module c3_avmm_rdl_intf
+recompiling module c3lib_cfgcsr_fastslow_pulse_meta
+recompiling module c3lib_cfgcsr_slowfast_pulse_meta
+recompiling module c3lib_avmm_pulse_cross
+recompiling module c3lib_async_fifo
+recompiling module c3lib_bitsync
+recompiling module c3lib_lvlsync
+recompiling module c3lib_rstsync
+recompiling module c3lib_vecsync
+recompiling module c3lib_vecsync_handshake
+recompiling module c3lib_ckg_async_posedge_ctn
+recompiling module c3lib_mux2_ctn
+recompiling module c3lib_mux3_ctn
+recompiling module c3lib_mux4_ctn
+recompiling module c3lib_buf_lcell
+recompiling module c3lib_mux2_lcell
+recompiling module c3lib_or2_lcell
+recompiling module c3lib_tie_bus_lcell
+recompiling module c3lib_tieh_lcell
+recompiling module c3lib_tiel_lcell
+recompiling module c3lib_mtieh_lcell
+recompiling module c3lib_mtiel_lcell
+recompiling module c3lib_dff_scan_lcell
+recompiling module c3lib_ecc_dec_c39_d32
+recompiling module c3lib_ecc_dec_c88_d80
+recompiling module c3lib_ecc_enc_d32_c39
+recompiling module c3lib_ecc_enc_d80_c88
+recompiling module c3lib_sync2_reset_ulvt_gate
+recompiling module c3lib_sync2_set_ulvt_gate
+recompiling module c3lib_mux2_svt_2x
+recompiling module c3lib_ckmux4_ulvt_gate
+recompiling module c3lib_ckinv_lvt_12x
+recompiling module c3lib_ckbuf_lvt_4x
+recompiling module c3lib_and2_svt_2x
+recompiling module c3lib_dff0_reset_lvt_2x
+recompiling module c3lib_dff0_set_lvt_2x
+recompiling module c3dfx_tcm_wrap
+recompiling module c3dfx_tcm
+recompiling module c3aibadapt_avmm1_async
+recompiling module c3aibadapt_cfg_csr
+recompiling module c3aibadapt_usr_csr
+150 of 335 modules done
+recompiling module c3aibadapt_avmm2
+recompiling module c3aibadapt_avmm_async
+recompiling module c3aibadapt_avmmclk_dcg
+recompiling module c3aibadapt_avmmclk_gate
+recompiling module c3aibadapt_avmm_cmdbuilder
+recompiling module c3aibadapt_avmm_rdfifo
+recompiling module c3aibadapt_avmm
+recompiling module c3aibadapt_hrdrst_clkctl
+recompiling module c3aibadapt_hrdrst_rstctrl
+recompiling module c3aibadapt_cmn_async_capture_bit
+recompiling module c3aibadapt_cmn_async_capture_bus
+recompiling module c3aibadapt_cmn_clkand2
+recompiling module c3aibadapt_cmn_clkgate_high
+recompiling module c3aibadapt_cmn_clkinv
+recompiling module c3aibadapt_cmn_clkmux2
+recompiling module c3aibadapt_cmn_cp_comp_cntr
+recompiling module c3aibadapt_cmn_cp_dist_dw
+recompiling module c3aibadapt_cmn_cp_dist
+recompiling module c3aibadapt_cmn_dft_clk_ctlr
+recompiling module c3aibadapt_cmn_latency_measure
+recompiling module c3aibadapt_cmn_occ_clkgate
+recompiling module c3aibadapt_cmn_parity_checker
+recompiling module c3aibadapt_cmn_parity_gen
+recompiling module c3aibadapt_cmn_pulse_stretch
+recompiling module c3aibadapt_cmn_dprio_status_sync_regs
+recompiling module c3aibadapt_cmn_shadow_status_regs
+recompiling module c3aibadapt_rxasync_direct
+recompiling module c3aibadapt_rxasync_rsvd_capture
+recompiling module c3aibadapt_rxasync_rsvd_update
+recompiling module c3aibadapt_rxasync_update
+recompiling module c3aibadapt_rxchnl_testbus
+recompiling module c3aibadapt_rxclk_ctl
+recompiling module c3aibadapt_rxclk_gate
+recompiling module c3aibadapt_rxdp_del_sm
+recompiling module c3aibadapt_rxdp_fifo_ram
+recompiling module c3aibadapt_rx_dprio
+recompiling module c3aibadapt_rxdp_txeq
+recompiling module c3aibadapt_rxdp
+recompiling module c3aibadapt_rxrst_ctl
+recompiling module c3aibadapt_fsr_in
+recompiling module c3aibadapt_fsr_out
+recompiling module c3aibadapt_sr_async_capture_bit
+recompiling module c3aibadapt_sr_async_capture_bus
+recompiling module c3aibadapt_srclk_ctl
+recompiling module c3aibadapt_sr_in_bit
+recompiling module c3aibadapt_sr_out_bit
+recompiling module c3aibadapt_srrst_ctl
+recompiling module c3aibadapt_sr_sm
+recompiling module c3aibadapt_sr
+recompiling module c3aibadapt_ssr_out
+200 of 335 modules done
+recompiling module c3aibadapt_async_update
+recompiling module c3aibadapt_txasync
+recompiling module c3aibadapt_txchnl_testbus
+recompiling module c3aibadapt_txchnl
+recompiling module c3aibadapt_txclk_ctl
+recompiling module c3aibadapt_txclk_gate
+recompiling module c3aibadapt_txdp_fifo_ram
+recompiling module c3aibadapt_tx_dprio
+recompiling module c3aibadapt_txrst_ctl
+recompiling module aibcr3pnr_dll_pnr
+recompiling module c3dfx_aibadaptwrap_tcb
+recompiling module c3aib_master
+recompiling module an_io_double_edge_ff
+recompiling module an_io_phdet_ff_ln
+recompiling module s10aib
+recompiling module hdpldadapt
+recompiling module hdpldadapt_avmm1_async
+recompiling module hdpldadapt_avmm1_dprio_mapping
+recompiling module hdpldadapt_avmm2
+recompiling module hdpldadapt_avmm_async_update
+recompiling module hdpldadapt_avmmclk_ctl
+recompiling module hdpldadapt_avmm_cmdfifo
+recompiling module hdpldadapt_avmm_rdfifo
+recompiling module hdpldadapt_avmm_async
+recompiling module hdpldadapt_hrdrst_rstctrl
+recompiling module hdpldadapt_hrdrst_clkctl
+recompiling module hdpldadapt_fsr_in
+recompiling module hdpldadapt_fsr_out
+recompiling module hdpldadapt_srclk_ctl
+recompiling module hdpldadapt_sr_in_bit
+recompiling module hdpldadapt_sr_out_bit
+recompiling module hdpldadapt_srrst_ctl
+recompiling module hdpldadapt_sr_sm
+recompiling module hdpldadapt_sr
+recompiling module hdpldadapt_ssr_out
+recompiling module hdpldadapt_async_update
+recompiling module hdpldadapt_tx_async
+recompiling module hdpldadapt_tx_chnl
+recompiling module hdpldadapt_txclk_ctl
+recompiling module hdpldadapt_tx_datapath_fifo_ram
+recompiling module hdpldadapt_tx_chnl_testbus
+recompiling module hdpldadapt_tx_datapath_dv_gen
+recompiling module hdpldadapt_tx_datapath_frame_gen
+recompiling module hdpldadapt_txrst_ctl
+recompiling module hdpldadapt_tx_datapath_pulse_stretch
+recompiling module hdpldadapt_rx_async
+recompiling module hdpldadapt_rx_chnl
+recompiling module hdpldadapt_rxclk_ctl
+recompiling module hdpldadapt_rx_datapath_asn
+recompiling module hdpldadapt_rx_datapath_cp_bond
+250 of 335 modules done
+recompiling module hdpldadapt_rx_datapath_fifo_ram
+recompiling module hdpldadapt_rx_datapath_insert_sm
+recompiling module hdpldadapt_rx_datapath_word_align
+recompiling module hdpldadapt_rxrst_ctl
+recompiling module hdpldadapt_rx_datapath_pulse_stretch
+recompiling module hdpldadapt_rx_chnl_testbus
+recompiling module hdpldadapt_cmn_async_capture_bit
+recompiling module hdpldadapt_cmn_cp_comp_cntr
+recompiling module hdpldadapt_cmn_cp_dist
+recompiling module hdpldadapt_cmn_async_capture_bus
+recompiling module hdpldadapt_cmn_cp_dist_dw
+recompiling module hdpldadapt_cmn_pulse_stretch
+recompiling module hdpldadapt_cmn_parity_gen
+recompiling module hdpldadapt_cmn_parity_checker
+recompiling module hdpldadapt_cmn_clkdelay_map
+recompiling module hdpldadapt_cmn_dft_clock_controller
+recompiling module cdclib_bitsync2
+recompiling module cdclib_sync2_reset_type_w_gate
+recompiling module cdclib_bitsync4
+recompiling module cdclib_sync4_reset_type_l_gate
+recompiling module cdclib_sync4_set_type_l_gate
+recompiling module cdclib_graytobin
+recompiling module cdclib_graytobin_inc2
+recompiling module cdclib_rst_n_sync
+recompiling module cfg_dprio_csr_reg_bit
+recompiling module cfg_dprio_csr_reg_nbits
+recompiling module cfg_dprio_csr_reg_nregs
+recompiling module cfg_dprio_ctrl_reg_bit
+recompiling module cfg_dprio_ctrl_reg_nbits
+recompiling module cfg_dprio_status_sync_regs
+recompiling module cfg_dprio_shadow_status_regs
+recompiling module cfg_dprio_shadow_status_nregs
+recompiling module aibnd_dcc_dly_rep
+recompiling module aibnd_dly_mimic
+recompiling module aibnd_latch
+recompiling module aibnd_hgy_latch
+recompiling module aibnd_ff_r
+recompiling module aibnd_ff_rp
+recompiling module aibnd_2ff_scan
+recompiling module aibnd_aliasv
+recompiling module aibnd_buffx1_top
+recompiling module aibnd_clkbuf
+recompiling module aibnd_clktree_avmm_mimic
+recompiling module aibnd_clktree_avmm_pcs
+recompiling module aibnd_clktree_mimic
+recompiling module aibnd_cmos_nand_x6
+recompiling module aibnd_cmos_nand_x1
+recompiling module aibnd_dcc_5b_b2tc_x1
+recompiling module aibnd_dcc_5b_b2tc
+recompiling module aibnd_dcc_ff
+300 of 335 modules done
+recompiling module aibnd_dcc_fine_dly
+recompiling module aibnd_dcc_mux
+recompiling module aibnd_inv_split_align
+recompiling module aibnd_quadph_code_gen
+recompiling module aibnd_preclkbuf
+recompiling module aibnd_fine_dly_x1
+recompiling module aibnd_fine_dly_inv
+recompiling module aibnd_str_ff
+recompiling module aibnd_str_clktree_mimic
+recompiling module aibnd_dcc_dly
+recompiling module aibnd_nand_x64_delay_line
+recompiling module aibnd_str_clktree
+recompiling module aibnd_signal_buf
+recompiling module aibnd_interface
+recompiling module io_interp_mux
+recompiling module io_ip16phs
+recompiling module io_cmos_16ph_decode
+recompiling module io_interp_misc
+recompiling module io_interp_output
+recompiling module io_interp_mux_pair
+recompiling module io_interp_pdn
+recompiling module io_min_interp_mux
+recompiling module io_min_ip16phs
+recompiling module io_min_output
+recompiling module io_min_misc
+recompiling module io_min_pdn
+recompiling module io_dly_interpolator
+recompiling module io_ip8phs_3in
+recompiling module io_cmos_nand_x64_decode
+recompiling module io_cmos_nand_x6
+recompiling module io_cmos_nand_x64
+recompiling module aibndpnr_dll_pnr
+recompiling module top
+recompiling module dut_io
+recompiling module test
+All of 335 modules done
+rm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so
+if [ -x ../simv ]; then chmod a-x ../simv; fi
+g++  -o ../simv      -rdynamic  -Wl,-rpath='$ORIGIN'/simv.daidir -Wl,-rpath=./simv.daidir \
+-Wl,-rpath=/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib -L/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib \
+-Wl,-rpath-link=./   objs/amcQw_d.o   _39645_archive_1.so objs/udps/xfhxx.o objs/udps/U6r2c.o \
+SIM_l.o       rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o \
+-lnuma -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -lsimprofile -luclinative \
+/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib/vcs_tls.o   -Wl,-whole-archive \
+-lvcsucli    -Wl,-no-whole-archive        _vcs_pli_stub_.o   /p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib/vcs_save_restore_new.o \
+/p/psg/eda/synopsys/verdi/S-2021.09/linux64/suse/share/PLI/VCS/SUSE64/pli.a -ldl \
+-lc -lm -lpthread -ldl 
+../simv up to date
+CPU time: 6.998 seconds to compile + 1.404 seconds to elab + .279 seconds to link

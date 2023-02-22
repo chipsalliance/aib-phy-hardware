@@ -1,0 +1,6 @@
+/home/abuild/rpmbuild/BUILD/glibc-2.22/csu/../sysdeps/x86_64/crti.S
+/home/abuild/rpmbuild/BUILD/glibc-2.22/csu/../sysdeps/x86_64/crtn.S
+/home/abuild/rpmbuild/BUILD/glibc-2.22/csu/../sysdeps/x86_64/start.S
+/home/abuild/rpmbuild/BUILD/glibc-2.22/csu/elf-init.c
+/home/abuild/rpmbuild/BUILD/glibc-2.22/csu/init.c
+/home/abuild/rpmbuild/BUILD/glibc-2.22/stdlib/atexit.c

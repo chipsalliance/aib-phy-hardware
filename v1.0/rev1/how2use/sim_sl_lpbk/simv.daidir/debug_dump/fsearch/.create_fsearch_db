@@ -1,0 +1,9 @@
+#!/bin/sh -h 
+PYTHONHOME=/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/etc/search/pyh
+export PYTHONHOME
+PYTHONPATH=/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib/pylib27
+export PYTHONPATH
+LD_LIBRARY_PATH=/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib:/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/lib/pylib27
+export LD_LIBRARY_PATH
+/p/psg/eda/synopsys/vcsmx/T-2022.06/linux64/suse/suse64/bin/vcsfind_create_index.exe  -z  "/nfs/site/disks/psg_data_14/huizhan1/aib-phy-hardware_bca_release/v1.0/rev1/how2use/sim_sl_lpbk/simv.daidir/debug_dump/fsearch/./idents_O16s4I.xml.gz" "/nfs/site/disks/psg_data_14/huizhan1/aib-phy-hardware_bca_release/v1.0/rev1/how2use/sim_sl_lpbk/simv.daidir/debug_dump/fsearch/./idents_tapi.xml.gz" -o "/nfs/site/disks/psg_data_14/huizhan1/aib-phy-hardware_bca_release/v1.0/rev1/how2use/sim_sl_lpbk/simv.daidir/debug_dump/fsearch/fsearch.db_tmp"
+\mv "/nfs/site/disks/psg_data_14/huizhan1/aib-phy-hardware_bca_release/v1.0/rev1/how2use/sim_sl_lpbk/simv.daidir/debug_dump/fsearch/fsearch.db_tmp" "/nfs/site/disks/psg_data_14/huizhan1/aib-phy-hardware_bca_release/v1.0/rev1/how2use/sim_sl_lpbk/simv.daidir/debug_dump/fsearch/fsearch.db"

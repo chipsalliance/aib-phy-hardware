@@ -73,3 +73,6 @@ VCS/Cadence/Modelsim simulators run scripts are provided.
 
 sim_sl2ms_lpbk_2e (2e 2x): This test shows how open source IP connect to Stratix 10 MAIB channel in PRE-FIFO loopback test.
 VCS/Cadence/Modelsim simulators run scripts are provided.
+
+sim_sl_lpbk (2e 2x): This test shows Stratix 10 MAIB channel internal loopback. No leader AIB involved. 
+VCS/Cadence/Modelsim simulators run scripts are provided.
