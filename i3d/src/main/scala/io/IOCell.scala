@@ -14,7 +14,7 @@ class IOCellBundle extends Bundle {
   val tx_en, rx_en, async_tx_en, async_rx_en, wkpu_en, wkpd_en = Input(Bool())
   val pad = Analog(1.W)
 
-  def attachTx(that: RedundancyMuxBundle) {
+  def attachTx(that: RedundancyMuxBundle): Unit = {
     tx_data := that.data
     tx_async := that.async
     tx_en := that.tx_en
@@ -25,7 +25,7 @@ class IOCellBundle extends Bundle {
     wkpd_en := that.wkpd_en
   }
 
-  def attachRx(that: RedundancyMuxDataBundle) {
+  def attachRx(that: RedundancyMuxDataBundle): Unit = {
     that.data := rx_data
     that.async := rx_async
   }

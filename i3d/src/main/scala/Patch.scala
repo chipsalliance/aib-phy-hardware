@@ -28,6 +28,8 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
   def nInterrupts = 0
 
   lazy val module = new LazyModuleImp(this) {
+    // Module name should always be Patch regardless of protocol
+    override def desiredName = "Patch"
 
     // Clocks and reset (implicit ones for CSRs)
     val m_ns_fwd_clk = IO(Input(Clock()))   // Near-side input for transmitting to far-side
@@ -93,9 +95,6 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(p(AIB3DKey).padsIoTypes))
     GenBumpMapAnno.anno(thisMod, p(AIB3DKey).padsIoTypes)
     // TODO: constraints
-
-    // Module name should always be Patch regardless of protocol
-    override def desiredName = "Patch"
   }
 }
 
