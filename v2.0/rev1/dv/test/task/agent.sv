@@ -238,6 +238,100 @@
      end
   endtask
 
+////////////////////////////////////////////////////////////////////////////
+/* DLL or DCC bypass.  
+*  DCC and DLL should be placed into their bypass mode of operation whenever
+*  the frequency of the AIB link clock ({ns,fs}_fwd_clk) is less than 500MHz
+*  What the following does is override the codes that are created with the
+*  FSMs and overrides the lock from the DCC/DLL. The lock value will cause the
+*  FSM to exit and it will then use the override codes instead of tuning it
+*  autimatically.
+*  DCC:
+  wr(txdll1.txpi_aclk_code     , 4'd0 );
+  wr(txdll2.txpi_socclk_code   , 4'd0 );
+  wr(txdll2.txpi_aclk_code_ovrd, 1'b1 );
+  wr(txdll2.txpi_sclk_code_ovrd, 1'b1 );
+  wr(txdll2.txadp_lock_ovrd    , 1'b1 );
+  wr(txdll2.txsoc_lock_ovrd    , 1'b1 );
+
+  wr(dcs2.dcs2_npusel_code     , 5'd16);
+  wr(dcs2.dcs2_npdsel_code     , 5'd16);
+  wr(dcs2.dcs2_ppusel_code     , 5'd16);
+  wr(dcs2.dcs2_ppdsel_code     , 5'd16);
+  wr(dcs1.dcssel_ovrd          , 1'b1 );
+  wr(dcs1.dcs_lock_ovrd        , 1'b1 );
+*////////////////////////////////////////////////////////////////////////////
+
+  task ms_dll_bypass ();
+    integer i_m1;
+    logic [31:0] wdata = 32'h0; 
+      for (i_m1=0; i_m1<24; i_m1++) begin
+	wdata = 32'h0;
+        avmm_if_m1.cfg_write({i_m1, 11'h34c}, 4'hf, wdata);
+	wdata = {1'b1, 2'b0, 3'b111, 26'h0};
+	avmm_if_m1.cfg_write({i_m1, 11'h350}, 4'hf, wdata);
+	wdata ={4{3'h0, 5'd16}};
+	avmm_if_m1.cfg_write({i_m1, 11'h368}, 4'hf, wdata);
+	wdata ={2'b11, 30'h0};
+	avmm_if_m1.cfg_write({i_m1, 11'h364}, 4'hf, wdata);
+
+      end
+  endtask
+
+  task sl_dll_bypass ();
+    integer i_s1;
+    logic [31:0] wdata = 32'h0;
+      for (i_s1=0; i_s1<24; i_s1++) begin
+        wdata = 32'h0;
+        avmm_if_s1.cfg_write({i_s1, 11'h34c}, 4'hf, wdata);
+        wdata = {1'b1, 2'b0, 3'b111, 26'h0};
+        avmm_if_s1.cfg_write({i_s1, 11'h350}, 4'hf, wdata);
+        wdata ={4{3'h0, 5'd16}};
+        avmm_if_s1.cfg_write({i_s1, 11'h368}, 4'hf, wdata);
+        wdata ={2'b11, 30'h0};
+        avmm_if_s1.cfg_write({i_s1, 11'h364}, 4'hf, wdata);
+
+      end
+  endtask
+
+///////////////////////////////////////////////////////////////////////////
+/* DLL:
+* wr(cdr.picode_odd            , 7'd0 );
+  wr(cdr.picode_even           , 7'd64);
+  wr(cdr.cdr_ovrd_sel          , 1'b1 );
+  wr(cdr.cdr_lock_ovrd         , 1'b1 );
+
+  wr(rxdll2.rxpi_adpclk_code   , 4'd0 );
+  wr(rxdll2.rxpi_socclk_code   , 4'd0 );
+  wr(rxdll2.rxpi_aclk_code_ovrd, 1'b1 );
+  wr(rxdll2.rxpi_sclk_code_ovrd, 1'b1 );
+  wr(rxdll2.rxadp_lock_ovrd    , 1'b1 );
+  wr(rxdll2.rxsoc_lock_ovrd    , 1'b1 );
+*//////////////////////////////////////////////////////////////////////////
+
+  task ms_dcc_bypass ();
+    integer i_m1;
+    logic [31:0] wdata = 32'h0; 
+      for (i_m1=0; i_m1<24; i_m1++) begin
+        wdata = {1'b0, 1'b1, 1'b1, 14'h0, 8'b0,7'd64};
+        avmm_if_m1.cfg_write({i_m1, 11'h348}, 4'hf, wdata);
+        wdata = {4'b1111, 28'h0};
+        avmm_if_m1.cfg_write({i_m1, 11'h350}, 4'hf, wdata);
+      end
+  endtask
+
+  task sl_dcc_bypass ();
+    integer i_s1;
+    logic [31:0] wdata = 32'h0;
+      for (i_s1=0; i_s1<24; i_s1++) begin
+        wdata = {1'b0, 1'b1, 1'b1, 14'h0, 8'b0,7'd64};
+        avmm_if_s1.cfg_write({i_s1, 11'h348}, 4'hf, wdata);
+        wdata = {4'b1111, 28'h0};
+        avmm_if_s1.cfg_write({i_s1, 11'h350}, 4'hf, wdata);
+      end
+  endtask
+
+
 ////////////////////////////////////////////////////////
 /* AIB2.0 MS <-> AIB2.0 SL  in register mode 80b <-80b*/
 ///////////////////////////////////////////////////

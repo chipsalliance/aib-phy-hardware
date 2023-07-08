@@ -38,6 +38,7 @@ test vector: fifo1x_test.inc
              fifo4x_nslpbk_test.inc
              fifo4x_fslpbk_test.inc   
              fifo2x_fifo4x_test.inc    //Asymmetric case
+             fifo2x_test_dcc_dll_bypass.inc //when ns_fwd_clk less than 500MHz
 
 Note: Cadence ncsim example is provided. Commands to run:
 ./run_compile_bca_ncsim
