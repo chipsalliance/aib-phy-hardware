@@ -262,7 +262,7 @@
   wr(dcs1.dcs_lock_ovrd        , 1'b1 );
 *////////////////////////////////////////////////////////////////////////////
 
-  task ms_dll_bypass ();
+  task ms_dcc_bypass ();
     integer i_m1;
     logic [31:0] wdata = 32'h0; 
       for (i_m1=0; i_m1<24; i_m1++) begin
@@ -278,7 +278,7 @@
       end
   endtask
 
-  task sl_dll_bypass ();
+  task sl_dcc_bypass ();
     integer i_s1;
     logic [31:0] wdata = 32'h0;
       for (i_s1=0; i_s1<24; i_s1++) begin
@@ -309,25 +309,25 @@
   wr(rxdll2.rxsoc_lock_ovrd    , 1'b1 );
 *//////////////////////////////////////////////////////////////////////////
 
-  task ms_dcc_bypass ();
+  task ms_dll_bypass ();
     integer i_m1;
     logic [31:0] wdata = 32'h0; 
       for (i_m1=0; i_m1<24; i_m1++) begin
         wdata = {1'b0, 1'b1, 1'b1, 14'h0, 8'b0,7'd64};
         avmm_if_m1.cfg_write({i_m1, 11'h348}, 4'hf, wdata);
         wdata = {4'b1111, 28'h0};
-        avmm_if_m1.cfg_write({i_m1, 11'h350}, 4'hf, wdata);
+        avmm_if_m1.cfg_write({i_m1, 11'h344}, 4'hf, wdata);
       end
   endtask
 
-  task sl_dcc_bypass ();
+  task sl_dll_bypass ();
     integer i_s1;
     logic [31:0] wdata = 32'h0;
       for (i_s1=0; i_s1<24; i_s1++) begin
         wdata = {1'b0, 1'b1, 1'b1, 14'h0, 8'b0,7'd64};
         avmm_if_s1.cfg_write({i_s1, 11'h348}, 4'hf, wdata);
         wdata = {4'b1111, 28'h0};
-        avmm_if_s1.cfg_write({i_s1, 11'h350}, 4'hf, wdata);
+        avmm_if_s1.cfg_write({i_s1, 11'h344}, 4'hf, wdata);
       end
   endtask
 
