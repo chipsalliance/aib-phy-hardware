@@ -8,6 +8,7 @@ import aib3d._
   * This fully-synthesizable DLL uses a folded delay line topology, originally designed by Uneeb Rathore.
   * This DLL is to be used for phase alignment for receive data sampling.
   */
+/*
 class DLL extends Module {
   // implicit clock is reference clock
   val clk_loop = IO(Input(Clock()))
@@ -19,3 +20,4 @@ class DLL extends Module {
 
   // val GL
 }
+*/
