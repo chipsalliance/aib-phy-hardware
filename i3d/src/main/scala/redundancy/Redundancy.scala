@@ -48,7 +48,6 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
   val core = IO(new CoreBundle)
 
   // One hot encoding
-  // TODO: need to translate this into which muxes to activate
   val txFaulty, rxFaulty = IO(Input(UInt(params.numSubmods.W)))
 
   // Shift in the longer dimension
@@ -64,24 +63,33 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
       j <- 0 until params.submodRowsWR - 2 by 2
     } yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i, j+k))
   }
+  // Use these indices to generate the shift signal for each mux
+  // Essentially, count the bit positions (by 2) to the right of the current one
+  // that contains a 1 in the one-hot encoding of txFaulty and rxFaulty
+  val (txShift, rxShift) = submodIdxs.indices.map { idx =>
+    val tx, rx = Wire(Bool())
+    val dependsOn = (idx % 2 to idx by 2)
+    tx := dependsOn.map(i => txFaulty(i)).reduce(_ | _)
+    rx := dependsOn.map(i => rxFaulty(i)).reduce(_ | _)
+    (tx, rx)
+  }.unzip
 
   // Generate redundancy muxes
-  // TODO: are Rx reverse order from Tx?
-  val (txMuxes, rxMuxes) = submodIdxs.map(idx => {
+  val (txMuxes, rxMuxes) = submodIdxs.map { idx =>
     val txMux = Module(new RedundancyMuxSubmod(idx(1), idx(0), isTx = true))
     core.connectToMux(txMux.a)
     core.connectToMux(txMux.b)
     bumps.connectToMux(txMux.o)
-    txMux.shift := txFaulty(idx(0).linearIdx).asBool
+    txMux.shift := txShift(idx(0).linearIdx).asBool
 
     val rxMux = Module(new RedundancyMuxSubmod(idx(2), idx(3), isTx = false))
     bumps.connectToMux(rxMux.a)
     bumps.connectToMux(rxMux.b)
     core.connectToMux(rxMux.o)
-    rxMux.shift := rxFaulty(idx(2).linearIdx).asBool
+    rxMux.shift := rxShift(idx(0).linearIdx).asBool
 
     (txMux, rxMux)
-  }).unzip
+  }.unzip
 
   // First set of Tx bumps must have inputs directly from core
   // 0's as primary input to Tx mux for redundant submods are handled in connectToMux function
@@ -96,11 +104,6 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
     fromCore.elements.values zip toBumps.elements.values foreach { case (c, b) => b := c }
     bumps.connectToMux(toBumps)
   }
-
-  // Forward out the redundant Rx clocks
-  // TODO: this shouldn't exist (clocks are muxed)
-  val redRxClks = Seq(params.numSubmods, params.numSubmods + 1).map(i => s"RXCKP$i")
-  redRxClks foreach ( clk => core(clk) := bumps(clk) )
 }
 
 // TODO: logic for coding?

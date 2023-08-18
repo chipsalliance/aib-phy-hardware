@@ -29,6 +29,8 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
 
   def nInterrupts = 0
 
+  val params = p(AIB3DKey)
+
   lazy val module = new LazyModuleImp(this) {
     // Module name should always be Patch regardless of protocol
     override def desiredName = "Patch"
@@ -114,10 +116,9 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // Documentation/collateral + annotations
     val thisMod = Module.currentModule.get.asInstanceOf[RawModule]
     // Bump map
-    val flatBumpMap = p(AIB3DKey).flatBumpMap
-    ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(flatBumpMap))
-    ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(flatBumpMap))
-    GenBumpMapAnno.anno(thisMod, flatBumpMap)
+    ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(params.bumpMap))
+    ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(params.bumpMap))
+    GenBumpMapAnno.anno(thisMod, params.bumpMap)
     // TODO: constraints
   }
 }

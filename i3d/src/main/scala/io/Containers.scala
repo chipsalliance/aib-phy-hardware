@@ -8,7 +8,8 @@ import freechips.rocketchip.config.Parameters
 import aib3d._
 
 /** Useful case classes */
-// Useful for any coordinates (submodule, pin, bump)
+
+/** Useful for any coordinates (submodule, pin, bump) */
 case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   import Numeric.Implicits._
   // Following methods are to be used for submodule indices only
@@ -63,11 +64,13 @@ case class RxSig(bumpNum: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
 }
 // Clock
 // TODO: redundant block should not have coreSig?
-case class TxClk(submodNum: Int) extends AIB3DBump {
+case class TxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
   val bumpName = s"TXCKP${submodNum}"
-  val coreSig = Some(AIB3DCore(s"TXCKP${submodNum}", None, Output(Clock()), None))
+  val coreSig = if (isRedundant) None
+    else Some(AIB3DCore(s"TXCKP${submodNum}", None, Output(Clock()), None))
 }
-case class RxClk(submodNum: Int) extends AIB3DBump {
+case class RxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
   val bumpName = s"RXCKP${submodNum}"
-  val coreSig = Some(AIB3DCore(s"RXCKP${submodNum}", None, Input(Clock()), None))
+  val coreSig = if (isRedundant) None
+    else Some(AIB3DCore(s"RXCKP${submodNum}", None, Input(Clock()), None))
 }

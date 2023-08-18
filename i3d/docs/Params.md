@@ -37,6 +37,9 @@ Design parameters:
   * Data (active) redundancy architecture. 0 = no redundancy, 1 = coding, 2 = signal shift
   * Note that signal shift will require more sideband signaling (not yet implemented).
   * Configuration and clocks will implement passive redundancy.
+* redundRatio (Int)
+  * Denotes the redundancy ratio of signal bumps to redundant bumps (default: 4).
+  * Used for both coding and signal shift redundancy.
 * hasDBI (Boolean)
   * True if Tx IOs are to implement DBI. Only used with coding redundancy.
 * deskewArch (Int)
@@ -55,7 +58,7 @@ Technology parameters:
 
 * node (Double)
   * The tech node (in nm) of the instance
-* layerPitch: Map(String -> Double) 
+* layerPitch: Map(String -> Double)
   * Map(layer name -> pitch in um) corresponding to the track pitch on a set of layers desired for routing. The entries should be ordered from lowest to highest layer.
 * viaKOZRatio (Double)
   * Ratio of the size of the keep-out zone around signal/power via stacks to the min. bond pitch. Superceded by tsvKOZRatio and bprKOZRatio if specified.

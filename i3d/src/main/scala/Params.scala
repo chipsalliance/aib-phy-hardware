@@ -1,13 +1,13 @@
 package aib3d
 
 import util.control.Breaks._
-import scala.collection.mutable.{ArrayBuffer, LinkedHashMap}
-import scala.collection.immutable.ListMap
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.SeqMap
 import scala.math.{pow, sqrt, min, max}
 
 import chisel3._
 
-import chisel3.experimental.{Analog, DataMirror}
+import chisel3.experimental.DataMirror
 import freechips.rocketchip.config._
 
 import aib3d.io._
@@ -27,6 +27,8 @@ import aib3d.io._
   * Following are design parameters
   * @param redundArch is the active data redundancy architecture.
   * 0 = none, 1 = coding, 2 = signal shift
+  * @param redundRatio is the redundancy ratio (default: 4).
+  * Denotes the number of signal bumps per redundant bump.
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
   * @param submodSize is the max number of data bits (Tx/Rx, each) in a sub-module
@@ -42,6 +44,7 @@ case class AIB3DGlblParams(
   sigsPerPGOvrdH: Option[Int] = None,
   sigsPerPGOvrdV: Option[Int] = None,
   redundArch: Int = 2,
+  redundRatio: Int = 4,
   hasDBI: Boolean = false,
   deskewArch: Int = 0,
   submodSize: Int = 64,
@@ -71,6 +74,7 @@ case class AIB3DGlblParams(
 
   // Checks
   require(redundArch >= 0 && redundArch <= 2, "Only 0, 1, 2 supported for redundArch")
+  require(redundRatio >= 1, "Redundancy ratio must be a positive integer")
   require(hasDBI ^ !(redundArch == 1), "DBI only supported with coding redundancy")
   require(deskewArch >= 0 && deskewArch <= 2, "Only 0, 1, 2 supported for deskewArch")
 
@@ -147,7 +151,7 @@ case class AIB3DParams(
   require(numTxIOs == numRxIOs, "Only balanced Tx/Rx IO count supported at this time.")
 
   // IO flattening
-  private def flattenIOs(orig: ListMap[String, Data]) : Seq[AIB3DCore] = {
+  private def flattenIOs(orig: SeqMap[String, Data]) : Seq[AIB3DCore] = {
     def cloneDirection(d: Data) = DataMirror.specifiedDirectionOf(d) match {
       case SpecifiedDirection.Input => Input(UInt(1.W))
       case SpecifiedDirection.Output => Output(UInt(1.W))
@@ -178,13 +182,26 @@ case class AIB3DParams(
   require(numTxIOs % numSubmods == 0, s"Number of IOs (${numTxIOs}) not evenly divisible by derived number of submodules (${numSubmods})")
   val sigsPerSubmod = numTxIOs / numSubmods
   // TODO: allow for more/less than 2 redundant submods, don't require even number
-  val redSubmods = if (gp.redundArch == 2) 2 else 0
-  require(numSubmods % redSubmods == 0, "Number of submods must be even")
+  val redSubmods = if (gp.redundArch == 2) numSubmods / gp.redundRatio else 0
+  require(numSubmods % redSubmods == 0, "Number of signal submods must be evenly divisible by number of redundant submods")
   val isWide = Set("N", "S").contains(ip.pinSide)
   val numSubmodsWR = numSubmods + redSubmods
   // These are total, not Tx/Rx individually
-  val (submodRows, submodCols) = if (isWide) (2, numSubmods) else (numSubmods, 2)
-  val (submodRowsWR, submodColsWR) = if (isWide) (2, numSubmodsWR) else (numSubmodsWR, 2)
+  // If no redundancy, want to find the most "square" arrangement from the factor pairs of numSubmods
+  // Else, shorter dimension is determined by the number of redundant submods
+  val (submodRows, submodCols) = if (gp.redundArch == 2) {
+    if (isWide) (redSubmods, numSubmods / redSubmods * 2)
+    else (numSubmods / redSubmods * 2, redSubmods)
+  } else {
+    // Find factor pairs, and return the most "square" one
+    // This still works if numSubmods is a square number
+    val bestFactor = (1 to sqrt(numSubmods).toInt).filter(numSubmods % _ == 0).last
+    if (isWide) (bestFactor, numSubmods / bestFactor)  // wide
+    else (numSubmods / bestFactor, bestFactor)  // tall
+  }
+  val (submodRowsWR, submodColsWR) = if (gp.redundArch == 2) {
+    if (isWide) (redSubmods, submodCols + 2) else (submodRows + 2, redSubmods)
+  } else (submodRows, submodCols)
 
   /** Following is the process of creating the bump map.
     * It is different depending on the redundancy scheme.
@@ -275,8 +292,8 @@ case class AIB3DParams(
         breakable {
           // Clock
           if (clkCoord == (c, r)) {
-            txBumpMap(s)(r)(c) = TxClk(s)
-            rxBumpMap(s)(r)(c) = RxClk(s)
+            txBumpMap(s)(r)(c) = TxClk(s, s >= numSubmods)
+            rxBumpMap(s)(r)(c) = RxClk(s, s >= numSubmods)
             break
           }
 
