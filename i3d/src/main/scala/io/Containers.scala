@@ -3,7 +3,7 @@ package aib3d.io
 import chisel3._
 
 import chisel3.experimental.Analog
-import freechips.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 import aib3d._
 
@@ -17,14 +17,14 @@ case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   def linearIdx(implicit p: Parameters): Int = {
     val params = p(AIB3DKey)
     if (params.isWide)
-      x.toInt() / 2 * params.submodRowsWR + y.toInt()
+      x.toInt / 2 * params.submodRowsWR + y.toInt
     else
-      y.toInt() / 2 * params.submodColsWR + x.toInt()
+      y.toInt / 2 * params.submodColsWR + x.toInt
   }
   def isRedundant(implicit p: Parameters): Boolean = {
     val params = p(AIB3DKey)
-    if (params.isWide) x.toInt() >= params.submodCols
-    else y.toInt() >= params.submodRows
+    if (params.isWide) x.toInt >= params.submodCols
+    else y.toInt >= params.submodRows
   }
 }
 

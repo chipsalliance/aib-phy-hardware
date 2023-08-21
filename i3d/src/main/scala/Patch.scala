@@ -4,7 +4,7 @@ import chisel3._
 
 import chisel3.experimental.DataMirror
 import chisel3.experimental.BundleLiterals._
-import freechips.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy.LazyModuleImp
 import freechips.rocketchip.interrupts.HasInterruptSources
 import freechips.rocketchip.regmapper._
@@ -17,7 +17,6 @@ import freechips.rocketchip.jtag._
 import aib3d.io._
 import aib3d.redundancy._
 import aib3d.stage._
-import freechips.rocketchip.tilelink.TLMessages
 
 abstract class Patch(implicit p: Parameters) extends RegisterRouter(
   RegisterRouterParams(
@@ -118,6 +117,7 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // Bump map
     ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(params.bumpMap))
     ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(params.bumpMap))
+    GenBumpMapAnno.toImg(params.bumpMap)
     GenBumpMapAnno.anno(thisMod, params.bumpMap)
     // TODO: constraints
   }

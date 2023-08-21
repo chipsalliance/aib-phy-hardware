@@ -2,14 +2,14 @@ package aib3d
 
 import chisel3._
 
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 
 /** AIB3D Config Keys */
 case object AIB3DGlblKey extends Field[AIB3DGlblParams]
 case object AIB3DInstKey extends Field[AIB3DInstParams]
 case object AIB3DKey extends Field[AIB3DParams]
 
-/** 
+/**
   * Global AIB3D Configs
   * When running the Generator, select one of these configs for the implicit params.
   */
@@ -25,7 +25,7 @@ class AIB3DHalfConfig extends Config ((site, here, up) => {
   case AIB3DInstDsnKey => AIB3DInstDsnParams(128, 128)
 })
 
-class AIB3DBalancedConfig(val numIOs: Int) extends Config ((site, here, up) => { 
+class AIB3DBalancedConfig(val numIOs: Int) extends Config ((site, here, up) => {
   case AIB3DInstDsnKey => AIB3DInstDsnParams(numIOs, numIOs)
 })
 

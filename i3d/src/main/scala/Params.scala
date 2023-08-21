@@ -8,7 +8,7 @@ import scala.math.{pow, sqrt, min, max}
 import chisel3._
 
 import chisel3.experimental.DataMirror
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 
 import aib3d.io._
 
@@ -294,21 +294,21 @@ case class AIB3DParams(
           if (clkCoord == (c, r)) {
             txBumpMap(s)(r)(c) = TxClk(s, s >= numSubmods)
             rxBumpMap(s)(r)(c) = RxClk(s, s >= numSubmods)
-            break
+            break()
           }
 
           // Grounds. Extra gets set to ground too
           if (gCols.contains(c) || extraCoords.contains((c, r))) {
             txBumpMap(s)(r)(c) = Gnd()
             rxBumpMap(s)(r)(c) = Gnd()
-            break
+            break()
           }
 
           // Power
           if (pRows.contains(r)) {
             txBumpMap(s)(r)(c) = Pwr()
             rxBumpMap(s)(r)(c) = Pwr()
-            break
+            break()
           }
 
           // Signal

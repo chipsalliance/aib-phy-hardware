@@ -14,7 +14,7 @@ class AnalogToUInt(w: Int = 1) extends BlackBox(Map("WIDTH" -> IntParam(w))) wit
 }
 
 object AnalogToUInt {
-  def apply(in: Analog, out: UInt) {
+  def apply(in: Analog, out: UInt): Unit = {
     val in2out = Module(new AnalogToUInt(w = in.getWidth))
     attach(in, in2out.io.in)
     out := in2out.io.out
@@ -31,7 +31,7 @@ class UIntToAnalog(w: Int = 1) extends BlackBox(Map("WIDTH" -> IntParam(w))) wit
 }
 
 object UIntToAnalog {
-  def apply(in: UInt, out: Analog, en: Bool) {
+  def apply(in: UInt, out: Analog, en: Bool): Unit = {
     val in2out = Module(new UIntToAnalog(w = in.getWidth))
     attach(out, in2out.io.out)
     in2out.io.in := in

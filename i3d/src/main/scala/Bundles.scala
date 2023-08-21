@@ -4,14 +4,15 @@ import scala.collection.immutable.SeqMap
 
 import chisel3._
 
-import chisel3.experimental.{Analog, DataMirror}
+import chisel3.experimental.{Analog, DataMirror, AutoCloneType}
 import chisel3.util.log2Ceil
-import freechips.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 
 import aib3d.io._
 
 /** Top-level and adapter bundles */
-class BumpsBundle(atBumps: Boolean)(implicit p: Parameters) extends Record {
+class BumpsBundle(atBumps: Boolean)
+  (implicit p: Parameters) extends Record with AutoCloneType {
   // Filter out power and ground bumps
   val sigBumps: Seq[AIB3DBump] = p(AIB3DKey).flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
@@ -29,7 +30,6 @@ class BumpsBundle(atBumps: Boolean)(implicit p: Parameters) extends Record {
       case _ => throw new Exception("Should not get here")
   })}):_*)
 	def apply(elt: String): Data = elements(elt)
-	override def cloneType = (new BumpsBundle(atBumps)).asInstanceOf[this.type]
 
   // Connect the correct bumps in this bundle to the corresponding submodule bundle
   def connectToMux(that: SubmodBundle): Unit = {
@@ -56,7 +56,7 @@ class BumpsBundle(atBumps: Boolean)(implicit p: Parameters) extends Record {
   }
 }
 
-class CoreBundle(implicit p: Parameters) extends Record {
+class CoreBundle(implicit p: Parameters) extends Record with AutoCloneType {
   val params = p(AIB3DKey)
 
   // Filter out power and ground bumps, and coreSig must be defined
@@ -71,7 +71,6 @@ class CoreBundle(implicit p: Parameters) extends Record {
     else sig.name -> Flipped(sig.ioType)
   }:_*)
 	def apply(elt: String): Data = elements(elt)
-	override def cloneType = (new CoreBundle).asInstanceOf[this.type]
 
   // Connect the correct core signals in this bundle to the corresponding submodule bundle
   def connectToMux(that: SubmodBundle): Unit = {
@@ -89,7 +88,9 @@ class CoreBundle(implicit p: Parameters) extends Record {
 }
 
 /** Submod-specific bundle, used for redundancy muxes*/
-class SubmodBundle(val submodIdx: AIB3DCoordinates[Int], coreFacing: Boolean)(implicit p: Parameters) extends Record {
+class SubmodBundle(
+  val submodIdx: AIB3DCoordinates[Int], coreFacing: Boolean)
+  (implicit p: Parameters) extends Record with AutoCloneType {
   val params = p(AIB3DKey)
 
   // First, extract the bumps corresponding to this submod index
@@ -115,7 +116,6 @@ class SubmodBundle(val submodIdx: AIB3DCoordinates[Int], coreFacing: Boolean)(im
     } else b.bumpName -> b.coreSig.get.ioType  // bump facing, get from bumpName
   }):_*)
   def apply(elt: String): Data = elements(elt)
-  override def cloneType = (new SubmodBundle(submodIdx, coreFacing)).asInstanceOf[this.type]
 }
 
 class DefaultDataBundle extends Bundle {

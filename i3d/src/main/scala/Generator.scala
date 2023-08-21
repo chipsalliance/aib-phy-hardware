@@ -3,7 +3,7 @@ package aib3d
 import chisel3._
 
 import chisel3.stage.ChiselGeneratorAnnotation
-import freechips.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.amba.axi4._
@@ -17,10 +17,10 @@ trait AIB3DDummyNode {
   def connectTL(node: TLInwardNode) =
     node := dummyNode
   def connectAXI4(node: AXI4InwardNode) =
-    node := 
+    node :=
     AXI4UserYanker() :=
     AXI4Deinterleaver(64) :=
-    TLToAXI4() := 
+    TLToAXI4() :=
     dummyNode
 }
 

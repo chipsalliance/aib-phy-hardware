@@ -3,7 +3,7 @@ package aib3d.redundancy
 import chisel3._
 
 import chisel3.experimental.{noPrefix, DataMirror}
-import freechips.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 import testchipip.ClockMux2
 
 import aib3d._
