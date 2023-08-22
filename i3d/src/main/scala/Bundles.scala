@@ -96,7 +96,7 @@ class SubmodBundle(
   // First, extract the bumps corresponding to this submod index
   val submodSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
-    case _ => b.submodIdx.get == submodIdx  // submodIdx should be defined for all non-power/ground bumps
+    case _ => b.submodIdx.get == submodIdx  // defined for all non-power/ground bumps
   })
 
   // elements map is the bump/core signal name -> ioType
@@ -111,14 +111,16 @@ class SubmodBundle(
         else Input(dtype))
     } else if (coreFacing) {  // core facing, get from coreSig name and flip IO
       b.coreSig.get.name + (
-        if (b.coreSig.get.bitIdx.isDefined) "[" + b.coreSig.get.bitIdx.get.toString + "]" else ""
+        if (b.coreSig.get.bitIdx.isDefined)
+          "[" + b.coreSig.get.bitIdx.get.toString + "]"
+        else ""
       ) -> Flipped(b.coreSig.get.ioType)
     } else b.bumpName -> b.coreSig.get.ioType  // bump facing, get from bumpName
   }):_*)
   def apply(elt: String): Data = elements(elt)
 }
 
-class DefaultDataBundle extends Bundle {
-  val tx = Output(UInt((64*8).W))
-  val rx = Input(UInt((64*8).W))
+class DefaultDataBundle(width: Int) extends Bundle {
+  val tx = Output(UInt(width.W))
+  val rx = Input(UInt(width.W))
 }

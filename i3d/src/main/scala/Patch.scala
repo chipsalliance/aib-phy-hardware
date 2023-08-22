@@ -117,7 +117,7 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // Bump map
     ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(params.bumpMap))
     ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(params.bumpMap))
-    GenBumpMapAnno.toImg(params.bumpMap)
+    GenBumpMapAnno.toImg
     GenBumpMapAnno.anno(thisMod, params.bumpMap)
     // TODO: constraints
   }

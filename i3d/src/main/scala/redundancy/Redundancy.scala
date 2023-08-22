@@ -24,19 +24,21 @@ class RedundancyMuxSubmod(
   // TODO: Output false path annotation for shift input
   val shift = IO(Input(Bool()))
 
-  a.elements.values zip b.elements.values zip o.elements.values foreach { case ((av, bv), ov) =>
-    require(DataMirror.directionOf(av) == ActualDirection.Input &&
-      DataMirror.directionOf(bv) == ActualDirection.Input &&
-      DataMirror.directionOf(ov) == ActualDirection.Output,
-      "Improper directions of a, b, o in redundancy mux")
-    // This clock mux is NOT glitchless (fine, because shift is static)
-    if (DataMirror.checkTypeEquivalence(ov, Clock())) {
-      val clkMux = Module(new ClockMux2)
-      clkMux.io.sel := shift
-      clkMux.io.clocksIn(0) := av
-      clkMux.io.clocksIn(1) := bv
-      ov := clkMux.io.clockOut
-    } else ov := Mux(shift, bv, av)
+  a.elements.values zip b.elements.values zip o.elements.values foreach {
+    case ((av, bv), ov) =>
+      require(DataMirror.directionOf(av) == ActualDirection.Input &&
+        DataMirror.directionOf(bv) == ActualDirection.Input &&
+        DataMirror.directionOf(ov) == ActualDirection.Output,
+        "Improper directions of a, b, o in redundancy mux")
+      // This clock mux is NOT glitchless (fine, because shift is static)
+      if (DataMirror.checkTypeEquivalence(ov, Clock())) {
+        val clkMux = Module(new ClockMux2)
+        clkMux.io.sel := shift
+        clkMux.io.clocksIn(0) := av
+        clkMux.io.clocksIn(1) := bv
+        ov := clkMux.io.clockOut
+      }
+      else ov := Mux(shift, bv, av)
   }
 }
 
@@ -101,7 +103,9 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
     val fromCore = Wire(new SubmodBundle(idx, coreFacing = true))
     val toBumps = Wire(new SubmodBundle(idx, coreFacing = false))
     core.connectToMux(fromCore)
-    fromCore.elements.values zip toBumps.elements.values foreach { case (c, b) => b := c }
+    fromCore.elements.values zip toBumps.elements.values foreach {
+      case (c, b) => b := c
+    }
     bumps.connectToMux(toBumps)
   }
 }

@@ -16,10 +16,8 @@ case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   // Divide by 2 since submods are created in pairs
   def linearIdx(implicit p: Parameters): Int = {
     val params = p(AIB3DKey)
-    if (params.isWide)
-      x.toInt / 2 * params.submodRowsWR + y.toInt
-    else
-      y.toInt / 2 * params.submodColsWR + x.toInt
+    if (params.isWide) x.toInt / 2 * params.submodRowsWR + y.toInt
+    else y.toInt / 2 * params.submodColsWR + x.toInt
   }
   def isRedundant(implicit p: Parameters): Boolean = {
     val params = p(AIB3DKey)
