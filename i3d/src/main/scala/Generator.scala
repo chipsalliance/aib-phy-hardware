@@ -3,11 +3,14 @@ package aib3d
 import chisel3._
 
 import chisel3.stage.ChiselGeneratorAnnotation
-import org.chipsalliance.cde.config.Parameters
+import chisel3.experimental.hierarchy.{Definition, Instance}
+import org.chipsalliance.cde.config._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.subsystem.WithoutTLMonitors
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.amba.axi4._
 
+import aib3d._
 import aib3d.stage._
 
 /** Connect dummy ClientNode (SourceNode) for diplomacy */
@@ -27,7 +30,7 @@ trait AIB3DDummyNode {
 /** AIB3D Main - do "runMain aib3d.AIB3DGenerator" in sbt */
 object AIB3DGenerator extends App with AIB3DDummyNode {
   // Select Config here
-  implicit val p = new AIB3DBaseConfig
+  implicit val p = new Config(new AIB3DBaseConfig ++ new WithoutTLMonitors)
 
   // Uncomment for TL version
   val patch = LazyModule(new TLPatch)

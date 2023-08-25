@@ -2,8 +2,7 @@ package aib3d.io
 
 import chisel3._
 
-import chisel3.experimental.Analog
-import org.chipsalliance.cde.config.Parameters
+import chisel3.experimental.{Analog, DataMirror}
 
 import aib3d._
 
@@ -14,13 +13,11 @@ case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   import Numeric.Implicits._
   // Following methods are to be used for submodule indices only
   // Divide by 2 since submods are created in pairs
-  def linearIdx(implicit p: Parameters): Int = {
-    val params = p(AIB3DKey)
+  def linearIdx(implicit params: AIB3DParams): Int = {
     if (params.isWide) x.toInt / 2 * params.submodRowsWR + y.toInt
     else y.toInt / 2 * params.submodColsWR + x.toInt
   }
-  def isRedundant(implicit p: Parameters): Boolean = {
-    val params = p(AIB3DKey)
+  def isRedundant(implicit params: AIB3DParams): Boolean = {
     if (params.isWide) x.toInt >= params.submodCols
     else y.toInt >= params.submodRows
   }
@@ -33,6 +30,8 @@ case class AIB3DCore(
   ioType: Data,  // Input, Output, Analog
   relatedClk: Option[String]) {  // Name of clock domain
     var pinLocation: Option[AIB3DCoordinates[Double]] = None
+    // TODO: this uses a DataMirror internal API, subject to change/removal
+    def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
   }
 
 /** AIB3D bump containers */
@@ -61,7 +60,6 @@ case class RxSig(bumpNum: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
   val coreSig = if (sig.isDefined) sig else None
 }
 // Clock
-// TODO: redundant block should not have coreSig?
 case class TxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
   val bumpName = s"TXCKP${submodNum}"
   val coreSig = if (isRedundant) None

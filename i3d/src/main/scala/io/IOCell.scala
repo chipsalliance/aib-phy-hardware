@@ -10,17 +10,22 @@ class IOControlBundle extends Bundle {
   val loopback, tx_wkpu, tx_wkpd, rx_wkpu, rx_wkpd = Bool()
 }
 
-class IOCellBundle extends Bundle {
+trait IOCellBundle {
+  val location: AIB3DCoordinates[Double]
+
   // TODO: these must match IO cell generator. Use DataView?
-  val tx_clk, rx_clk = Input(Clock())
-  val tx_data = Input(Bits(1.W))
-  val rx_data = Output(Bits(1.W))
-  val async, tx_en, rx_en, wkpu_en, wkpd_en = Input(Bool())
-  val pad = Analog(1.W)
+  val tx_clk, rx_clk = IO(Input(Clock()))
+  val tx_data = IO(Input(Bits(1.W)))
+  val rx_data = IO(Output(Bits(1.W)))
+  val async, tx_en, rx_en, wkpu_en, wkpd_en = IO(Input(Bool()))
+  val pad = IO(Analog(1.W))
 
   def connectInternal(d: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
-    if (DataMirror.directionOf(d) == ActualDirection.Input) connectRx(d, clk, ioCtrl.loopback)
-    else connectTx(d, clk, ioCtrl.loopback)
+    DataMirror.directionOf(d) match {
+      case ActualDirection.Input => connectRx(d, clk, ioCtrl.loopback)
+      case ActualDirection.Output => connectTx(d, clk, ioCtrl.loopback)
+      case _ => throw new Exception("Data to be connected must have a direction")
+    }
     async := DataMirror.checkTypeEquivalence(d, clk).B  // is clock
     wkpu_en := ioCtrl.tx_wkpu
     wkpd_en := ioCtrl.tx_wkpd
@@ -46,42 +51,28 @@ class IOCellBundle extends Bundle {
   }
 }
 
-class IOCellModel(idx: Int) extends RawModule {
-  val io = IO(new IOCellBundle)
+class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellBundle {
+  val location = forBump.location.get
 
   // Analog to directional
   val to_pad = Wire(Bits(1.W))
-  UIntToAnalog(to_pad, io.pad, io.wkpu_en || io.wkpd_en || io.tx_en)
+  UIntToAnalog(to_pad, pad, tx_en)
   val from_pad = Wire(Bits(1.W))
-  AnalogToUInt(io.pad, from_pad)
+  AnalogToUInt(pad, from_pad)
 
-  // TODO: detect clock cells
+  // TODO: detect clock cells and don't have retimers
 
   // Tx logic
-  val tx_retimed = withClockAndReset(io.tx_clk, !io.tx_en)(RegNext(io.tx_data, 0.U))
-  when (io.wkpu_en) {
-    to_pad := 1.U
-  } .elsewhen (io.wkpd_en) {
-    to_pad := 0.U
-  } .elsewhen (io.async) {
-    to_pad := io.tx_data & io.tx_en
-  } .otherwise {
-    to_pad := tx_retimed
-  }
+  val tx_retimed = withClockAndReset(tx_clk, !tx_en)(RegNext(tx_data, 0.U))
+  val tx = Mux(async, tx_data, tx_retimed)
+  val txp = Mux(wkpu_en ^ wkpd_en, wkpu_en & ~wkpd_en, tx)
+  to_pad := Mux(tx_en, tx, txp)
 
   // Rx logic
-  val rx_retimed = withClockAndReset(io.rx_clk, !io.rx_en)(RegNext(from_pad, 0.U))
-  when (io.async) {
-    io.rx_data := from_pad & io.rx_en
-  } .otherwise {
-    io.rx_data := rx_retimed
-  }
-
-  override def desiredName = s"aibio_$idx"
+  val rx_retimed = withClockAndReset(rx_clk, !rx_en)(RegNext(from_pad, 0.U))
+  rx_data := Mux(async, from_pad & rx_en, rx_retimed)
 }
 
-class IOCellBB(idx: Int) extends BlackBox {
-  val io = IO(new IOCellBundle)
-
-  override def desiredName = s"aibio_$idx"
+class IOCellBB(val forBump: AIB3DBump) extends BlackBox with IOCellBundle {
+  val location = forBump.location.get
 }

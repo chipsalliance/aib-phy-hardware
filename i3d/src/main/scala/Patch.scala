@@ -4,6 +4,7 @@ import chisel3._
 
 import chisel3.experimental.DataMirror
 import chisel3.experimental.BundleLiterals._
+import chisel3.experimental.hierarchy.{Definition, Instance, Hierarchy}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy.LazyModuleImp
 import freechips.rocketchip.interrupts.HasInterruptSources
@@ -16,7 +17,6 @@ import freechips.rocketchip.jtag._
 // import aib3d.deskew._
 import aib3d.io._
 import aib3d.redundancy._
-import aib3d.stage._
 
 abstract class Patch(implicit p: Parameters) extends RegisterRouter(
   RegisterRouterParams(
@@ -28,7 +28,10 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
 
   def nInterrupts = 0
 
-  val params = p(AIB3DKey)
+  // Calculate these params only once for speed, pass around implicitly
+  implicit val params: AIB3DParams = p(AIB3DKey)
+  implicit val glblParams: AIB3DGlblParams = p(AIB3DGlblKey)
+  implicit val instParams: AIB3DInstParams = p(AIB3DInstKey)
 
   lazy val module = new LazyModuleImp(this) {
     // Module name should always be Patch regardless of protocol
@@ -39,11 +42,15 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     val bumpio = IO(new BumpsBundle(atBumps = true))
 
     // Generate IO cells and connect to bumps
-    val iocells = (0 until bumpio.elements.size).map { i =>
-      if (p(AIB3DInstKey).blackBoxModels) Module(new IOCellModel(i)).io
-      else Module(new IOCellBB(i)).io
-    }
-    iocells zip bumpio.elements foreach { case (c, (_, b)) => c.pad <> b }
+    val iocells = (bumpio.sigBumps lazyZip bumpio.elements.values).map {
+      (b: AIB3DBump, d: Data) =>
+        val iocell = Module(
+          if (instParams.blackBoxModels) new IOCellModel(b)
+          else new IOCellBB(b))
+        iocell.pad <> d
+        iocell
+    }.toSeq
+
     // Reset to pull down
     val ioCtrl = RegInit((new IOControlBundle).Lit(
       _.loopback -> false.B,
@@ -63,11 +70,11 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     )
 
     // Redundancy affects how IO cells are connected
-    if (p(AIB3DGlblKey).redundArch == 2) {
+    if (glblParams.redundArch == 2) {
       val redundancy = Module(new RedundancyMuxTop)
 
       // Connect core side of muxes to coreio
-      coreio.elements zip redundancy.core.elements foreach { case ((_, c), (_, r)) => c <> r }
+      coreio <> redundancy.core
 
       // Connect bumps side of muxes to iocells
       (iocells zip redundancy.bumps.elements) foreach { case (i, (bs, bd)) =>
@@ -89,7 +96,7 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
           RegFieldDesc("rxFaulty", "One-hot encoding of faulty submodules (Rx).")))
       )
     } else {
-      // Connect coreio to iocells
+      // Connect coreio to iocells directly
       coreio.elements zip iocells foreach { case ((cs, cd), i) =>
         // Get related clock (all submodules should have a clock)
         val relatedClk = coreio.getRelatedClk(cs)
@@ -115,10 +122,10 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // Documentation/collateral + annotations
     val thisMod = Module.currentModule.get.asInstanceOf[RawModule]
     // Bump map
-    ElaborationArtefacts.add(s"bumpmap.csv", GenBumpMapAnno.toCSV(params.bumpMap))
-    ElaborationArtefacts.add(s"bumpmap.json", GenBumpMapAnno.toJSON(params.bumpMap))
-    GenBumpMapAnno.toImg
-    GenBumpMapAnno.anno(thisMod, params.bumpMap)
+    ElaborationArtefacts.add(s"bumpmap.csv", GenCollateral.toCSV)
+    ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON)
+    GenCollateral.toImg
+    GenCollateral.ioLocations(iocells)
     // TODO: constraints
   }
 }

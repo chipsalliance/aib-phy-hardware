@@ -6,22 +6,21 @@ import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror, AutoCloneType}
 import chisel3.util.log2Ceil
-import org.chipsalliance.cde.config.Parameters
 
 import aib3d.io._
 
 /** Top-level and adapter bundles */
 class BumpsBundle(atBumps: Boolean)
-  (implicit p: Parameters) extends Record with AutoCloneType {
+  (implicit params: AIB3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps
-  val sigBumps: Seq[AIB3DBump] = p(AIB3DKey).flatBumpMap.filter(b => b match {
+  val sigBumps: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => true
   })
-  // elements map is the bump name -> ioType
+  // elements map is the bump name -> (cloned) ioType
   val elements: SeqMap[String, Data] = SeqMap(sigBumps.map(b => b.bumpName -> {
     if (atBumps) Analog(1.W)  // Analog type for bump pads
-    else if (b.coreSig.isDefined) b.coreSig.get.ioType
+    else if (b.coreSig.isDefined) b.coreSig.get.cloneIoType
     else (b match {
       case _:TxSig => Output(UInt(1.W))
       case _:RxSig => Input(UInt(1.W))
@@ -34,6 +33,7 @@ class BumpsBundle(atBumps: Boolean)
   // Connect the correct bumps in this bundle to the corresponding submodule bundle
   def connectToMux(that: SubmodBundle): Unit = {
     that.elements foreach { elt => elt._2 <> elements(elt._1) }
+    //(that: Data).waiveAll <> (this: Data).waiveAll
   }
 
   // Get related clock for a bump
@@ -56,19 +56,18 @@ class BumpsBundle(atBumps: Boolean)
   }
 }
 
-class CoreBundle(implicit p: Parameters) extends Record with AutoCloneType {
-  val params = p(AIB3DKey)
-
+class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps, and coreSig must be defined
   val coreSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => b.coreSig.isDefined
   })
-  // elements map is the coreSig name + bitIdx -> Flipped(ioType)
+  // elements map is the coreSig name + bitIdx -> Flipped((cloned) ioType)
   val elements: SeqMap[String, Data] = SeqMap(coreSigs.map{c =>
     val sig = c.coreSig.get
-    if (sig.bitIdx.isDefined) sig.name + "[" + sig.bitIdx.get.toString + "]" -> Flipped(sig.ioType)
-    else sig.name -> Flipped(sig.ioType)
+    if (sig.bitIdx.isDefined)
+      sig.name + "[" + sig.bitIdx.get.toString + "]" -> Flipped(sig.cloneIoType)
+    else sig.name -> Flipped(sig.cloneIoType)
   }:_*)
 	def apply(elt: String): Data = elements(elt)
 
@@ -90,8 +89,7 @@ class CoreBundle(implicit p: Parameters) extends Record with AutoCloneType {
 /** Submod-specific bundle, used for redundancy muxes*/
 class SubmodBundle(
   val submodIdx: AIB3DCoordinates[Int], coreFacing: Boolean)
-  (implicit p: Parameters) extends Record with AutoCloneType {
-  val params = p(AIB3DKey)
+  (implicit params: AIB3DParams) extends Record with AutoCloneType {
 
   // First, extract the bumps corresponding to this submod index
   val submodSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
@@ -99,7 +97,7 @@ class SubmodBundle(
     case _ => b.submodIdx.get == submodIdx  // defined for all non-power/ground bumps
   })
 
-  // elements map is the bump/core signal name -> ioType
+  // elements map is the bump/core signal name -> (cloned) ioType
   // If this bundle is core-facing, get the coreSig name
   // Else, get the bumpName
   val elements: SeqMap[String, Data] = SeqMap(submodSigs.map(b => {
@@ -109,13 +107,14 @@ class SubmodBundle(
       b.bumpName -> (
         if (coreFacing ^ b.bumpName.contains("TX")) Output(dtype)
         else Input(dtype))
-    } else if (coreFacing) {  // core facing, get from coreSig name and flip IO
+    } else if (coreFacing) {  // core facing, get from coreSig name and flip
       b.coreSig.get.name + (
         if (b.coreSig.get.bitIdx.isDefined)
           "[" + b.coreSig.get.bitIdx.get.toString + "]"
         else ""
-      ) -> Flipped(b.coreSig.get.ioType)
-    } else b.bumpName -> b.coreSig.get.ioType  // bump facing, get from bumpName
+      ) -> Flipped(b.coreSig.get.cloneIoType)
+    } else   // bump facing, get from bumpName
+      b.bumpName -> b.coreSig.get.cloneIoType
   }):_*)
   def apply(elt: String): Data = elements(elt)
 }

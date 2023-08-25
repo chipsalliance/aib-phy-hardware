@@ -8,7 +8,6 @@ import scala.math.{pow, sqrt, min, max}
 import chisel3._
 
 import chisel3.experimental.DataMirror
-import org.chipsalliance.cde.config._
 
 import aib3d.io._
 

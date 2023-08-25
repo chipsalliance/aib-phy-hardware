@@ -3,7 +3,6 @@ package aib3d.redundancy
 import chisel3._
 
 import chisel3.experimental.{noPrefix, DataMirror}
-import org.chipsalliance.cde.config.Parameters
 import testchipip.ClockMux2
 
 import aib3d._
@@ -13,7 +12,7 @@ import aib3d.io._
 class RedundancyMuxSubmod(
   submodIdxA: AIB3DCoordinates[Int],
   submodIdxB: AIB3DCoordinates[Int],
-  isTx: Boolean = true)(implicit p: Parameters) extends RawModule {
+  isTx: Boolean = true)(implicit params: AIB3DParams) extends RawModule {
 
   // Note difference in submod indices for Tx vs. Rx
   val (a, b, o) = (
@@ -24,7 +23,7 @@ class RedundancyMuxSubmod(
   // TODO: Output false path annotation for shift input
   val shift = IO(Input(Bool()))
 
-  a.elements.values zip b.elements.values zip o.elements.values foreach {
+  (a.elements.values zip b.elements.values zip o.elements.values).foreach {
     case ((av, bv), ov) =>
       require(DataMirror.directionOf(av) == ActualDirection.Input &&
         DataMirror.directionOf(bv) == ActualDirection.Input &&
@@ -43,11 +42,9 @@ class RedundancyMuxSubmod(
 }
 
 /** Top-level shift redundancy add-on module */
-class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
-  val params = p(AIB3DKey)
-
-  val bumps = IO(new BumpsBundle(atBumps = false))  // internal
+class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
+  val bumps = IO(new BumpsBundle(atBumps = false))  // internal
 
   // One hot encoding
   val txFaulty, rxFaulty = IO(Input(UInt(params.numSubmods.W)))
@@ -65,6 +62,7 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
       j <- 0 until params.submodRowsWR - 2 by 2
     } yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i, j+k))
   }
+
   // Use these indices to generate the shift signal for each mux
   // Essentially, count the bit positions (by 2) to the right of the current one
   // that contains a 1 in the one-hot encoding of txFaulty and rxFaulty
@@ -76,7 +74,7 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
     (tx, rx)
   }.unzip
 
-  // Generate redundancy muxes
+  // Generate redundancy muxes and set inputs/outputs based on indices
   val (txMuxes, rxMuxes) = submodIdxs.map { idx =>
     val txMux = Module(new RedundancyMuxSubmod(idx(1), idx(0), isTx = true))
     core.connectToMux(txMux.a)
@@ -95,15 +93,17 @@ class RedundancyMuxTop(implicit p: Parameters) extends RawModule {
 
   // First set of Tx bumps must have inputs directly from core
   // 0's as primary input to Tx mux for redundant submods are handled in connectToMux function
-  val noMuxTxSubmods = Seq(AIB3DCoordinates[Int](0, 0)) :+ (
-    if (params.isWide) AIB3DCoordinates[Int](0, 1)
-    else AIB3DCoordinates[Int](1, 0))
-  noMuxTxSubmods foreach { idx =>
+  val noMuxTxSubmods =
+    if (params.isWide) (0 until params.submodRowsWR).map(i =>
+      AIB3DCoordinates[Int](0, i))
+    else (0 until params.submodColsWR).map(i =>
+      AIB3DCoordinates[Int](i, 0))
+  noMuxTxSubmods.foreach { idx =>
     // TODO: make a pass-thru connector instead going through a set of wires
     val fromCore = Wire(new SubmodBundle(idx, coreFacing = true))
     val toBumps = Wire(new SubmodBundle(idx, coreFacing = false))
     core.connectToMux(fromCore)
-    fromCore.elements.values zip toBumps.elements.values foreach {
+    (fromCore.elements.values zip toBumps.elements.values).foreach {
       case (c, b) => b := c
     }
     bumps.connectToMux(toBumps)
