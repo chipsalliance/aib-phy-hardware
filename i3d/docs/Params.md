@@ -82,6 +82,8 @@ Design parameters:
   * "MX" or "MY" only supported, if specified. Exported as a floorplan constraint but does not affect bump map calculation.
 * pinSide (String)
   * One of "N", "S", "E", "W". Applied on the default (non-mirrored/rotated) orientation.
+* bumpOffset (Double)
+  * Denotes the offset of the bump array from the pin edge in um. Applied on the default (non-mirrored/rotated) orientation.
 * baseAddress (BigInt)
   * Address of the CSR bus
 * testProtocol (String)

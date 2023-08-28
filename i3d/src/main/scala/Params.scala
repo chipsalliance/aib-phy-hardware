@@ -114,6 +114,7 @@ case class AIB3DGlblParams(
   * @param pinSide is the side of the blocks where pins are to be assigned, pre-mirroring/rotation.
   * One of "N", "S", "E", "W".
   * //TODO: this should probably be specified by the leader?
+  * @param bumpOffset is the offset of the bump array from the pin edge
   * @param baseAddress is the memory-mapped CSR base address
   * @param testProtocol denotes which test protocol is implemented
   * @param blackBoxModels true denotes using behavioral models of all blackboxes
@@ -130,6 +131,7 @@ case class AIB3DInstParams (
   isLeader: Boolean,
   orientation: Option[String] = None,
   pinSide: String = "N",
+  bumpOffset: Double = 0.0,
   baseAddress: Int = 0x2000,
   testProtocol: String = "IEEE1838",
   blackBoxModels: Boolean = false) {

@@ -120,6 +120,7 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
 
     // Documentation/collateral
     ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON(iocells))
+    ElaborationArtefacts.add(s"hammer.json", GenCollateral.toHammerJSON(iocells))
     ElaborationArtefacts.add(s"bumpmap.csv", GenCollateral.toCSV)
     GenCollateral.toImg
   }
