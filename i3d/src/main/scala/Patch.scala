@@ -2,9 +2,8 @@ package aib3d
 
 import chisel3._
 
-import chisel3.experimental.DataMirror
+import chisel3.experimental.{DataMirror}
 import chisel3.experimental.BundleLiterals._
-import chisel3.experimental.hierarchy.{Definition, Instance, Hierarchy}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy.LazyModuleImp
 import freechips.rocketchip.interrupts.HasInterruptSources
@@ -54,10 +53,10 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // Reset to pull down
     val ioCtrl = RegInit((new IOControlBundle).Lit(
       _.loopback -> false.B,
-      _.tx_wkpu -> false.B,
-      _.tx_wkpd -> true.B,
-      _.rx_wkpu -> false.B,
-      _.rx_wkpd -> true.B
+      _.txWkpu -> false.B,
+      _.txWkpd -> true.B,
+      _.rxWkpu -> false.B,
+      _.rxWkpd -> true.B
     ))
 
     // Regmap up to this point
@@ -66,7 +65,7 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
       // [error] firrtl.passes.CheckFlows$WrongFlow:  @[RegField.scala 74:92]: [module Patch]
       // Expression _T_1 is used as a SinkFlow but can only be used as a SourceFlow.
       Seq(RegField.r(ioCtrl.asUInt.getWidth, ioCtrl.asUInt,
-        RegFieldDesc("ioCtrl", "{loopback, tx_wkpu, tx_wkpd, rx_wkpu, rx_wkpd} - pulls-down when reset.")))
+        RegFieldDesc("ioCtrl", "{loopback, txWkpu, txWkpd, rxWkpu, rxWkpd} - pulls-down when reset.")))
     )
 
     // Redundancy affects how IO cells are connected
@@ -119,14 +118,10 @@ abstract class Patch(implicit p: Parameters) extends RegisterRouter(
     // CSR memory mapping
     regmap(((0 until patchSCRs.size).map(_ * beatBytes) zip patchSCRs):_*)
 
-    // Documentation/collateral + annotations
-    val thisMod = Module.currentModule.get.asInstanceOf[RawModule]
-    // Bump map
+    // Documentation/collateral
+    ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON(iocells))
     ElaborationArtefacts.add(s"bumpmap.csv", GenCollateral.toCSV)
-    ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON)
     GenCollateral.toImg
-    GenCollateral.ioLocations(iocells)
-    // TODO: constraints
   }
 }
 

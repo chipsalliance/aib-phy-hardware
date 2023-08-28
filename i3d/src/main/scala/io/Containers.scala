@@ -1,5 +1,8 @@
 package aib3d.io
 
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.write
+
 import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror}
@@ -29,9 +32,13 @@ case class AIB3DCore(
   bitIdx: Option[Int],  // For buses
   ioType: Data,  // Input, Output, Analog
   relatedClk: Option[String]) {  // Name of clock domain
-    var pinLocation: Option[AIB3DCoordinates[Double]] = None
+    //var pinLocation: Option[AIB3DCoordinates[Double]] = None
+    var pinLocation: Option[AIB3DCoordinates[Double]] =
+      Some(AIB3DCoordinates[Double](0.0, 0.0))
     // TODO: this uses a DataMirror internal API, subject to change/removal
     def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
+    def fullName: String =
+      name + (if (bitIdx.isDefined) "[" + bitIdx.get.toString() + "]" else "")
   }
 
 /** AIB3D bump containers */

@@ -1,5 +1,6 @@
 package aib3d
 
+import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.{pretty, render}
 import doodle.core._
@@ -10,30 +11,31 @@ import cats.effect.unsafe.implicits.global
 
 import chisel3._
 
-import firrtl.annotations.Target
+import chisel3.experimental.BaseModule
 import org.chipsalliance.cde.config.Parameters
 
 import aib3d.io._
-import chisel3.experimental.BaseModule
 
 /** Generate bump map collateral */
 object GenCollateral {
-  def ioLocations(
-    iocells: Seq[BaseModule with IOCellBundle]
-  ): Unit = {
-    iocells.foreach(i => println(s"${i.toTarget}: ${i.location.toString}"))
-  }
-
   /** Generates a JSON file with the IO cell instance name and location,
     * core pin name and location, and other physical design constraints.
     */
-  def toJSON(implicit params: AIB3DParams): String = {
-    val flatMap = params.bumpMap.flatten.toSeq
-    s"""{\n  "bump_map": [\n""" +
-    flatMap.map { case b =>
-      s"""    "${b.bumpName}":"${b.location.get.x}, ${b.location.get.y}""""
-    }.mkString(",\n") +
-    "\n  ]\n}"
+  def toJSON(iocells: Seq[BaseModule with IOCellBundle])
+    (implicit params: AIB3DParams): String = {
+    implicit val formats = DefaultFormats
+    val jsonMap = params.flatBumpMap.map { case b =>
+      val iocell = iocells.find(_.forBump == b)
+      ("bump_name" -> b.bumpName) ~
+      ("core_sig" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.fullName) else None)) ~
+      ("iocell_path" -> (if (iocell.isDefined) Some(iocell.get.toTarget.toString) else None)) ~
+      ("bump_x" -> b.location.get.x) ~
+      ("bump_y" -> b.location.get.y) ~
+      ("pin_x" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.x) else None)) ~
+      ("pin_y" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.y) else None)) ~
+      ("submod_idx" -> (if (b.submodIdx.isDefined) Some(b.submodIdx.get.linearIdx) else None))
+    }.toSeq
+    pretty(render(("bump_map" -> jsonMap)))
   }
 
   /** Generates a CSV file that can be imported into a spreadsheet
@@ -44,10 +46,7 @@ object GenCollateral {
     "Signal <-> Bump\n"+
     // Reverse rows to account for spreadsheet vs. layout
     params.bumpMap.reverse.map { case r => r.map { case b =>
-      val coreSig = if (b.coreSig.isDefined) {
-        b.coreSig.get.name + (if (b.coreSig.get.bitIdx.isDefined)
-          "[" + b.coreSig.get.bitIdx.get.toString() + "]" else "") + " <-> "
-      } else ""
+      val coreSig = if (b.coreSig.isDefined) b.coreSig.get.fullName + " <-> " else ""
       s"${coreSig}${b.bumpName}"
     }.mkString(", ")}.mkString("\n")
   }

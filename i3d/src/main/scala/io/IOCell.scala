@@ -7,17 +7,17 @@ import chisel3.experimental.{Analog, DataMirror}
 import aib3d._
 
 class IOControlBundle extends Bundle {
-  val loopback, tx_wkpu, tx_wkpd, rx_wkpu, rx_wkpd = Bool()
+  val loopback, txWkpu, txWkpd, rxWkpu, rxWkpd = Bool()
 }
 
 trait IOCellBundle {
-  val location: AIB3DCoordinates[Double]
+  val forBump: AIB3DBump
 
   // TODO: these must match IO cell generator. Use DataView?
-  val tx_clk, rx_clk = IO(Input(Clock()))
-  val tx_data = IO(Input(Bits(1.W)))
-  val rx_data = IO(Output(Bits(1.W)))
-  val async, tx_en, rx_en, wkpu_en, wkpd_en = IO(Input(Bool()))
+  val txClk, rxClk = IO(Input(Clock()))
+  val txData = IO(Input(Bits(1.W)))
+  val rxData = IO(Output(Bits(1.W)))
+  val async, txEn, rxEn, wkpuEn, wkpdEn = IO(Input(Bool()))
   val pad = IO(Analog(1.W))
 
   def connectInternal(d: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
@@ -27,52 +27,49 @@ trait IOCellBundle {
       case _ => throw new Exception("Data to be connected must have a direction")
     }
     async := DataMirror.checkTypeEquivalence(d, clk).B  // is clock
-    wkpu_en := ioCtrl.tx_wkpu
-    wkpd_en := ioCtrl.tx_wkpd
+    wkpuEn := ioCtrl.txWkpu
+    wkpdEn := ioCtrl.txWkpd
   }
 
   private def connectTx(tx: Data, clk: Clock, loopback: Bool): Unit = {
-    tx_data := tx.asTypeOf(tx_data)
-    rx_data := DontCare
-    tx_clk := clk
+    txData := tx.asTypeOf(txData)
+    rxData := DontCare
+    txClk := clk
     // TODO: use testchipip.ClockSignalNor2 if clock gating not inferred properly
-    rx_clk := (loopback && clk.asBool).asClock
-    tx_en := true.B
-    rx_en := loopback
+    rxClk := (loopback && clk.asBool).asClock
+    txEn := true.B
+    rxEn := loopback
   }
 
   private def connectRx(rx: Data, clk: Clock, loopback: Bool): Unit = {
-    tx_data := 0.U
-    rx := rx_data.asTypeOf(rx)
-    tx_clk := (loopback && clk.asBool).asClock
-    rx_clk := clk
-    tx_en := loopback
-    rx_en := true.B
+    txData := 0.U
+    rx := rxData.asTypeOf(rx)
+    txClk := (loopback && clk.asBool).asClock
+    rxClk := clk
+    txEn := loopback
+    rxEn := true.B
   }
 }
 
 class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellBundle {
-  val location = forBump.location.get
-
   // Analog to directional
-  val to_pad = Wire(Bits(1.W))
-  UIntToAnalog(to_pad, pad, tx_en)
-  val from_pad = Wire(Bits(1.W))
-  AnalogToUInt(pad, from_pad)
+  val toPad = Wire(Bits(1.W))
+  UIntToAnalog(toPad, pad, txEn)
+  val fromPad = Wire(Bits(1.W))
+  AnalogToUInt(pad, fromPad)
 
   // TODO: detect clock cells and don't have retimers
 
   // Tx logic
-  val tx_retimed = withClockAndReset(tx_clk, !tx_en)(RegNext(tx_data, 0.U))
-  val tx = Mux(async, tx_data, tx_retimed)
-  val txp = Mux(wkpu_en ^ wkpd_en, wkpu_en & ~wkpd_en, tx)
-  to_pad := Mux(tx_en, tx, txp)
+  val txRetimed = withClockAndReset(txClk, !txEn)(RegNext(txData, 0.U))
+  val tx = Mux(async, txData, txRetimed)
+  val txp = Mux(wkpuEn ^ wkpdEn, wkpuEn & ~wkpdEn, tx)
+  toPad := Mux(txEn, tx, txp)
 
   // Rx logic
-  val rx_retimed = withClockAndReset(rx_clk, !rx_en)(RegNext(from_pad, 0.U))
-  rx_data := Mux(async, from_pad & rx_en, rx_retimed)
+  val rxRetimed = withClockAndReset(rxClk, !rxEn)(RegNext(fromPad, 0.U))
+  rxData := Mux(async, fromPad & rxEn, rxRetimed)
 }
 
 class IOCellBB(val forBump: AIB3DBump) extends BlackBox with IOCellBundle {
-  val location = forBump.location.get
 }
