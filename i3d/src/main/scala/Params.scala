@@ -76,7 +76,7 @@ case class AIB3DGlblParams(
   val pitchV = pitchOvrdV.getOrElse(pitch)
 
   // Process array pattern param
-  val pattern = patternOvrd.getOrElse(if (pitch <= 9.0) "square" else "hex")
+  val pattern = patternOvrd.getOrElse(if (pitch <= 10.0) "square" else "hex")
 
   // Number of continuous signal bumps between power/ground bumps in each dimension
   // TODO: discretize based on pitch
@@ -239,24 +239,27 @@ case class AIB3DParams(
   val bumpMap: Array[Array[AIB3DBump]] = if (gp.redundArch != 1) {  // none or signal shift
     /* Submodule calculations */
 
-    // TODO: support non-square submodules?
     // Prioritize least number of bumps
-    val rowsSigCandidates = Seq(sqrt(sigsPerSubmod.toDouble).floor.toInt,
+    // Choose the ordering with fewer bumps facing pin edge
+    // TODO: is this the right decision?
+    val rowsSigOpts = Seq(sqrt(sigsPerSubmod.toDouble).floor.toInt,
                                 sqrt(sigsPerSubmod.toDouble).ceil.toInt)
-    val colsSigCandidates = rowsSigCandidates.map(r =>
+    val colsSigOpts = rowsSigOpts.map(r =>
       (sigsPerSubmod / r.toDouble).ceil.toInt)
     val (rowsSig, colsSig) = {
-      if (rowsSigCandidates(0) * colsSigCandidates(0) < rowsSigCandidates(1) * colsSigCandidates(1))
-        (rowsSigCandidates(0), colsSigCandidates(0))
+      if (rowsSigOpts(0) * colsSigOpts(0) < rowsSigOpts(1) * colsSigOpts(1))
+        if (isWide) (colsSigOpts(0), rowsSigOpts(0))
+        else (rowsSigOpts(0), colsSigOpts(0))
       else
-        (rowsSigCandidates(1), colsSigCandidates(1))
+        if (isWide) (rowsSigOpts(1), colsSigOpts(1))
+        else (colsSigOpts(1), rowsSigOpts(1))
     }
     val extras = rowsSig * colsSig - sigsPerSubmod
 
     // There must be an intersection for clock
     // TODO: 1 row or 1 column? Make this 1 if no valid
-    val rowsP = min(1, ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt)
-    val colsG = min(1, ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt)
+    val rowsP = max(1, ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1)
+    val colsG = max(1, ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1)
     val rowsPerSubmod = rowsSig + rowsP
     val colsPerSubmod = colsSig + colsG
 
@@ -281,38 +284,69 @@ case class AIB3DParams(
         diffuse(splitQuotient._2, splitQuotient._1.map(_ + 1))
     }
     // Get the pattern and the row/column indices of the power/ground
-    val spgPatternV = spgPatternGen(rowsSig, rowsP)
-    val pRows = spgPatternV.scanLeft(0)(_ + _ + 1).map(_ - 1).tail
-    val spgPatternH = spgPatternGen(colsSig, colsG)
-    val gCols = spgPatternH.scanLeft(0)(_ + _ + 1).map(_ - 1).tail
+    // At the edges, the signals virtually spill over into adjacent submods
+    // So we must add sigsPerPG to the pattern gen then subtract half when we
+    // calculate the indicies of pRows and gCols
+    val spgPatternV = spgPatternGen(rowsSig + gp.sigsPerPG._2, rowsP)
+    val pRows = spgPatternV.scanLeft(0)(_ + _ + 1)
+                .map(_ - 1 - gp.sigsPerPG._2/2)
+                .drop(1).dropRight(1)
+    val spgPatternH = spgPatternGen(colsSig + gp.sigsPerPG._1, colsG)
+    val gCols = spgPatternH.scanLeft(0)(_ + _ + 1)
+                .map(_ - 1 - gp.sigsPerPG._1/2)
+                .drop(1).dropRight(1)
+    println(gCols)
+    println(pRows)
 
     // Calculate which P/G intersections the clock signal will be located
     // It should be as close to the middle as possible and biased towards pin edge
-    val biasUL = if (Set("N", "W").contains(ip.pinSide)) 1 else 0
+    // TODO: should really be on the center-most power/ground row/col, which
+    // is not necessarily an intersection
+    val biasLL = if (Set("S", "W").contains(ip.pinSide)) 1 else 0
     val clkCoord: (Int, Int) = (colsG % 2 == 0, rowsP % 2 == 0) match {
-      case (true, true) => (gCols(colsG / 2 - biasUL), pRows(rowsP / 2 - biasUL))
-      case (true, false) => (gCols(colsG / 2 - biasUL), pRows(rowsP / 2))
-      case (false, true) => (gCols(colsG / 2), pRows(rowsP / 2 - biasUL))
+      case (true, true) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2 - biasLL))
+      case (true, false) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2))
+      case (false, true) => (gCols(colsG / 2), pRows(rowsP / 2 - biasLL))
       case (false, false) => (gCols(colsG / 2), pRows(rowsP / 2))
     }
 
-    // Calculate which positions the extra signals will be located
-    // In a circle around the submod, get the cornermost bumps, starting at (0, 0)
+    // Calculate which positions the extra signals will be located.
+    // In a counter-clockwise circle, get the cornermost bumps, starting at (0, 0)
+    // Then reorder based on which side the pin is on (prioritize farther ones).
     // This method reduces the radius of the clock tree in each submodule
-    // Col pattern is 0, 0, 1, 0, 1, 2, 0, 1, 2, 3, etc. and row is reverse (count down)
-    // Use recursion to generate this pattern and only take as many entries as necessary
+    // while decreasing the total length of routing to all IO cells.
+    // For ranges: col pattern is (0), (0, 1), (0, 1, 2), (0, 1, 2, 3), etc.
+    // and row is reverse (count down within each of those groups in col pattern).
+    // We must also adjust for any rows/cols of power/ground.
+    // Use recursion to generate this pattern and take as many entries as necessary.
+    val sideDropTake = ip.pinSide match{
+      case "N" => 0
+      case "W" => 1
+      case "S" => 2
+      case "E" => 3
+    }
     def extraCoordGen(coords: Seq[(Int, Int)], maxIdx: Int): Seq[(Int, Int)] = {
       if (coords.length >= extras) coords
       else {
         val range = Range(0, maxIdx)
         val nextCoords = (range zip range.reverse).map{ case(c, r) =>
-          Seq((c, r), (colsPerSubmod - c, r),
-              (colsPerSubmod - c, rowsPerSubmod - r), (c, rowsPerSubmod - r))
+          val cAdjUp = gCols.indexWhere(c >= _) + 1
+          val cAdjDown = gCols.reverse.indexWhere(colsPerSubmod - c - 1 <= _) + 2
+          val rAdjUp = pRows.indexWhere(r >= _) + 1
+          val rAdjDown = pRows.reverse.indexWhere(rowsPerSubmod - r - 1 <= _) + 2
+          val ord = Seq((c + cAdjUp, r + rAdjUp),
+                        (colsPerSubmod - c - cAdjDown, r + rAdjUp),
+                        (colsPerSubmod - c - cAdjDown, rowsPerSubmod - r - rAdjDown),
+                        (c + cAdjUp, rowsPerSubmod - r - rAdjDown))
+          ord.drop(sideDropTake) ++ ord.take(sideDropTake)
         }.flatten
         extraCoordGen(coords ++ nextCoords, maxIdx + 1)
       }
     }
     val extraCoords = extraCoordGen(Seq.empty, 0).take(extras)
+    println(extraCoords)
+    println(rowsPerSubmod)
+    println(colsPerSubmod)
 
     // Map to bump map
     val txBumpMap, rxBumpMap = Array.ofDim[AIB3DBump](numSubmodsWR, rowsPerSubmod, colsPerSubmod)
@@ -341,6 +375,7 @@ case class AIB3DParams(
             break()
           }
 
+          println(s"s: $s, c: $c, r: $r, bitCnt: ${bitCnt}")
           // Signal
           txBumpMap(s)(r)(c) = TxSig(bitCnt, if (s < numSubmods)
             Some(flatTx(bitCnt).copy(relatedClk = Some(s"TXCKP$s"))) else None)
@@ -362,38 +397,29 @@ case class AIB3DParams(
       if (isWide)  // Tx left of Rx
         ((0 until submodColsWR by 2) ++ (1 until submodColsWR by 2)).flatMap(c =>
           (0 until submodRowsWR).map(r =>
-            (r*(rowsPerSubmod+1), c*(colsPerSubmod+1))))
+            (r * rowsPerSubmod, c * colsPerSubmod)))
       else  // Tx under Rx
         ((0 until submodRowsWR by 2) ++ (1 until submodRowsWR by 2)).flatMap(r =>
           (0 until submodColsWR).map(c =>
-            (r*(rowsPerSubmod+1), c*(colsPerSubmod+1))))
+            (r * rowsPerSubmod, c * colsPerSubmod)))
     }
     require(submodOrigins.length == concatenated.length,
       "Error in Tx/Rx submodule to full module mapping.")
 
     // Flatten submodules into final map
-    // Dimensions of final map account for extra rows/cols of ground between each Tx/Rx submodule
     // Submodule index tag is added to each bump for submodule redundancy mapping
-    val finalRows = submodRowsWR * (rowsPerSubmod + 1) - 1
-    val finalCols = submodColsWR * (colsPerSubmod + 1) - 1
+    val finalRows = submodRowsWR * rowsPerSubmod
+    val finalCols = submodColsWR * colsPerSubmod
     val finalMap = Array.ofDim[AIB3DBump](finalRows, finalCols)
     submodOrigins.zipWithIndex.foreach { case ((r, c), s) =>
       for (sr <- 0 until rowsPerSubmod; sc <- 0 until colsPerSubmod) {
         finalMap(r + sr)(c + sc) = concatenated(s)(sr)(sc)
         finalMap(r + sr)(c + sc).submodIdx =
           Some(AIB3DCoordinates[Int](
-            x = c / (colsPerSubmod + 1),
-            y = r / (rowsPerSubmod + 1)))
+            x = c / colsPerSubmod,
+            y = r / rowsPerSubmod))
       }
     }
-    // Add rows/cols of ground
-    // Permute the submodRowsWR and submodColsWR together
-    (1 until submodRowsWR).flatMap(r => (0 until finalCols).map(c =>
-      (r * (rowsPerSubmod + 1) - 1, c))) ++
-    (1 until submodColsWR).flatMap(c => (0 until finalRows).map(r =>
-      (r, c * (colsPerSubmod + 1) - 1))) foreach { case(r, c) =>
-        finalMap(r)(c) = Gnd()
-      }
 
     // Calculate location
     // TODO: ignore tech grids and let the tools snap or use BigDecimal?

@@ -83,9 +83,9 @@ object GenCollateral {
 
     // Placements
     val topWidth = (params.bumpMap(0).length + 1) * params.gp.pitchH +
-      (if (Set("E", "W").contains(params.ip.pinSide)) params.ip.bumpOffset else 0.0)
+      (if (!params.isWide) params.ip.bumpOffset else 0.0)
     val topHeight = (params.bumpMap.length + 1) * params.gp.pitchV +
-      (if (Set("N", "S").contains(params.ip.pinSide)) params.ip.bumpOffset else 0.0)
+      (if (params.isWide) params.ip.bumpOffset else 0.0)
     val topPlacement =
       ("vlsi.inputs.placement_constraints" -> Seq(
         ("path" -> "Patch") ~
@@ -187,11 +187,14 @@ object GenCollateral {
           )
         // An invisible square with a circle inside
         val bumpCircle = Picture.circle(scale * params.gp.pitch / 2)
-        val bumpCell = bumpText.on(
-          if (b.isInstanceOf[Pwr]) bumpCircle.fillColor(Color.red)
-          else if (b.isInstanceOf[Gnd]) bumpCircle.fillColor(Color.gray)
-          else bumpCircle.noFill).on(
-            Picture.rectangle(scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
+        val bumpCell = bumpText.on(bumpCircle.fillColor(b match {
+          case _: Pwr => Color.red
+          case _: Gnd => Color.gray
+          case _: TxSig => Color.lightGreen
+          case _: RxSig => Color.lightBlue
+          case _ => Color.white
+        })).on(Picture.rectangle(
+          scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
         constructCols(bumpCell.beside(right), ba.tail)
       }
     }
@@ -212,8 +215,8 @@ object GenCollateral {
     val (bumpsH, bumpsV) = (params.bumpMap(0).length, params.bumpMap.length)
     val bumpsWidth = bumpsH * scale * params.gp.pitchH
     val bumpsHeight = bumpsV * scale * params.gp.pitchV
-    val gridWidth = (bumpsH + 1) * scale * params.gp.pitchH / params.submodColsWR - 1
-    val gridHeight = (bumpsV + 1) * scale * params.gp.pitchV / params.submodRowsWR - 1
+    val gridWidth = bumpsH * scale * params.gp.pitchH / params.submodColsWR - 1
+    val gridHeight = bumpsV * scale * params.gp.pitchV / params.submodRowsWR - 1
     val titleText = s"""Bump Map: ${bumpsH} x ${bumpsV} bumps at
                         |${params.gp.pitchH}um x ${params.gp.pitchV}um pitch"""
                         .stripMargin
@@ -249,6 +252,6 @@ object GenCollateral {
     // Scalar
     // bumpMapPic.write[Png]("bumpmap.png")
     // Live window (2x2 pixels = 1um^2)
-    // bumpMapPic.scale(2.0 / scale, 2.0 / scale).draw()
+    bumpMapPic.scale(2.0 / scale, 2.0 / scale).draw()
   }
 }

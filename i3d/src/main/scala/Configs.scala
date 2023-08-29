@@ -15,8 +15,11 @@ case object AIB3DKey extends Field[AIB3DParams]
   */
 
 class AIB3DBaseConfig extends Config ((site, here, up) => {
-  case AIB3DGlblKey => AIB3DGlblParams(dataBundle = new DefaultDataBundle(64*2),
-                                      redundRatio=1)
+  case AIB3DGlblKey => AIB3DGlblParams(dataBundle = new DefaultDataBundle(72*2),
+                                      redundRatio=1,
+                                      submodSize = 80,
+                                      sigsPerPGOvrdV = Some(3),
+                                      sigsPerPGOvrdH = Some(5))
   case AIB3DInstKey => AIB3DInstParams(isLeader = true,
                                       pinSide = "W",
                                       blackBoxModels = true)
