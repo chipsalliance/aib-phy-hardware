@@ -329,10 +329,9 @@ case class AIB3DParams(
       case "S" => 2
       case "E" => 3
     }
-    def extraCoordGen(coords: Seq[(Int, Int)], maxIdx: Int): Seq[(Int, Int)] = {
-      if (coords.length >= extras) coords
-      else {
-        val range = Range(0, maxIdx)
+    val extraCoords = (1 to (extras / 4.0).ceil.toInt)  // recursion
+      .foldLeft(Seq.empty[(Int, Int)]){ case (coords, e) =>
+        val range = Range(0, e)
         val nextCoords = (range zip range.reverse).map{ case(c, r) =>
           val cAdjUp = gCols.indexWhere(c >= _) + 1
           val cAdjDown = gCols.reverse.indexWhere(colsPerSubmod - c - 1 <= _) + 2
@@ -344,10 +343,8 @@ case class AIB3DParams(
                         (c + cAdjUp, rowsPerSubmod - r - rAdjDown))
           ord.drop(sideDropTake) ++ ord.take(sideDropTake)
         }.flatten
-        extraCoordGen(coords ++ nextCoords, maxIdx + 1)
-      }
-    }
-    val extraCoords = extraCoordGen(Seq.empty, 0).take(extras)
+        coords ++ nextCoords
+      }.take(extras)
 
     // Map to bump map
     val txBumpMap, rxBumpMap = Array.ofDim[AIB3DBump](numSubmodsWR, rowsPerSubmod, colsPerSubmod)

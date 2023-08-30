@@ -169,47 +169,38 @@ object GenCollateral {
   def toImg(implicit params: AIB3DParams): Unit = {
     require(params.gp.pattern == "square",
       "Only square bump patterns are supported for visualization")
-    // Iterate row-wise (not in reverse order) and column-wise (in reverse order) using recursion
+    // Iterate row-wise (not in reverse order) and column-wise (in reverse order)
     // Scale by factor of 10 for legibility
     val scale = 10.0
-    def constructCols(right: Picture[Unit], ba: Array[AIB3DBump]): Picture[Unit] = {
-      if (ba.isEmpty) right
-      else {
-        val b = ba.head
-        val coreSig = if (b.coreSig.isDefined) {
-          b.coreSig.get.name + (if (b.coreSig.get.bitIdx.isDefined)
-            "[" + b.coreSig.get.bitIdx.get.toString() + "]" else "")
-        } else ""
-        val bumpText = Picture.text(b.bumpName)
-          .scale(scale / 16, scale / 16)
-          .above(
-            if (b.coreSig.isDefined)
-              Picture.text(coreSig).scale(scale / 20, scale / 20)
-            else Picture.empty
-          )
-        // An invisible square with a circle inside
-        val bumpCircle = Picture.circle(scale * params.gp.pitch / 2)
-        val bumpCell = bumpText.on(bumpCircle.fillColor(b match {
-          case _: Pwr => Color.red
-          case _: Gnd => Color.gray
-          case _: TxSig => Color.lightGreen
-          case _: RxSig => Color.lightBlue
-          case _ => Color.white
-        })).on(Picture.rectangle(
-          scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
-        constructCols(bumpCell.beside(right), ba.tail)
-      }
-    }
-    def constructRows(below: Picture[Unit], ba: Array[Array[AIB3DBump]]): Picture[Unit] = {
-      if (ba.isEmpty) below
-      else {
-        val row = constructCols(Picture.empty, ba.head.reverse)
-        constructRows(row.above(below), ba.tail)
-      }
-    }
-    val bumps = constructRows(Picture.empty, params.bumpMap)
+    val bumps =  // 2D recursion
+      params.bumpMap.foldLeft(Picture.empty)((below, row) =>
+        row.foldLeft(Picture.empty){(right, b) =>
+          val coreSig = if (b.coreSig.isDefined) {
+            b.coreSig.get.name + (if (b.coreSig.get.bitIdx.isDefined)
+              "[" + b.coreSig.get.bitIdx.get.toString() + "]" else "")
+          } else ""
+          val bumpText = Picture.text(b.bumpName)
+            .scale(scale / 16, scale / 16)
+            .above(
+              if (b.coreSig.isDefined)
+                Picture.text(coreSig).scale(scale / 20, scale / 20)
+              else Picture.empty
+            )
+          // An invisible square with a circle inside
+          val bumpCircle = Picture.circle(scale * params.gp.pitch / 2)
+          val bumpCell = bumpText.on(bumpCircle.fillColor(b match {
+            case _: Pwr => Color.red
+            case _: Gnd => Color.gray
+            case _: TxSig => Color.lightGreen
+            case _: RxSig => Color.lightBlue
+            case _ => Color.white
+          })).on(Picture.rectangle(
+            scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
+          bumpCell.beside(right)
+        }.above(below)
+      )
 
-    // Overlay a dotted grid for submodules and some helpful text
+    // Overlay a dotted grid for submodules
     // Unfortunately, can't get bounding box or size of patch because it's a bug in doodle 0.19.0
     // Fixed for 0.20.0 but that is only available for Scala 3
     // So we have to do it manually - get dimensions of bump map and draw grid
@@ -219,38 +210,31 @@ object GenCollateral {
     val bumpsHeight = bumpsV * scale * params.gp.pitchV
     val gridWidth = bumpsH * scale * params.gp.pitchH / params.submodColsWR - 1
     val gridHeight = bumpsV * scale * params.gp.pitchV / params.submodRowsWR - 1
-    def gridCols(right: Picture[Unit], x: Int): Picture[Unit] = {
-      if (x == params.submodColsWR) right
-      else {
-        val gridRect = Picture.rectangle(gridWidth, gridHeight)
+    val grid =  // 2D recursion
+      (0 until params.submodRowsWR).foldLeft(Picture.empty)((below, y) =>
+        (0 until params.submodColsWR).foldLeft(Picture.empty)((right, x) =>
+          Picture.rectangle(gridWidth, gridHeight)
           .strokeColor(Color.gray).strokeDash(Array(scale / 2, scale / 5))
-        gridCols(gridRect.beside(right), x + 1)
-      }
-    }
-    def gridRows(below: Picture[Unit], y: Int): Picture[Unit] = {
-      if (y == params.submodRowsWR) below
-      else {
-        val row = gridCols(Picture.empty, 0)
-        gridRows(row.above(below), y + 1)
-      }
-    }
-    val grid = gridRows(Picture.empty, 0)
+          .beside(right)
+        ).above(below)
+      )
+    // Title
     val titleText = s"""Bump Map: ${bumpsH} x ${bumpsV} bumps at
                         | ${params.gp.pitchH}um x ${params.gp.pitchV}um pitch"""
                         .stripMargin
     val titleBlock = Picture.text(titleText).scale(scale / 5, scale / 5).on(
       Picture.rectangle(bumpsWidth, scale / 2 * params.gp.pitchV).noFill.noStroke)
     // Rulers
-    val leftRulerOffset = if (params.pinSide == "W") params.ip.bumpOffset else 0.0
+    val leftRulerOffset = if (params.pinSide == "S") params.ip.bumpOffset else 0.0
     val leftRuler =
       (0 until bumpsV).foldLeft(Picture.empty)((below, y) =>
         Picture.text(((y + 0.5) * params.gp.pitchV + leftRulerOffset).toString)
         .on(Picture.rectangle(scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
         .above(below))
       Picture.rectangle(scale / 2 * params.gp.pitchH, bumpsHeight).noFill.noStroke
-    val bottomRulerOffset = if (params.pinSide == "S") params.ip.bumpOffset else 0.0
+    val bottomRulerOffset = if (params.pinSide == "W") params.ip.bumpOffset else 0.0
     val bottomRuler =
-      Picture.text("Ruler (um)")
+      Picture.text("(um)")
       .on(Picture.rectangle(scale * params.gp.pitchH + bottomRulerOffset,
                             scale * params.gp.pitchV).noFill.noStroke)
       .beside((0 until bumpsH).reverse.foldLeft(Picture.empty)((right, x) =>
@@ -267,8 +251,21 @@ object GenCollateral {
       .foldLeft(Picture.empty){ case (on, b) =>
         val coreSig = b.coreSig.get
         val pinSize = params.ip.layerPitch(coreSig.pinLayer.get) / 1000 * scale
-        val locX = (coreSig.pinLocation.get.x + params.gp.pitchH / 2) * scale - bumpsWidth / 2
-        val locY = (coreSig.pinLocation.get.y + params.gp.pitchV / 2) * scale - bumpsHeight / 2
+        // location is relative to center of bump array
+        val locX =
+          (coreSig.pinLocation.get.x + params.gp.pitchH / 2) * scale - bumpsWidth / 2 +
+          (params.pinSide match {
+            case "W" => -params.ip.bumpOffset * scale
+            case "E" => params.ip.bumpOffset * scale
+            case _ => 0.0
+          })
+        val locY =
+          (coreSig.pinLocation.get.y + params.gp.pitchV / 2) * scale - bumpsHeight / 2 +
+          (params.pinSide match {
+            case "S" => -params.ip.bumpOffset * scale
+            case "N" => params.ip.bumpOffset * scale
+            case _ => 0.0
+          })
         val textOffset = scale
         val pinText = Picture.text(s"${coreSig.fullName} (${coreSig.pinLayer.get})")
           .scale(scale / 100, scale / 100).rotate(rotation)
