@@ -24,10 +24,10 @@ object GenCollateral {
   def toJSON(iocells: Seq[BaseModule with IOCellBundle])
     (implicit params: AIB3DParams): String = {
     pretty(render(("bump map" -> params.flatBumpMap.map{ b =>
-      val iocell = iocells.find(_.forBump == b)
+      val io = iocells.find(_.forBump == b)
       ("bump_name" -> b.bumpName) ~
       ("core_sig" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.fullName) else None)) ~
-      ("iocell_path" -> (if (iocell.isDefined) Some(iocell.get.toTarget.toString) else None)) ~
+      ("iocell_path" -> (if (io.isDefined) Some(io.get.toTarget.toString) else None)) ~
       ("bump_x" -> b.location.get.x) ~
       ("bump_y" -> b.location.get.y) ~
       ("pin_x" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.x) else None)) ~
@@ -43,15 +43,16 @@ object GenCollateral {
     // TODO: support mismatched pitchH/pitchV - need gcd of them
     // TODO: get bump cell name from params (tech-specific...)
     (implicit params: AIB3DParams): String = {
+    // Floating point precision
+    def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
 
     // Bumps
-    val pitch = min(params.gp.pitchH, params.gp.pitchV)
     val bumps =
       ("vlsi.inputs.bumps_mode" -> "manual") ~
       ("vlsi.inputs.bumps" ->
         ("x" -> params.bumpMap(0).length) ~
         ("y" -> params.bumpMap.length) ~
-        ("pitch" -> pitch) ~
+        ("pitch" -> params.gp.pitch) ~
         // TODO: this must vary depending on how much edge logic there is
         ("global_x_offset" -> (
           if (params.pinSide == "W") params.ip.bumpOffset else 0.0)) ~
@@ -61,8 +62,8 @@ object GenCollateral {
         ("assignments" -> params.flatBumpMap.map( b =>
           ("name" -> b.bumpName) ~
           // location is integer multiple of pitch, 1-indexed
-          ("x" -> (b.location.get.x / pitch + 0.5).toInt) ~
-          ("y" -> (b.location.get.y / pitch + 0.5).toInt)
+          ("x" -> roundToNm(b.location.get.x / params.gp.pitch + 0.5).toInt) ~
+          ("y" -> roundToNm(b.location.get.y / params.gp.pitch + 0.5).toInt)
         ))
       )
 
@@ -77,7 +78,8 @@ object GenCollateral {
           ("pins" -> s"*${c.fullName}") ~
           ("side" -> sideMap(params.pinSide)) ~
           ("layers" -> Seq(c.pinLayer.get)) ~
-          ("location" -> Seq(c.pinLocation.get.x, c.pinLocation.get.y))
+          ("location" -> Seq(roundToNm(c.pinLocation.get.x),
+                             roundToNm(c.pinLocation.get.y)))
         ))
       )
 
@@ -92,8 +94,8 @@ object GenCollateral {
         ("type" -> "toplevel") ~
         ("x" -> 0) ~
         ("y" -> 0) ~
-        ("width" -> topWidth) ~
-        ("height" -> topHeight) ~
+        ("width" -> roundToNm(topWidth)) ~
+        ("height" -> roundToNm(topHeight)) ~
         ("margins" ->
           ("left" -> 0) ~
           ("right" -> 0) ~
@@ -107,8 +109,8 @@ object GenCollateral {
         // TODO: breaks if IO cell beneath top hierarchy
         ("path" -> i.toTarget.toString.replace("~", "").replace("|", "/")) ~
         ("type" -> "hardmacro") ~
-        ("x" -> i.forBump.location.get.x) ~
-        ("y" -> i.forBump.location.get.y) ~
+        ("x" -> roundToNm(i.forBump.location.get.x)) ~
+        ("y" -> roundToNm(i.forBump.location.get.y)) ~
         ("master" -> i.getClass.getSimpleName)
         // TODO: top layer for halos
       )) ~
@@ -169,21 +171,21 @@ object GenCollateral {
   def toImg(implicit params: AIB3DParams): Unit = {
     require(params.gp.pattern == "square",
       "Only square bump patterns are supported for visualization")
+    // Floating point precision
+    def roundToNm(x: Double): String = ((x * 1000).round / 1000.0).toString
+
     // Iterate row-wise (not in reverse order) and column-wise (in reverse order)
     // Scale by factor of 10 for legibility
     val scale = 10.0
+    val unitWidth = scale * params.gp.pitchH
+    val unitHeight = scale * params.gp.pitchV
     val bumps =  // 2D recursion
       params.bumpMap.foldLeft(Picture.empty)((below, row) =>
-        row.foldLeft(Picture.empty){(right, b) =>
-          val coreSig = if (b.coreSig.isDefined) {
-            b.coreSig.get.name + (if (b.coreSig.get.bitIdx.isDefined)
-              "[" + b.coreSig.get.bitIdx.get.toString() + "]" else "")
-          } else ""
-          val bumpText = Picture.text(b.bumpName)
-            .scale(scale / 16, scale / 16)
+        row.reverse.foldLeft(Picture.empty){(right, b) =>
+          val bumpText = Picture.text(b.bumpName).scale(scale / 16, scale / 16)
             .above(
               if (b.coreSig.isDefined)
-                Picture.text(coreSig).scale(scale / 20, scale / 20)
+                Picture.text(b.coreSig.get.fullName).scale(scale / 20, scale / 20)
               else Picture.empty
             )
           // An invisible square with a circle inside
@@ -194,8 +196,7 @@ object GenCollateral {
             case _: TxSig => Color.lightGreen
             case _: RxSig => Color.lightBlue
             case _ => Color.white
-          })).on(Picture.rectangle(
-            scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
+          })).on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
           bumpCell.beside(right)
         }.above(below)
       )
@@ -206,14 +207,13 @@ object GenCollateral {
     // So we have to do it manually - get dimensions of bump map and draw grid
     // (Accounts for default strokeWidth = 1)
     val (bumpsH, bumpsV) = (params.bumpMap(0).length, params.bumpMap.length)
-    val bumpsWidth = bumpsH * scale * params.gp.pitchH
-    val bumpsHeight = bumpsV * scale * params.gp.pitchV
-    val gridWidth = bumpsH * scale * params.gp.pitchH / params.submodColsWR - 1
-    val gridHeight = bumpsV * scale * params.gp.pitchV / params.submodRowsWR - 1
+    val bumpsWidth = bumpsH * unitWidth
+    val bumpsHeight = bumpsV * unitHeight
     val grid =  // 2D recursion
       (0 until params.submodRowsWR).foldLeft(Picture.empty)((below, y) =>
         (0 until params.submodColsWR).foldLeft(Picture.empty)((right, x) =>
-          Picture.rectangle(gridWidth, gridHeight)
+          Picture.rectangle(bumpsWidth / params.submodColsWR - 1,
+                            bumpsHeight / params.submodRowsWR - 1)
           .strokeColor(Color.gray).strokeDash(Array(scale / 2, scale / 5))
           .beside(right)
         ).above(below)
@@ -223,26 +223,37 @@ object GenCollateral {
                         | ${params.gp.pitchH}um x ${params.gp.pitchV}um pitch"""
                         .stripMargin
     val titleBlock = Picture.text(titleText).scale(scale / 5, scale / 5).on(
-      Picture.rectangle(bumpsWidth, scale / 2 * params.gp.pitchV).noFill.noStroke)
+      Picture.rectangle(bumpsWidth, unitHeight / 2).noFill.noStroke)
     // Rulers
     val leftRulerOffset = if (params.pinSide == "S") params.ip.bumpOffset else 0.0
     val leftRuler =
       (0 until bumpsV).foldLeft(Picture.empty)((below, y) =>
-        Picture.text(((y + 0.5) * params.gp.pitchV + leftRulerOffset).toString)
-        .on(Picture.rectangle(scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
+        Picture.text(roundToNm((y + 0.5) * params.gp.pitchV + leftRulerOffset))
+        .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
         .above(below))
-      Picture.rectangle(scale / 2 * params.gp.pitchH, bumpsHeight).noFill.noStroke
+      Picture.rectangle(unitWidth / 2, bumpsHeight).noFill.noStroke
     val bottomRulerOffset = if (params.pinSide == "W") params.ip.bumpOffset else 0.0
     val bottomRuler =
-      Picture.text("(um)")
-      .on(Picture.rectangle(scale * params.gp.pitchH + bottomRulerOffset,
-                            scale * params.gp.pitchV).noFill.noStroke)
+      Picture.text("Rulers (um)")
+      .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
       .beside((0 until bumpsH).reverse.foldLeft(Picture.empty)((right, x) =>
-        Picture.text(((x + 0.5) * params.gp.pitchH + bottomRulerOffset).toString)
-        .on(Picture.rectangle(scale * params.gp.pitchH, scale * params.gp.pitchV).noFill.noStroke)
+        Picture.text(roundToNm((x + 0.5) * params.gp.pitchH + bottomRulerOffset))
+        .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
         .beside(right))
       )
     // Pin placement
+    // location is relative to center of bump array
+    val pinOffsetX = (params.pinSide match {
+      case "W" => -params.ip.bumpOffset * scale
+      case "E" => params.ip.bumpOffset * scale
+      case _ => 0.0
+    }) + unitWidth /2 - bumpsWidth / 2
+    val pinOffsetY = (params.pinSide match {
+      case "S" => -params.ip.bumpOffset * scale
+      case "N" => params.ip.bumpOffset * scale
+      case _ => 0.0
+    }) + unitHeight / 2 - bumpsHeight / 2
+    val textOffset = scale
     val rotation = params.pinSide match {
       case "N" | "S" => 90.degrees
       case _ => 0.degrees
@@ -251,33 +262,18 @@ object GenCollateral {
       .foldLeft(Picture.empty){ case (on, b) =>
         val coreSig = b.coreSig.get
         val pinSize = params.ip.layerPitch(coreSig.pinLayer.get) / 1000 * scale
-        // location is relative to center of bump array
-        val locX =
-          (coreSig.pinLocation.get.x + params.gp.pitchH / 2) * scale - bumpsWidth / 2 +
-          (params.pinSide match {
-            case "W" => -params.ip.bumpOffset * scale
-            case "E" => params.ip.bumpOffset * scale
-            case _ => 0.0
-          })
-        val locY =
-          (coreSig.pinLocation.get.y + params.gp.pitchV / 2) * scale - bumpsHeight / 2 +
-          (params.pinSide match {
-            case "S" => -params.ip.bumpOffset * scale
-            case "N" => params.ip.bumpOffset * scale
-            case _ => 0.0
-          })
-        val textOffset = scale
+        val locX = coreSig.pinLocation.get.x * scale + pinOffsetX
+        val locY = coreSig.pinLocation.get.y * scale + pinOffsetY
         val pinText = Picture.text(s"${coreSig.fullName} (${coreSig.pinLayer.get})")
           .scale(scale / 100, scale / 100).rotate(rotation)
-        val pinRect = Picture.rectangle(pinSize, pinSize)
+        val pinRect = Picture.rectangle(pinSize, pinSize).at(locX, locY)
           .strokeColor(Color.black).strokeWidth(scale / 200)
-          .at(locX, locY)
-        params.pinSide match {
-          case "N" => pinText.at(locX, locY + textOffset).on(pinRect).on(on)
-          case "S" => pinText.at(locX, locY - textOffset).on(pinRect).on(on)
-          case "E" => pinText.at(locX + textOffset, locY).on(pinRect).on(on)
-          case "W" => pinText.at(locX - textOffset, locY).on(pinRect).on(on)
-        }
+        (params.pinSide match {
+          case "N" => pinText.at(locX, locY + textOffset)
+          case "S" => pinText.at(locX, locY - textOffset)
+          case "E" => pinText.at(locX + textOffset, locY)
+          case "W" => pinText.at(locX - textOffset, locY)
+        }).on(pinRect).on(on)
       }
 
     // Final pic

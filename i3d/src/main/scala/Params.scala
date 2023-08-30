@@ -59,13 +59,15 @@ case class AIB3DGlblParams(
   // Checks
   require(pitch >= 1.0 && pitch <= 25.0, "Pitch must be within [1, 25] um")
   if (pitchOvrdH.isDefined)
-    require(pitchOvrdH.get >= pitch && pitchOvrdH.get <= 25.0, "Bad pitchOvrdH")
+    require(pitchOvrdH.get > pitch && pitchOvrdH.get <= 25.0,
+    "Bad pitchOvrdH: must be greater than pitch if specified")
   if (pitchOvrdV.isDefined)
-    require(pitchOvrdV.get >= pitch && pitchOvrdV.get <= 25.0, "Bad pitchOvrdV")
+    require(pitchOvrdV.get > pitch && pitchOvrdV.get <= 25.0,
+    "Bad pitchOvrdV: must be greater than pitch if specified")
   require(maxNode <= 28.0, "Max supported tech node is 28nm")
   require(maxParticleSize >= 0, "Can't have negative particle size")
   if (patternOvrd.isDefined)
-    require(patternOvrd.get == "square" || patternOvrd.get == "hex",
+    require(Set("square", "hex").contains(patternOvrd.get),
     "Only 'square' or 'hex' for patternOvrd supported")
   if (sigsPerPGOvrdH.isDefined)
     require(sigsPerPGOvrdH.get >= 1,

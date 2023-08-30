@@ -18,6 +18,7 @@ class AIB3DBaseConfig extends Config ((site, here, up) => {
   case AIB3DGlblKey => AIB3DGlblParams(dataBundle = new DefaultDataBundle(67*2),
                                       redundRatio=1,
                                       submodSize = 80,
+                                      pitch = 9.9,
                                       pinSide = "W",
                                       sigsPerPGOvrdV = Some(3),
                                       sigsPerPGOvrdH = Some(5))
