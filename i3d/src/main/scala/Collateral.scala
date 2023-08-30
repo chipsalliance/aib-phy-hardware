@@ -54,9 +54,9 @@ object GenCollateral {
         ("pitch" -> pitch) ~
         // TODO: this must vary depending on how much edge logic there is
         ("global_x_offset" -> (
-          if (params.ip.pinSide == "W") params.ip.bumpOffset else 0.0)) ~
+          if (params.pinSide == "W") params.ip.bumpOffset else 0.0)) ~
         ("global_y_offset" -> (
-          if (params.ip.pinSide == "S") params.ip.bumpOffset else 0.0)) ~
+          if (params.pinSide == "S") params.ip.bumpOffset else 0.0)) ~
         ("cell" -> "TODO") ~
         ("assignments" -> params.flatBumpMap.map( b =>
           ("name" -> b.bumpName) ~
@@ -75,8 +75,8 @@ object GenCollateral {
         ("generate_mode" -> "semi_auto") ~
         ("assignments" -> coreSigs.map( c =>
           ("pins" -> s"*${c.fullName}") ~
-          ("side" -> sideMap(params.ip.pinSide)) ~
-          ("layers" -> Seq(params.ip.layerPitch.head._1)) ~
+          ("side" -> sideMap(params.pinSide)) ~
+          ("layers" -> Seq(c.pinLayer.get)) ~
           ("location" -> Seq(c.pinLocation.get.x, c.pinLocation.get.y))
         ))
       )
@@ -250,7 +250,7 @@ object GenCollateral {
     // Vector
     bumpMapPic.write[Pdf]("bumpmap.pdf")
     // Scalar
-    // bumpMapPic.write[Png]("bumpmap.png")
+    bumpMapPic.write[Png]("bumpmap.png")
     // Live window (2x2 pixels = 1um^2)
     bumpMapPic.scale(2.0 / scale, 2.0 / scale).draw()
   }

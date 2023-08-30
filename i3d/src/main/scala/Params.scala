@@ -35,6 +35,8 @@ import aib3d.io._
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
   * @param submodSize is the max number of data bits (Tx/Rx, each) in a sub-module
+  * @param pinSide is the side where pins are to be assigned, pre-mirroring/rotation.
+  * One of "N", "S", "E", "W".
   * @param dataBundle is the data bundle of the leader die
   */
 case class AIB3DGlblParams(
@@ -51,6 +53,7 @@ case class AIB3DGlblParams(
   hasDBI: Boolean = false,
   deskewArch: Int = 0,
   submodSize: Int = 64,
+  pinSide: String = "N",
   dataBundle: Bundle) {
 
   // Checks
@@ -89,6 +92,8 @@ case class AIB3DGlblParams(
   require(redundRatio >= 1, "Redundancy ratio must be a positive integer")
   require(hasDBI ^ !(redundArch == 1), "DBI only supported with coding redundancy")
   require(deskewArch >= 0 && deskewArch <= 2, "Only 0, 1, 2 supported for deskewArch")
+  require(Set("N","S","E","W").contains(pinSide),
+    "pinSides Set can only be 'N', 'S', 'E', or 'W'")
 
   // TODO: submodSize depends on pitch, additional signals, redundancy
   // require(submodSize >= pow(maxParticleSize, 2).toInt,
@@ -121,7 +126,7 @@ case class AIB3DGlblParams(
   */
 case class AIB3DInstParams (
   node: Double = 10.0,
-  layerPitch: Map[String, Double] = Map("M3" -> 100.0),
+  layerPitch: Map[String, Double] = Map("M3" -> 100.0, "M5" -> 200.0),
   viaKOZRatio: Double = 0.15,
   bprKOZRatio: Option[Double] = None,
   tsvKOZRatio: Option[Double] = None,
@@ -130,7 +135,7 @@ case class AIB3DInstParams (
   powerB: Boolean = true,
   isLeader: Boolean,
   orientation: Option[String] = None,
-  pinSide: String = "N",
+  pinSide: Option[String] = None,
   bumpOffset: Double = 0.0,
   baseAddress: Int = 0x2000,
   testProtocol: String = "IEEE1838",
@@ -154,7 +159,8 @@ case class AIB3DInstParams (
   if (orientation.isDefined)
     require(orientation.get == "MX" || orientation.get == "MY",
     "Only 'MX' or 'MY' supported for orientation")
-  require(Set("N","S","E","W").contains(pinSide),
+  if (pinSide.isDefined)
+    require(Set("N","S","E","W").contains(pinSide.get),
     "pinSides Set can only be 'N', 'S', 'E', or 'W'")
   require(baseAddress > 0, "baseAddress must be non-negative")
   // TODO: check testProtocol
@@ -211,7 +217,8 @@ case class AIB3DParams(
   if (redSubmods > 0) require(numSubmods % redSubmods == 0,
     s"Number of signal submods (${numSubmods}) must be evenly divisible by number of redundant submods (${redSubmods})")
   // TODO: fix this: determined globally
-  val isWide = Set("N", "S").contains(ip.pinSide)
+  val isWide = Set("N", "S").contains(gp.pinSide)
+  val pinSide = if (ip.pinSide.isDefined) ip.pinSide.get else gp.pinSide
   val numSubmodsWR = numSubmods + redSubmods
   // These are total, not Tx/Rx individually
   // If no redundancy, want to find the most "square" arrangement from the factor pairs of numSubmods
@@ -257,9 +264,8 @@ case class AIB3DParams(
     val extras = rowsSig * colsSig - sigsPerSubmod
 
     // There must be an intersection for clock
-    // TODO: 1 row or 1 column? Make this 1 if no valid
-    val rowsP = max(1, ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1)
-    val colsG = max(1, ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1)
+    val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1
+    val colsG = ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1
     val rowsPerSubmod = rowsSig + rowsP
     val colsPerSubmod = colsSig + colsG
 
@@ -295,14 +301,12 @@ case class AIB3DParams(
     val gCols = spgPatternH.scanLeft(0)(_ + _ + 1)
                 .map(_ - 1 - gp.sigsPerPG._1/2)
                 .drop(1).dropRight(1)
-    println(gCols)
-    println(pRows)
 
     // Calculate which P/G intersections the clock signal will be located
     // It should be as close to the middle as possible and biased towards pin edge
     // TODO: should really be on the center-most power/ground row/col, which
     // is not necessarily an intersection
-    val biasLL = if (Set("S", "W").contains(ip.pinSide)) 1 else 0
+    val biasLL = if (Set("S", "W").contains(gp.pinSide)) 1 else 0
     val clkCoord: (Int, Int) = (colsG % 2 == 0, rowsP % 2 == 0) match {
       case (true, true) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2 - biasLL))
       case (true, false) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2))
@@ -319,7 +323,7 @@ case class AIB3DParams(
     // and row is reverse (count down within each of those groups in col pattern).
     // We must also adjust for any rows/cols of power/ground.
     // Use recursion to generate this pattern and take as many entries as necessary.
-    val sideDropTake = ip.pinSide match{
+    val sideDropTake = gp.pinSide match{
       case "N" => 0
       case "W" => 1
       case "S" => 2
@@ -344,9 +348,6 @@ case class AIB3DParams(
       }
     }
     val extraCoords = extraCoordGen(Seq.empty, 0).take(extras)
-    println(extraCoords)
-    println(rowsPerSubmod)
-    println(colsPerSubmod)
 
     // Map to bump map
     val txBumpMap, rxBumpMap = Array.ofDim[AIB3DBump](numSubmodsWR, rowsPerSubmod, colsPerSubmod)
@@ -375,7 +376,6 @@ case class AIB3DParams(
             break()
           }
 
-          println(s"s: $s, c: $c, r: $r, bitCnt: ${bitCnt}")
           // Signal
           txBumpMap(s)(r)(c) = TxSig(bitCnt, if (s < numSubmods)
             Some(flatTx(bitCnt).copy(relatedClk = Some(s"TXCKP$s"))) else None)
@@ -421,7 +421,7 @@ case class AIB3DParams(
       }
     }
 
-    // Calculate location
+    // Calculate bump/iocell location
     // TODO: ignore tech grids and let the tools snap or use BigDecimal?
     for (r <- 0 until finalRows; c <- 0 until finalCols) {
       // Update coordinates using calculated pitch.
@@ -433,8 +433,55 @@ case class AIB3DParams(
     }
 
     // Calculate pin locations
-    // TODO: calculate how many layers + min pitch or not for each
-    // TODO: should we just assume that the tools have intelligent pin spreading?
+    // Check for available routing resources
+    // Assume 20% power assumption + 50% shielding/space penalty
+    val routingTracks = ip.layerPitch.map{ case(layer, pitch) =>
+      layer -> (gp.pitch / pitch * 1000).floor.toInt}
+    val sumTracks = routingTracks.map(_._2).sum
+    val reqdSigs =
+      if (Set("E", "W").contains(pinSide)) colsSig * submodCols
+      else rowsSig * submodRows
+    require(sumTracks * 0.4 >= reqdSigs,
+      s"""Not enough routing tracks on pin side (${pinSide}).
+      ${reqdSigs} tracks requested but only ${sumTracks} available.""")
+    // Query bumps with core signals in each row/col depending on pinSide
+    val coreSigs = (if (isWide) finalMap.transpose else finalMap).map{
+      _.filter(_.coreSig.isDefined).map(_.coreSig.get)}
+    // Spread signals out evenly across all layers,
+    // starting from the lowest layer in the middle of the row/column
+    // Assume that tools will snap to track
+    val pinOffsetsPos = routingTracks.map{ case(layer, tracks) =>
+      (0 until tracks / 2).map( t => (t * ip.layerPitch(layer) / 1000, layer))
+      }.flatten.grouped(sumTracks / reqdSigs).map(_.head).toSeq
+    val pinOffsetsNeg = pinOffsetsPos.map{ case(os, lay) => (-os, lay)}.toSeq
+    val pinOffsets: Seq[(Double, String)] = pinSide match {
+      case "N" | "E" =>  // reverse (farthest I/O appears first)
+        Seq(pinOffsetsPos.reverse, pinOffsetsNeg.reverse).transpose.flatten
+      case _ => Seq(pinOffsetsPos, pinOffsetsNeg).transpose.flatten.tail
+    }
+    coreSigs.zipWithIndex.foreach{ case (grp, i) =>
+      (grp zip pinOffsets.take(grp.length)).foreach{ case (sig, (os, lay)) =>
+        sig.pinLayer = Some(lay)
+        sig.pinLocation = pinSide match {
+          case "W" => Some(AIB3DCoordinates[Double](
+                        x = 0,
+                        y = (i + 0.5) * gp.pitchV + os))
+          case "E" => Some(AIB3DCoordinates[Double](
+                        x = (finalCols + 1) * gp.pitchH,
+                        y = (i + 0.5) * gp.pitchV + os))
+          case "S" => Some(AIB3DCoordinates[Double](
+                        x = (i + 0.5) * gp.pitchH + os,
+                        y = 0))
+          case "N" => Some(AIB3DCoordinates[Double](
+                        x = (i + 0.5) * gp.pitchH + os,
+                        y = (finalRows + 1) * gp.pitchV))
+        }
+      }
+    }
+    println(pinOffsets)
+    println(pinOffsets.size)
+    println(coreSigs(0).length)
+
 
     // Return
     finalMap

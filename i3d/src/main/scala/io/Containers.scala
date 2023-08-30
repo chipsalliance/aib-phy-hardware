@@ -32,9 +32,8 @@ case class AIB3DCore(
   bitIdx: Option[Int],  // For buses
   ioType: Data,  // Input, Output, Analog
   relatedClk: Option[String]) {  // Name of clock domain
-    //var pinLocation: Option[AIB3DCoordinates[Double]] = None
-    var pinLocation: Option[AIB3DCoordinates[Double]] =
-      Some(AIB3DCoordinates[Double](0.0, 0.0))
+    var pinLocation: Option[AIB3DCoordinates[Double]] = None
+    var pinLayer: Option[String] = None
     // TODO: this uses a DataMirror internal API, subject to change/removal
     def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
     def fullName: String =

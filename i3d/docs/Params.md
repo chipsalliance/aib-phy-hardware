@@ -47,6 +47,8 @@ Design parameters:
   * Architectures except 0 or 1 will require more sideband signaling (not yet implemented).
 * submodSize (Int)
   * Maximum number of data bits (Tx/Rx, each) in a sub-module. Dictated by timing requirements.
+* pinSide (String)
+  * One of "N", "S", "E", "W". Applied on the default (non-mirrored/rotated) orientation.
 * dataBundle (Bundle)
   * A Chisel Bundle object of all the IOs in the leader.
   * Each element must have a Direction (Input, Output) specified.
@@ -59,7 +61,7 @@ Technology parameters:
 * node (Double)
   * The tech node (in nm) of the instance
 * layerPitch: Map(String -> Double)
-  * Map(layer name -> pitch in um) corresponding to the track pitch on a set of layers desired for routing. The entries should be ordered from lowest to highest layer.
+  * Map(layer name -> pitch in nm) corresponding to the track pitch on a set of layers desired for routing. The entries should be ordered from lowest to highest layer. Ensure that these layers are preferred for the pinSide parameter.
 * viaKOZRatio (Double)
   * Ratio of the size of the keep-out zone around signal/power via stacks to the min. bond pitch. Superceded by tsvKOZRatio and bprKOZRatio if specified.
 * bprKOZRatio: (Double, Optional)
@@ -80,7 +82,8 @@ Design parameters:
   * True if this instance is a leader, else is a follower
 * orientation (String, Optional)
   * "MX" or "MY" only supported, if specified. Exported as a floorplan constraint but does not affect bump map calculation.
-* pinSide (String)
+* pinSide (String, Optional)
+  * Indicates pin side of the instance, although actual submodule configuration is determined by the global pinSide parameter.
   * One of "N", "S", "E", "W". Applied on the default (non-mirrored/rotated) orientation.
 * bumpOffset (Double)
   * Denotes the offset of the bump array from the pin edge in um. Applied on the default (non-mirrored/rotated) orientation.
