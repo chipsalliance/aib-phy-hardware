@@ -22,6 +22,7 @@ class AIB3DBaseConfig extends Config ((site, here, up) => {
                                       sigsPerPGOvrdV = Some(3),
                                       sigsPerPGOvrdH = Some(5))
   case AIB3DInstKey => AIB3DInstParams(isLeader = true,
+                                      bumpOffset = 0,
                                       blackBoxModels = true)
   case AIB3DKey => AIB3DParams(here(AIB3DGlblKey), here(AIB3DInstKey))
 })

@@ -467,21 +467,17 @@ case class AIB3DParams(
                         x = 0,
                         y = (i + 0.5) * gp.pitchV + os))
           case "E" => Some(AIB3DCoordinates[Double](
-                        x = (finalCols + 1) * gp.pitchH,
+                        x = finalCols * gp.pitchH + ip.bumpOffset,
                         y = (i + 0.5) * gp.pitchV + os))
           case "S" => Some(AIB3DCoordinates[Double](
                         x = (i + 0.5) * gp.pitchH + os,
                         y = 0))
           case "N" => Some(AIB3DCoordinates[Double](
                         x = (i + 0.5) * gp.pitchH + os,
-                        y = (finalRows + 1) * gp.pitchV))
+                        y = finalRows * gp.pitchV + ip.bumpOffset))
         }
       }
     }
-    println(pinOffsets)
-    println(pinOffsets.size)
-    println(coreSigs(0).length)
-
 
     // Return
     finalMap
