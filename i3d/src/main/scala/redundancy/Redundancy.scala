@@ -23,7 +23,7 @@ class RedundancyMuxSubmod(
   // TODO: Output false path annotation for shift input
   val shift = IO(Input(Bool()))
 
-  (a.elements.values zip b.elements.values zip o.elements.values).foreach {
+  (a.getElements zip b.getElements zip o.getElements).foreach {
     case ((av, bv), ov) =>
       require(DataMirror.directionOf(av) == ActualDirection.Input &&
         DataMirror.directionOf(bv) == ActualDirection.Input &&
@@ -103,7 +103,7 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
     val fromCore = Wire(new SubmodBundle(idx, coreFacing = true))
     val toBumps = Wire(new SubmodBundle(idx, coreFacing = false))
     core.connectToMux(fromCore)
-    (fromCore.elements.values zip toBumps.elements.values).foreach {
+    (fromCore.getElements zip toBumps.getElements).foreach {
       case (c, b) => b := c
     }
     bumps.connectToMux(toBumps)

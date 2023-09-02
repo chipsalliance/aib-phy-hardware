@@ -5,7 +5,7 @@ import scala.collection.immutable.SeqMap
 import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror, AutoCloneType}
-import chisel3.util.log2Ceil
+import chisel3.util.{log2Ceil, Cat}
 
 import aib3d.io._
 
@@ -33,7 +33,7 @@ class BumpsBundle(atBumps: Boolean)
   // Connect the correct bumps in this bundle to the corresponding submodule bundle
   def connectToMux(that: SubmodBundle): Unit = {
     that.elements foreach { elt => elt._2 <> elements(elt._1) }
-    //(that: Data).waiveAll <> (this: Data).waiveAll
+    // TODO: For Chisel 3.6+: (that: Data).waiveAll <> (this: Data).waiveAll
   }
 
   // Get related clock for a bump
@@ -62,27 +62,63 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
     case _:Pwr | _:Gnd => false
     case _ => b.coreSig.isDefined
   })
-  // elements map is the coreSig name + bitIdx -> Flipped((cloned) ioType)
+  // elements map is the coreSig fullName -> Flipped((cloned) ioType)
   val elements: SeqMap[String, Data] = SeqMap(coreSigs.map{c =>
     val sig = c.coreSig.get
-    if (sig.bitIdx.isDefined)
-      sig.name + "[" + sig.bitIdx.get.toString + "]" -> Flipped(sig.cloneIoType)
-    else sig.name -> Flipped(sig.cloneIoType)
+    sig.fullName -> Flipped(sig.cloneIoType)
   }:_*)
 	def apply(elt: String): Data = elements(elt)
 
   // Connect the correct core signals in this bundle to the corresponding submodule bundle
   def connectToMux(that: SubmodBundle): Unit = {
     if (that.submodIdx.isRedundant) {  // redundant submodule, tie to 0
-      that.elements.values foreach ( d => d := 0.U.asTypeOf(d) )
-    } else that.elements foreach ( elt => elt._2 <> elements(elt._1) )
+      that.getElements.foreach( d => d := 0.U.asTypeOf(d) )
+    } else that.elements.foreach( elt => elt._2 <> elements(elt._1) )
   }
 
   // Get related clock for a core signal
   def getRelatedClk(coreSigName: String): Clock = {
-    val sig = coreSigs.find(c => c.coreSig.get.name == coreSigName).get
+    val sig = coreSigs.find(c => c.coreSig.get.fullName == coreSigName).get
     require(sig.coreSig.isDefined, s"Cannot get related clock for core signal ${coreSigName}")
     sig.coreSig.get.relatedClk.get.asUInt(0).asClock
+  }
+
+  // Return only the clocks as a Record for port creation at the top level
+  // TODO: this uses a DataMirror internal API, subject to change/removal
+  def clksRecord: Record = {
+    val clks: SeqMap[String, Clock] = SeqMap(coreSigs.withFilter(c => c match {
+      case _:TxClk | _:RxClk => true
+      case _ => false
+    }).map(c => c.coreSig.get.name ->
+      DataMirror.internal.chiselTypeClone(elements(c.coreSig.get.name))):_*)
+    new Record with AutoCloneType { val elements = clks }
+  }
+
+  // Hook up to the data bundle at the top level
+  def connectDataBundle(dataBundle: Bundle): Unit = {
+    // Connection inwards is straigtforward
+    // Convert to seq of bools and connect each core bit to each data bit
+    val dbIn = dataBundle.elements.withFilter{ case(_, d) =>
+      DataMirror.directionOf(d) == ActualDirection.Input
+    }.flatMap(_._2.asUInt.asBools)
+    val eltIn = coreSigs.collect{ case b: TxSig =>
+      elements(b.coreSig.get.fullName) }.reverse
+    (eltIn zip dbIn).foreach{ case (c, p) => c := p }
+
+    // Connection outwards is more complicated
+    // Need to iterate through each element in the data bundle
+    // Then concatenate the correct number of core bits together to assign
+    val dbOut = dataBundle.elements.withFilter{ case(_, d) =>
+      DataMirror.directionOf(d) == ActualDirection.Output
+    }.map(_._2)
+    val eltOut = coreSigs.collect{ case b: RxSig =>
+      elements(b.coreSig.get.fullName) }.reverse
+    var i = 0
+    dbOut.foreach{ c =>
+      val w = c.getWidth
+      c := eltOut.slice(i, i+w).reduce((a, b) => Cat(a.asUInt, b.asUInt)).asTypeOf(c)
+      i += w
+    }
   }
 }
 
@@ -108,11 +144,7 @@ class SubmodBundle(
         if (coreFacing ^ b.bumpName.contains("TX")) Output(dtype)
         else Input(dtype))
     } else if (coreFacing) {  // core facing, get from coreSig name and flip
-      b.coreSig.get.name + (
-        if (b.coreSig.get.bitIdx.isDefined)
-          "[" + b.coreSig.get.bitIdx.get.toString + "]"
-        else ""
-      ) -> Flipped(b.coreSig.get.cloneIoType)
+      b.coreSig.get.fullName -> Flipped(b.coreSig.get.cloneIoType)
     } else   // bump facing, get from bumpName
       b.bumpName -> b.coreSig.get.cloneIoType
   }):_*)
@@ -122,4 +154,10 @@ class SubmodBundle(
 class DefaultDataBundle(width: Int) extends Bundle {
   val tx = Output(UInt(width.W))
   val rx = Input(UInt(width.W))
+}
+
+class ExampleArrayBundle(
+  numLanes: Int, width: Int, interleaving: Int) extends Bundle {
+  val adcOut = Output(Vec(numLanes, Vec(interleaving, UInt(width.W))))
+  val dacIn = Input(Vec(numLanes, Vec(interleaving, UInt(width.W))))
 }

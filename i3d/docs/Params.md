@@ -93,3 +93,7 @@ Design parameters:
   * Supported test protocol. Default = "IEEE1838" (not yet implemented)
 * blackBoxModels: (Boolean)
   * If true, use blackbox generic behavioral models of analog blocks
+* bumpCellName: (String, Optional)
+  * Name of the bump cell used by the technology. May be required for collateral generator.
+* ioCellName: (String, Optional)
+  * Name of the IO cell used by the technology. May be required for collateral generator.

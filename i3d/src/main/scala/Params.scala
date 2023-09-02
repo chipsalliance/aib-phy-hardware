@@ -125,6 +125,10 @@ case class AIB3DGlblParams(
   * @param baseAddress is the memory-mapped CSR base address
   * @param testProtocol denotes which test protocol is implemented
   * @param blackBoxModels true denotes using behavioral models of all blackboxes
+  * @param bumpCellName is the bump cell used by the technology.
+  * May be required by the collateral generator.
+  * @param ioCellName is the name of the IO cell macro used by the technology.
+  * May be required by the collateral generator.
   */
 case class AIB3DInstParams (
   node: Double = 10.0,
@@ -141,7 +145,9 @@ case class AIB3DInstParams (
   bumpOffset: Double = 0.0,
   baseAddress: Int = 0x2000,
   testProtocol: String = "IEEE1838",
-  blackBoxModels: Boolean = false) {
+  blackBoxModels: Boolean = false,
+  bumpCellName: Option[String] = None,
+  ioCellName: Option[String] = None) {
 
   // Checks
   require(node <= 28.0, "Max supported tech node is 28nm")
@@ -442,10 +448,12 @@ case class AIB3DParams(
       else rowsSig * submodRows
     require(sumTracks * 0.4 >= reqdSigs,
       s"""Not enough routing tracks on pin side (${pinSide}).
-      ${reqdSigs} tracks requested but only ${sumTracks} available.""")
+      |${reqdSigs} tracks requested but only ${sumTracks * 0.4} available.
+      |There are ${submodRowsWR} rows and ${submodColsWR} columns of submodules.
+      |""".stripMargin)
     // Query bumps with core signals in each row/col depending on pinSide
     val coreSigs = (if (isWide) finalMap.transpose else finalMap).map{
-      _.filter(_.coreSig.isDefined).map(_.coreSig.get)}
+      _.withFilter(_.coreSig.isDefined).map(_.coreSig.get)}
     // Spread signals out evenly across all layers,
     // starting from the lowest layer in the middle of the row/column
     // Assume that tools will snap to track
@@ -453,7 +461,7 @@ case class AIB3DParams(
       (0 until tracks / 2).map( t => (t * ip.layerPitch(layer) / 1000, layer))
       }.flatten.grouped(sumTracks / reqdSigs).map(_.head).toSeq
     val pinOffsetsNeg = pinOffsetsPos.map{ case(os, lay) => (-os, lay)}.toSeq
-    val pinOffsets: Seq[(Double, String)] = pinSide match {
+    val pinOffsets: Seq[(Double, String)] = pinSide match {  // interleaving
       case "N" | "E" =>  // reverse (farthest I/O appears first)
         Seq(pinOffsetsPos.reverse, pinOffsetsNeg.reverse).transpose.flatten
       case _ => Seq(pinOffsetsPos, pinOffsetsNeg).transpose.flatten.tail
