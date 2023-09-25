@@ -2,7 +2,7 @@ package aib3d.redundancy
 
 import chisel3._
 
-import chisel3.experimental.{noPrefix, DataMirror}
+import chisel3.experimental.DataMirror
 import testchipip.ClockMux2
 
 import aib3d._

@@ -45,6 +45,11 @@ object GenCollateral {
     (implicit params: AIB3DParams): String = {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
+    // Replace delimiters when generating Target strings
+    def targetRepl(s: String): String = {
+      val replMap = Map("~" -> "", "|" -> "/", ">" -> "/", "." -> "_")
+      replMap.foldLeft(s)((k, v) => k.replace(v._1, v._2))
+    }
 
     // Bumps
     val bumps =
@@ -73,23 +78,26 @@ object GenCollateral {
       ("vlsi.inputs.pin_mode" -> "generated") ~
       ("vlsi.inputs.pin" ->
         ("generate_mode" -> "semi_auto") ~
-        ("assignments" -> coreSigs.map( c =>
+        ("assignments" -> (coreSigs.map( c =>
           ("pins" -> s"*${c.fullName}") ~
           ("side" -> sideMap(params.pinSide)) ~
           ("layers" -> Seq(c.pinLayer.get)) ~
           ("location" -> Seq(roundToNm(c.pinLocation.get.x),
                              roundToNm(c.pinLocation.get.y)))
-        ))
+        ) ++ Seq(  // TODO: constrain within the edge
+          ("pins" -> "*") ~
+          ("side" -> sideMap(params.pinSide)) ~
+          ("layers" -> params.ip.layerPitch.keys)
+        )))
       )
-    // TODO: TL/AXI bus pins or raw config pins
 
     // Placements
     val topWidth = (params.bumpMap(0).length + 1) * params.gp.pitchH +
       (if (!params.isWide) params.ip.bumpOffset else 0.0)
     val topHeight = (params.bumpMap.length + 1) * params.gp.pitchV +
       (if (params.isWide) params.ip.bumpOffset else 0.0)
-    val topPlaces =
-      ("vlsi.inputs.placement_constraints" -> Seq(
+    val places =
+      ("vlsi.inputs.placement_constraints" -> (Seq(
         ("path" -> "Patch") ~
         ("type" -> "toplevel") ~
         ("x" -> 0) ~
@@ -101,14 +109,11 @@ object GenCollateral {
           ("right" -> 0) ~
           ("top" -> 0) ~
           ("bottom" -> 0))
-      )) ~
-      ("vlsi.inputs.placement_constraints_meta" -> "append")
-    val ioPlaces =
-      ("vlsi.inputs.placement_constraints" -> iocells.map( i =>
+      ) ++ iocells.map( i =>
         // Replace Target delimiters with / for P&R
         // Fields depend on whether we are using blackboxes or models
         // TODO: breaks if IO cell beneath top hierarchy
-        ("path" -> i.toTarget.toString.replace("~", "").replace("|", "/")) ~
+        ("path" -> targetRepl(i.toTarget.toString)) ~
         ("type" -> (if (params.ip.blackBoxModels) "placement" else "hardmacro")) ~
         ("x" -> roundToNm(i.forBump.location.get.x - (
           if (params.ip.blackBoxModels) params.gp.pitchH / 2 else 0.0))) ~
@@ -121,14 +126,23 @@ object GenCollateral {
         ("master" -> (if (params.ip.blackBoxModels) None
                       else Some(i.desiredName)))
         // TODO: top layer for halos
-      )) ~
+      ))) ~
       ("vlsi.inputs.placement_constraints_meta" -> "append")
 
     // SDC: clocks, delays, loads
     // Note: directions seem reversed (derived from bumps, not facing the core)
-    val clocks = coreSigs.filter(c =>
+    val txClocks = coreSigs.collect{ case c if (
       DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output)
+      => ("clocks_" + c.fullName, None)}
+    val rxClocks = iocells.filter(_.forBump.coreSig.isDefined).collect{ case i
+      if {  // get clock output of IO cell itself
+        val c = i.forBump.coreSig.get
+        DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
+        DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Input
+      } => (i.forBump.coreSig.get.fullName,
+          Some(targetRepl(i.io.rxData.toTarget.toString)))
+    }
     val coreTxs = coreSigs.collect{ case c if (
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
       !DataMirror.checkTypeEquivalence(c.ioType, Clock())) => (c, "input")
@@ -137,36 +151,36 @@ object GenCollateral {
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Input &&
       !DataMirror.checkTypeEquivalence(c.ioType, Clock())) => (c, "output")
     }
-    val coreDirectioned = coreTxs ++ coreRxs
     // TODO: parameterize frequency and uncertainty
-    val topSdc =
-      ("vlsi.inputs.clocks" ->
+    val sdc =
+      ("vlsi.inputs.clocks" -> (Seq(
         ("name" -> "clock") ~
         ("period" -> "1 ns") ~
         ("uncertainty" -> "0.1 ns")
-      ) ~
-      ("vlsi.inputs.custom_sdc_constraints" -> Seq(
-        "set_false_path -from [*ioCtrl*]"  // ioCtrl is static
-      ))
-    val sdc =
-      ("vlsi.inputs.clocks" -> clocks.map(c =>
-        ("name" -> c.fullName) ~
+      ) ++ (txClocks ++ rxClocks).map(c =>
+        ("name" -> c._1) ~
+        ("path" -> c._2) ~
         ("period" -> "250 ps") ~
         ("uncertainty" -> "25 ps")
+      ))) ~
+      ("vlsi.inputs.custom_sdc_constraints" -> Seq(
+        // These are static bits
+        "set_false_path -from [*ioCtrl*]",
+        "set_false_path -from [*Faulty*]"  // OK even if no redundancy
       )) ~
       // TODO: this depends on the voltage-delay curve of the spec
-      ("vlsi.inputs.delays" -> coreDirectioned.map{ case (c, dir) =>
+      ("vlsi.inputs.delays" -> (coreTxs ++ coreRxs).map{ case (c, dir) =>
         ("name" -> c.fullName) ~
         ("clock" -> c.relatedClk.get) ~
         ("direction" -> dir) ~
-        ("delay" -> 50)
+        ("delay" -> "50 ps")
       }) ~
       // TODO: what's the actual load
       ("vlsi.inputs.default_output_load" -> "1 fF")
       // ("vlsi.inputs.output_loads" -> List("*", "1 fF"))
       // TODO: driver cell
 
-    pretty(render(bumps merge pins merge topPlaces merge ioPlaces merge topSdc merge sdc))
+    pretty(render(bumps merge pins merge places merge sdc))
   }
 
   /** Generates a CSV file that can be imported into a spreadsheet

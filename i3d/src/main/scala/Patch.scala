@@ -3,7 +3,6 @@ package aib3d
 import chisel3._
 
 import chisel3.experimental.{DataMirror, AutoCloneType, FlatIO}
-import chisel3.experimental.BundleLiterals._
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy.LazyModuleImp
 import freechips.rocketchip.interrupts.HasInterruptSources
@@ -11,7 +10,6 @@ import freechips.rocketchip.regmapper._
 import freechips.rocketchip.tilelink.HasTLControlRegMap
 import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
 import freechips.rocketchip.util.{ResetCatchAndSync, ElaborationArtefacts}
-import freechips.rocketchip.jtag._
 
 // import aib3d.deskew._
 import aib3d.io._
@@ -47,11 +45,13 @@ trait BasePatch {
   val ioCtrlWire = Wire(new IOControlBundle)
 
   // Redundancy affects how IO cells are connected
-  val red = glblParams.redundArch == 2
-  val redundancy = if (red) Some(Module(new RedundancyMuxTop)) else None
-  val txFaultyWire = if (red) Some(Wire(UInt(redundancy.get.txFaulty.getWidth.W))) else None
-  val rxFaultyWire = if (red) Some(Wire(UInt(redundancy.get.rxFaulty.getWidth.W))) else None
-  if (red) {
+  val hasRed = glblParams.redundArch == 2
+  val redundancy = if (hasRed) Some(Module(new RedundancyMuxTop)) else None
+  val txFaultyWire =
+    if (hasRed) Some(Wire(UInt(redundancy.get.txFaulty.getWidth.W))) else None
+  val rxFaultyWire =
+    if (hasRed) Some(Wire(UInt(redundancy.get.rxFaulty.getWidth.W))) else None
+  if (hasRed) {
     // Connect core side of muxes to coreio
     coreio <> redundancy.get.core
     // Connect bumps side of muxes to iocells
@@ -94,10 +94,10 @@ trait BasePatch {
 class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
   override def desiredName = "Patch"
 
-  val ioCtrl = FlatIO(Input(new IOControlBundle))
+  val ioCtrl = IO(Input(new IOControlBundle))
   ioCtrlWire := ioCtrl
 
-  if (red) {
+  if (hasRed) {
     val txFaulty = IO(Input(redundancy.get.txFaulty.cloneType))
     val rxFaulty = IO(Input(redundancy.get.rxFaulty.cloneType))
     txFaultyWire.get := txFaulty
@@ -130,7 +130,7 @@ abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
     )
 
     // Redundancy affects how IO cells are connected
-    if (red) {
+    if (hasRed) {
       // Faulty control registers
       val txFaulty = RegInit(0.U(txFaultyWire.get.getWidth.W))
       val rxFaulty = RegInit(0.U(rxFaultyWire.get.getWidth.W))

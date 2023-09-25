@@ -17,7 +17,7 @@ case object AIB3DKey extends Field[AIB3DParams]
 class AIB3DBaseConfig extends Config ((site, here, up) => {
   case AIB3DGlblKey => AIB3DGlblParams(
     dataBundle = new ExampleArrayBundle(2, 9, 8),
-    redundRatio = 2,
+    redundRatio = 1,
     submodSize = 80,
     pinSide = "W",
     sigsPerPGOvrdV = Some(3),
@@ -25,7 +25,7 @@ class AIB3DBaseConfig extends Config ((site, here, up) => {
   case AIB3DInstKey => AIB3DInstParams(
     isLeader = true,
     bumpOffset = 0,
-    blackBoxModels = false)
+    blackBoxModels = true)
   case AIB3DKey => AIB3DParams(here(AIB3DGlblKey), here(AIB3DInstKey))
 })
 
