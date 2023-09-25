@@ -176,8 +176,8 @@ object GenCollateral {
         ("delay" -> "50 ps")
       }) ~
       // TODO: what's the actual load
-      ("vlsi.inputs.default_output_load" -> "1 fF")
-      // ("vlsi.inputs.output_loads" -> List("*", "1 fF"))
+      ("vlsi.inputs.default_output_load" -> 1)
+      // ("vlsi.inputs.output_loads" -> List("*", 1))
       // TODO: driver cell
 
     pretty(render(bumps merge pins merge places merge sdc))

@@ -197,17 +197,31 @@ case class AIB3DParams(
       case _ => throw new Exception("Only Input/Output supported")
     }
     val flat = ArrayBuffer.empty[AIB3DCore]
-    for (((sig, data), width) <- (orig zip orig.map(_._2.getWidth))) {
+    //for (((sig, data), width) <- (orig zip orig.map(_._2.getWidth))) {
+    for ((oname, odata) <- orig) {
       // Add single bit IOs as-is, otherwise break into individual bits
-      if (width > 1)
-        for (i <- (0 until width).reverse) {  // MSB to LSB
-          // TODO: support scrambling of bus bits for switching activity distribution
-          // Bit indexing can't be done unless it is actually hardware.
-          // Thus, we need to copy the direction and make it a 1-bit Data.
-          flat += AIB3DCore(sig, Some(i), cloneDirection(data), None)
+      // Need to deal with Vec and Seq types (recursively flatten with naming)
+      def flattenVecSeq(name: String, d: Data): Seq[(String, Data)] = d match {
+        case v: Vec[_] => v.zipWithIndex.flatMap{ case (elt, i) =>
+          flattenVecSeq(s"${name}_${i}", elt)
         }
-      else
-        flat += AIB3DCore(sig, None, data, None)
+        case s: Seq[_] => s.zipWithIndex.flatMap{ case (elt, i) =>
+          flattenVecSeq(s"${name}_${i}", elt.asInstanceOf[Data])
+        }
+        case _ => Seq((name, d))
+      }
+      flattenVecSeq(oname, odata).foreach{ case (name, data) =>
+        val width = data.getWidth
+        if (width > 1)
+          for (i <- (0 until width).reverse) {  // MSB to LSB
+            // TODO: support scrambling of bus bits for switching activity distribution
+            // Bit indexing can't be done unless it is actually hardware.
+            // Thus, we need to copy the direction and make it a 1-bit Data.
+            flat += AIB3DCore(name, Some(i), cloneDirection(odata), None)
+          }
+        else
+          flat += AIB3DCore(name, None, cloneDirection(odata), None)
+      }
     }
     flat.toSeq
   }
