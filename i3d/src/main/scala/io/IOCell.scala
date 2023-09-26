@@ -73,7 +73,9 @@ class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects 
   toPad := Mux(io.txEn, tx, txp)
 
   // Rx logic
-  val rxRetimed = withClockAndReset(io.rxClk, !io.rxEn)(RegNext(fromPad, 0.U))
+  val rxClock = Wire(Clock())
+  rxClock := (!io.rxClk.asBool).asClock
+  val rxRetimed = withClockAndReset(rxClock, !io.rxEn)(RegNext(fromPad, 0.U))
   io.rxData := Mux(io.async, fromPad & io.rxEn, rxRetimed)
 }
 

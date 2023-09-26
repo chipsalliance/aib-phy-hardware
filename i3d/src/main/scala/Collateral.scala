@@ -27,7 +27,7 @@ object GenCollateral {
       val io = iocells.find(_.forBump == b)
       ("bump_name" -> b.bumpName) ~
       ("core_sig" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.fullName) else None)) ~
-      ("iocell_path" -> (if (io.isDefined) Some(io.get.toTarget.toString) else None)) ~
+      ("iocell_path" -> (if (io.isDefined) Some(io.get.pathName) else None)) ~
       ("bump_x" -> b.location.get.x) ~
       ("bump_y" -> b.location.get.y) ~
       ("pin_x" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.x) else None)) ~
@@ -45,11 +45,6 @@ object GenCollateral {
     (implicit params: AIB3DParams): String = {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
-    // Replace delimiters when generating Target strings
-    def targetRepl(s: String): String = {
-      val replMap = Map("~" -> "", "|" -> "/", ">" -> "/", "." -> "_")
-      replMap.foldLeft(s)((k, v) => k.replace(v._1, v._2))
-    }
 
     // Bumps
     val bumps =
@@ -113,7 +108,7 @@ object GenCollateral {
         // Replace Target delimiters with / for P&R
         // Fields depend on whether we are using blackboxes or models
         // TODO: breaks if IO cell beneath top hierarchy
-        ("path" -> targetRepl(i.toTarget.toString)) ~
+        ("path" -> i.pathName.replace(".","/")) ~
         ("type" -> (if (params.ip.blackBoxModels) "placement" else "hardmacro")) ~
         ("x" -> roundToNm(i.forBump.location.get.x - (
           if (params.ip.blackBoxModels) params.gp.pitchH / 2 else 0.0))) ~
@@ -134,14 +129,15 @@ object GenCollateral {
     val txClocks = coreSigs.collect{ case c if (
       DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output)
-      => ("clocks_" + c.fullName, None)}
+      => (c.fullName, "clocks_" + c.fullName)}
     val rxClocks = iocells.filter(_.forBump.coreSig.isDefined).collect{ case i
       if {  // get clock output of IO cell itself
         val c = i.forBump.coreSig.get
         DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
         DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Input
       } => (i.forBump.coreSig.get.fullName,
-          Some(targetRepl(i.io.rxData.toTarget.toString)))
+          (i.io.rxData.parentPathName.replace(".","/") + "/" +
+          i.io.rxData.instanceName.replace(".","_")))
     }
     val coreTxs = coreSigs.collect{ case c if (
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
@@ -165,8 +161,8 @@ object GenCollateral {
       ))) ~
       ("vlsi.inputs.custom_sdc_constraints" -> Seq(
         // These are static bits
-        "set_false_path -from [*ioCtrl*]",
-        "set_false_path -from [*Faulty*]"  // OK even if no redundancy
+        "set_false_path -from *ioCtrl*",
+        "set_false_path -from *Faulty*"  // OK even if no redundancy
       )) ~
       // TODO: this depends on the voltage-delay curve of the spec
       ("vlsi.inputs.delays" -> (coreTxs ++ coreRxs).map{ case (c, dir) =>
