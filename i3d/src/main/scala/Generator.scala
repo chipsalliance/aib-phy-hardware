@@ -30,7 +30,7 @@ trait AIB3DDummyNode {
 /** AIB3D Main - do "runMain aib3d.AIB3DGenerator" in sbt */
 object AIB3DGenerator extends App with AIB3DDummyNode {
   // Select Config here
-  implicit val p = new Config(new AIB3DBaseConfig ++ new WithoutTLMonitors)
+  implicit val p = new Config(new AIB3DWideConfig ++ new WithoutTLMonitors)
 
   // Uncomment for TL version
   val patch = LazyModule(new TLPatch)
@@ -46,7 +46,7 @@ object AIB3DGenerator extends App with AIB3DDummyNode {
 
 /** For generating raw AIB3D module */
 object AIB3DRawGenerator extends App {
-  implicit val p = new Config(new AIB3DBaseConfig)
+  implicit val p = new Config(new AIB3DWideConfig)
 
   (new AIB3DStage).run(Seq(ChiselGeneratorAnnotation(() => new RawPatch)))
 }

@@ -396,10 +396,11 @@ case class AIB3DParams(
           }
 
           // Signal
-          txBumpMap(s)(r)(c) = TxSig(bitCnt, if (s < numSubmods)
-            Some(flatTx(bitCnt).copy(relatedClk = Some(s"TXCKP$s"))) else None)
-          rxBumpMap(s)(r)(c) = RxSig(bitCnt, if (s < numSubmods)
-            Some(flatRx(bitCnt).copy(relatedClk = Some(s"RXCKP$s"))) else None)
+          txBumpMap(s)(r)(c) = TxSig(bitCnt, if (s < numSubmods) s else s - redSubmods,
+            if (s < numSubmods) Some(flatTx(bitCnt).copy(relatedClk = Some(s"TXCKP$s"))) else None)
+          rxBumpMap(s)(r)(c) = RxSig(bitCnt, s,
+            if (s < numSubmods) Some(flatRx(bitCnt).copy(relatedClk = Some(s"RXCKP$s"))) else None)
+
           bitCnt += 1
         }
       }

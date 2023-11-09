@@ -38,41 +38,48 @@ case class AIB3DCore(
     def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
     def fullName: String =
       name + (if (bitIdx.isDefined) "[" + bitIdx.get.toString() + "]" else "")
+    // This returns muxed clock name
+    def muxedClk(offset: Int): String = {
+      require(DataMirror.checkTypeEquivalence(ioType, Clock()), "muxedClk only works for clocks")
+      val clkIdx = name.filter(_.isDigit).toInt + offset
+      name.filterNot(_.isDigit) + clkIdx.toString()
+    }
   }
 
 /** AIB3D bump containers */
 sealed trait AIB3DBump {
   val bumpName: String  // bump net name
-  val coreSig: Option[AIB3DCore]
+  val relatedClk: Option[String] = None  // bump clock domain
+  val coreSig: Option[AIB3DCore] = None
   var location: Option[AIB3DCoordinates[Double]] = None
   var submodIdx: Option[AIB3DCoordinates[Int]] = None
 }
 // Power/Ground
 case class Pwr() extends AIB3DBump {
   val bumpName = "VDDAIB"
-  val coreSig = None
 }
 case class Gnd() extends AIB3DBump {
   val bumpName = "VSS"
-  val coreSig = None
 }
 // Data
-case class TxSig(bumpNum: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
+case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
   val bumpName = if (sig.isDefined) s"TXDATA${bumpNum}" else s"TXRED${bumpNum}"
-  val coreSig = if (sig.isDefined) sig else None
+  override val relatedClk = Some(s"TXCKP${clkIdx}")
+  override val coreSig = if (sig.isDefined) sig else None
 }
-case class RxSig(bumpNum: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
+case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
   val bumpName = if (sig.isDefined) s"RXDATA${bumpNum}" else s"RXRED${bumpNum}"
-  val coreSig = if (sig.isDefined) sig else None
+  override val relatedClk = Some(s"RXCKP${clkIdx}")
+  override val coreSig = if (sig.isDefined) sig else None
 }
 // Clock
 case class TxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
   val bumpName = s"TXCKP${submodNum}"
-  val coreSig = if (isRedundant) None
+  override val coreSig = if (isRedundant) None
     else Some(AIB3DCore(s"TXCKP${submodNum}", None, Output(Clock()), None))
 }
 case class RxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
   val bumpName = s"RXCKP${submodNum}"
-  val coreSig = if (isRedundant) None
+  override val coreSig = if (isRedundant) None
     else Some(AIB3DCore(s"RXCKP${submodNum}", None, Input(Clock()), None))
 }

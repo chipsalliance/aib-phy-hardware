@@ -16,13 +16,36 @@ case object AIB3DKey extends Field[AIB3DParams]
 
 class AIB3DBaseConfig extends Config ((site, here, up) => {
   case AIB3DGlblKey => AIB3DGlblParams(
-    dataBundle = new ExampleArrayBundle(2, 9, 8),
-    redundRatio = 1,
-    submodSize = 80,
+    dataBundle = new ExampleArrayBundle(4, 9, 8),
+    pitch = 10.0,
+    redundRatio = 2,
+    submodSize = 72,
     pinSide = "W",
     sigsPerPGOvrdV = Some(3),
     sigsPerPGOvrdH = Some(5))
   case AIB3DInstKey => AIB3DInstParams(
+    layerPitch = Map("m4" -> 90.0, "m6" -> 90.0),
+    viaKOZRatio = 0.3,
+    tsvKOZRatio = Some(0.6),
+    isLeader = true,
+    bumpOffset = 0,
+    blackBoxModels = true)
+  case AIB3DKey => AIB3DParams(here(AIB3DGlblKey), here(AIB3DInstKey))
+})
+
+class AIB3DWideConfig extends Config ((site, here, up) => {
+  case AIB3DGlblKey => AIB3DGlblParams(
+    dataBundle = new ExampleArrayBundle(6, 9, 8),
+    pitch = 5.0,
+    redundRatio = 3,
+    submodSize = 72,
+    pinSide = "N",
+    sigsPerPGOvrdV = Some(4),
+    sigsPerPGOvrdH = Some(4))
+  case AIB3DInstKey => AIB3DInstParams(
+    layerPitch = Map("m3" -> 90.0, "m5" -> 90.0),
+    viaKOZRatio = 0.3,
+    tsvKOZRatio = Some(0.75),
     isLeader = true,
     bumpOffset = 0,
     blackBoxModels = true)

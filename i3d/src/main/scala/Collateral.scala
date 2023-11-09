@@ -1,6 +1,6 @@
 package aib3d
 
-import scala.math.min
+import scala.math.{min, max}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.{pretty, render}
 import doodle.core._
@@ -45,6 +45,8 @@ object GenCollateral {
     (implicit params: AIB3DParams): String = {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
+    // Redundancy
+    val hasRed = params.gp.redundArch == 2
 
     // Bumps
     val bumps =
@@ -74,23 +76,24 @@ object GenCollateral {
       ("vlsi.inputs.pin" ->
         ("generate_mode" -> "semi_auto") ~
         ("assignments" -> (coreSigs.map( c =>
-          ("pins" -> s"*${c.fullName}") ~
+          ("pins" -> ((if (c.name.contains("CKP")) "clocks_" else "") + c.fullName)) ~
           ("side" -> sideMap(params.pinSide)) ~
           ("layers" -> Seq(c.pinLayer.get)) ~
           ("location" -> Seq(roundToNm(c.pinLocation.get.x),
                              roundToNm(c.pinLocation.get.y)))
         ) ++ Seq(  // TODO: constrain within the edge
-          ("pins" -> "*") ~
+          ("pins" -> "{clock reset auto* ioCtrl *Faulty}") ~
           ("side" -> sideMap(params.pinSide)) ~
           ("layers" -> params.ip.layerPitch.keys)
         )))
       )
 
     // Placements
-    val topWidth = (params.bumpMap(0).length + 1) * params.gp.pitchH +
+    val topWidth = params.bumpMap(0).length * params.gp.pitchH +
       (if (!params.isWide) params.ip.bumpOffset else 0.0)
-    val topHeight = (params.bumpMap.length + 1) * params.gp.pitchV +
+    val topHeight = params.bumpMap.length * params.gp.pitchV +
       (if (params.isWide) params.ip.bumpOffset else 0.0)
+    val placeKOZ = max(params.ip.bprKOZRatio.getOrElse(0.0), params.ip.tsvKOZRatio.getOrElse(0.0))
     val places =
       ("vlsi.inputs.placement_constraints" -> (Seq(
         ("path" -> "Patch") ~
@@ -104,7 +107,7 @@ object GenCollateral {
           ("right" -> 0) ~
           ("top" -> 0) ~
           ("bottom" -> 0))
-      ) ++ iocells.map( i =>
+      ) ++ iocells.map( i =>  // IO cell placement
         // Replace Target delimiters with / for P&R
         // Fields depend on whether we are using blackboxes or models
         // TODO: breaks if IO cell beneath top hierarchy
@@ -121,62 +124,158 @@ object GenCollateral {
         ("master" -> (if (params.ip.blackBoxModels) None
                       else Some(i.desiredName)))
         // TODO: top layer for halos
-      ))) ~
+      ) ++ params.flatBumpMap.map( b =>  // Routing KOZ
+        ("path" -> s"Patch/${b.bumpName}_route_koz") ~
+        ("type" -> "obstruction") ~
+        ("obs_types" -> Seq("route", "power")) ~
+        ("x" -> roundToNm(b.location.get.x - params.ip.viaKOZRatio * params.gp.pitchH / 2)) ~
+        ("y" -> roundToNm(b.location.get.y - params.ip.viaKOZRatio * params.gp.pitchV / 2)) ~
+        ("width" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchH)) ~
+        ("height" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchV))
+      ) ++ (if (placeKOZ > 0) params.flatBumpMap.map( b =>  // Place KOZ
+        ("path" -> s"Patch/${b.bumpName}_place_koz") ~
+        ("type" -> "obstruction") ~
+        ("obs_types" -> Seq("place")) ~
+        ("x" -> roundToNm(b.location.get.x - placeKOZ * params.gp.pitchH / 2)) ~
+        ("y" -> roundToNm(b.location.get.y - placeKOZ * params.gp.pitchV / 2)) ~
+        ("width" -> roundToNm(placeKOZ * params.gp.pitchH)) ~
+        ("height" -> roundToNm(placeKOZ * params.gp.pitchV))
+      ) else Seq.empty))) ~
       ("vlsi.inputs.placement_constraints_meta" -> "append")
 
     // SDC: clocks, delays, loads
     // Note: directions seem reversed (derived from bumps, not facing the core)
+    // TODO: this depends on the voltage-delay curve of the spec
+    val tClkMin = (1-0.43)*0.25/2 + 0.05
+    val tClkMax = (1+0.43)*0.25/2 + 0.05
+    // txClocks returns (bump name, core path, muxed clock name)
     val txClocks = coreSigs.collect{ case c if (
       DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output)
-      => (c.fullName, "clocks_" + c.fullName)}
-    val rxClocks = iocells.filter(_.forBump.coreSig.isDefined).collect{ case i
-      if {  // get clock output of IO cell itself
-        val c = i.forBump.coreSig.get
-        DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
-        DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Input
-      } => (i.forBump.coreSig.get.fullName,
-          (i.io.rxData.parentPathName.replace(".","/") + "/" +
-          i.io.rxData.instanceName.replace(".","_")))
-    }
-    val coreTxs = coreSigs.collect{ case c if (
+      => (c.fullName, "clocks_" + c.fullName, c.muxedClk(offset=params.redSubmods))}
+    // TODO: don't match by name
+    // rxClocks returns (bump name, core path, iocell output path)
+    val rxClocks = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
+      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
+    val coreTxs = coreSigs.filter(c =>
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
-      !DataMirror.checkTypeEquivalence(c.ioType, Clock())) => (c, "input")
-    }
-    val coreRxs = coreSigs.collect{ case c if (
+      !DataMirror.checkTypeEquivalence(c.ioType, Clock())
+    )
+    val coreRxs = coreSigs.filter(c =>
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Input &&
-      !DataMirror.checkTypeEquivalence(c.ioType, Clock())) => (c, "output")
-    }
-    // TODO: parameterize frequency and uncertainty
+      !DataMirror.checkTypeEquivalence(c.ioType, Clock())
+    )
+    val bumpTxs = params.flatBumpMap.collect{case b:TxSig => b}
+    val bumpRxs = params.flatBumpMap.collect{case b:RxSig => b}
+    val bits = coreTxs.length + coreRxs.length
     val sdc =
       ("vlsi.inputs.clocks" -> (Seq(
         ("name" -> "clock") ~
         ("period" -> "1 ns") ~
         ("uncertainty" -> "0.1 ns")
-      ) ++ (txClocks ++ rxClocks).map(c =>
+      ) ++ txClocks.map(c =>
         ("name" -> c._1) ~
         ("path" -> c._2) ~
         ("period" -> "250 ps") ~
         ("uncertainty" -> "25 ps")
+      ) ++ rxClocks.map(c =>
+        ("name" -> s"${c._1}_invert") ~
+        ("path" -> c._1) ~
+        ("period" -> "250 ps") ~
+        ("uncertainty" -> "25 ps")
+      ) ++ rxClocks.map(c =>
+        ("name" -> c._1) ~
+        ("path" -> s"hpin:${c._3}") ~
+        ("generated" -> true) ~
+        ("divisor" -> -1) ~
+        ("source_path" -> c._1)
       ))) ~
-      ("vlsi.inputs.custom_sdc_constraints" -> Seq(
-        // These are static bits
-        "set_false_path -from *ioCtrl*",
-        "set_false_path -from *Faulty*"  // OK even if no redundancy
-      )) ~
-      // TODO: this depends on the voltage-delay curve of the spec
-      ("vlsi.inputs.delays" -> (coreTxs ++ coreRxs).map{ case (c, dir) =>
+      // Core-side signal delays relative to core-facing clocks
+      ("vlsi.inputs.delays" -> (coreTxs.map(c =>
         ("name" -> c.fullName) ~
         ("clock" -> c.relatedClk.get) ~
-        ("direction" -> dir) ~
-        ("delay" -> "50 ps")
-      }) ~
-      // TODO: what's the actual load
-      ("vlsi.inputs.default_output_load" -> 1)
-      // ("vlsi.inputs.output_loads" -> List("*", 1))
-      // TODO: driver cell
+        ("direction" -> "input") ~
+        ("delay" -> f"${tClkMax - 0.01 - 0.05}%.3f ns") ~
+        ("corner" -> "setup")
+      ) ++ coreTxs.map(c =>
+        ("name" -> c.fullName) ~
+        ("clock" -> c.relatedClk.get) ~
+        ("direction" -> "input") ~
+        ("delay" -> f"${tClkMin + 0.01}%.3f ns") ~
+        ("corner" -> "hold")
+      ) ++ coreRxs.map(c =>
+        ("name" -> c.fullName) ~
+        ("clock" -> c.relatedClk.get) ~
+        ("direction" -> "output") ~
+        ("delay" -> f"${0.25 - 0.01 - 0.05}%.3f ns") ~
+        ("corner" -> "setup")
+      ) ++ bumpTxs.map(b =>
+        ("name" -> b.bumpName) ~
+        ("clock" -> b.relatedClk.get) ~
+        ("direction" -> "output") ~
+        ("delay" -> f"${0.25 - 0.01 - 0.05}%.3f ns") ~
+        ("corner" -> "setup")
+      ) ++ bumpRxs.map(b =>
+        ("name" -> b.bumpName) ~
+        ("clock" -> b.relatedClk.get) ~
+        ("direction" -> "input") ~
+        ("delay" -> f"${tClkMax}%.3f ns") ~
+        ("corner" -> "setup")
+      ) ++ bumpRxs.map(b =>
+        ("name" -> b.bumpName) ~
+        ("clock" -> b.relatedClk.get) ~
+        ("direction" -> "input") ~
+        ("delay" -> f"${tClkMin}%.3f ns") ~
+        ("corner" -> "hold")
+      ))) ~
+      // TODO: parameterize default loading based on technology
+      ("vlsi.inputs.default_output_load" -> "5 fF") ~
+      ("vlsi.inputs.output_loads" -> (Seq(
+        // TODO: parameterize pad cap
+        ("name" -> "[get_ports \"TXDATA* TXCKP*\"]") ~
+        ("load" -> "20 fF")
+      ))) ~
+      ("vlsi.inputs.custom_sdc_constraints" -> (Seq(
+        // Global constraints
+        // These are static bits
+        "set_false_path -from *ioCtrl*",
+        "set_false_path -from *Faulty*",  // OK even if no redundancy
+        // TODO: determine power/jitter tradeoff of transition
+        "set_max_transition 0.05 [current_design]",  // Max transition for entire design. Assumes Lib units in ns.
+        f"set_max_dynamic_power [expr 0.05 * $bits / 0.25]mW",  // Max dynamic power for the entire design.
+        // Clock network latency, transition, skew
+        f"set Tclkmin $tClkMin%.3f",
+        f"set Tclkmax $tClkMax%.3f",
+        "set_clock_latency $Tclkmin -min [get_clocks TXCKP*]",
+        "set_clock_latency $Tclkmax -max [get_clocks TXCKP*]",
+        "set_clock_latency $Tclkmin -min [get_clocks RXCKP*]",
+        "set_clock_latency $Tclkmax -max [get_clocks RXCKP*]",
+        "set_min_transition [expr 0.25/10] [get_ports \"TXDATA* TXCKP*\"]",
+        "set_max_transition [expr 0.25/6] [get_ports \"TXDATA* TXCKP*\"]",
+        "set_input_transition -min [expr 0.25/10] [get_ports \"RXDATA* RXCKP*\"]",
+        "set_input_transition -max [expr 0.25/6] [get_ports \"RXDATA* RXCKP*\"]",
+        "set_clock_skew 0.03 [all_clocks]",
+        "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]"  // Max capacitance for Rx core-facing clocks (assumes Lib units in pF).
+      ) ++ coreRxs.map(c => s"set_max_capacitance 0.01 [get_ports ${c.fullName}]"  // Max capacitance for Rx data (assumes Lib units in pF).
+      ) ++ txClocks.flatMap(c => Seq(
+        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] 0.02",  // direct Tx clocks
+        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._3}] 0.05"   // muxed Tx clocks
+      )) ++ rxClocks.dropRight(2).flatMap(c => Seq(  // direct Rx clocks
+        s"set_min_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmin",
+        s"set_max_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmax"
+      )) ++ (rxClocks.drop(2) zip rxClocks.dropRight(2)).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks
+        s"set_min_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmin + 0.05]",
+        s"set_max_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmax + 0.05]"
+      )}))
 
-    pretty(render(bumps merge pins merge places merge sdc))
+    // Power intent
+    val power =
+      ("vlsi.inputs.power_spec_mode" -> "auto") ~
+      ("vlsi.inputs.power_spec_type" -> "upf") ~
+      ("vlsi.inputs.supplies.power" -> Seq(("name" -> "VDDAIB") ~ ("pin" -> "VDDAIB"))) ~
+      ("vlsi.inputs.supplies.ground" -> Seq(("name" -> "VSS") ~ ("pin" -> "VSS")))
+
+    pretty(render(bumps merge pins merge places merge sdc merge power))
   }
 
   /** Generates a CSV file that can be imported into a spreadsheet

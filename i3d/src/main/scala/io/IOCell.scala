@@ -38,20 +38,22 @@ trait IOCellConnects {
   }
 
   private def connectTx(tx: Data, clk: Clock, loopback: Bool): Unit = {
+    val isClk = DataMirror.checkTypeEquivalence(tx, clk)
     io.txData := tx.asTypeOf(io.txData)
     io.rxData := DontCare
-    io.txClk := clk
+    io.txClk := (if (isClk) false.B.asClock else clk)
     // TODO: use testchipip.ClockSignalNor2 if clock gating not inferred properly
-    io.rxClk := (loopback && clk.asBool).asClock
+    io.rxClk := (if (isClk) false.B else loopback && clk.asBool).asClock
     io.txEn := true.B
     io.rxEn := loopback
   }
 
   private def connectRx(rx: Data, clk: Clock, loopback: Bool): Unit = {
+    val isClk = DataMirror.checkTypeEquivalence(rx, clk)
     io.txData := 0.U
     rx := io.rxData.asTypeOf(rx)
-    io.txClk := (loopback && clk.asBool).asClock
-    io.rxClk := clk
+    io.txClk := (if (isClk) false.B else loopback && clk.asBool).asClock
+    io.rxClk := (if (isClk) false.B.asClock else clk)
     io.txEn := loopback
     io.rxEn := true.B
   }
@@ -60,9 +62,12 @@ trait IOCellConnects {
 class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
   // Analog to directional
   val toPad = Wire(Bits(1.W))
-  UIntToAnalog(toPad, io.pad, io.txEn)
   val fromPad = Wire(Bits(1.W))
-  AnalogToUInt(io.pad, fromPad)
+  // Uncomment if tristates supported in technology
+  // UIntToAnalog(toPad, io.pad, io.txEn)
+  // AnalogToUInt(io.pad, fromPad)
+  // Else uncomment this
+  AnalogUIntBidir(io.pad, toPad, fromPad, io.txEn, io.rxEn)
 
   // TODO: detect clock cells and don't have retimers
 
@@ -73,10 +78,9 @@ class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects 
   toPad := Mux(io.txEn, tx, txp)
 
   // Rx logic
-  val rxClock = Wire(Clock())
-  rxClock := (!io.rxClk.asBool).asClock
-  val rxRetimed = withClockAndReset(rxClock, !io.rxEn)(RegNext(fromPad, 0.U))
-  io.rxData := Mux(io.async, fromPad & io.rxEn, rxRetimed)
+  val rxRetimed = withClockAndReset(io.rxClk, !io.rxEn)(RegNext(fromPad, 0.U))
+  // Clock is assumed for now to be the only async signal. Invert it.
+  io.rxData := Mux(io.async, ~fromPad & io.rxEn, rxRetimed)
 }
 
 class IOCellBB(val forBump: AIB3DBump)(implicit params: AIB3DInstParams)
