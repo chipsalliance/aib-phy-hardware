@@ -11,18 +11,18 @@ import aib3d._
 
 /** Useful case classes */
 
-/** Useful for any coordinates (submodule, pin, bump) */
+/** Useful for any coordinates (module, pin, bump) */
 case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   import Numeric.Implicits._
-  // Following methods are to be used for submodule indices only
-  // Divide by 2 since submods are created in pairs
+  // Following methods are to be used for module indices only
+  // Divide by 2 since modules are created in pairs
   def linearIdx(implicit params: AIB3DParams): Int = {
-    if (params.isWide) x.toInt / 2 * params.submodRowsWR + y.toInt
-    else y.toInt / 2 * params.submodColsWR + x.toInt
+    if (params.isWide) x.toInt / 2 * params.modRowsWR + y.toInt
+    else y.toInt / 2 * params.modColsWR + x.toInt
   }
   def isRedundant(implicit params: AIB3DParams): Boolean = {
-    if (params.isWide) x.toInt >= params.submodCols
-    else y.toInt >= params.submodRows
+    if (params.isWide) x.toInt >= params.modCols
+    else y.toInt >= params.modRows
   }
 }
 
@@ -52,7 +52,7 @@ sealed trait AIB3DBump {
   val relatedClk: Option[String] = None  // bump clock domain
   val coreSig: Option[AIB3DCore] = None
   var location: Option[AIB3DCoordinates[Double]] = None
-  var submodIdx: Option[AIB3DCoordinates[Int]] = None
+  var modIdx: Option[AIB3DCoordinates[Int]] = None
 }
 // Power/Ground
 case class Pwr() extends AIB3DBump {
@@ -73,13 +73,13 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
   override val coreSig = if (sig.isDefined) sig else None
 }
 // Clock
-case class TxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
-  val bumpName = s"TXCKP${submodNum}"
+case class TxClk(modNum: Int, isRedundant: Boolean) extends AIB3DBump {
+  val bumpName = s"TXCKP${modNum}"
   override val coreSig = if (isRedundant) None
-    else Some(AIB3DCore(s"TXCKP${submodNum}", None, Output(Clock()), None))
+    else Some(AIB3DCore(s"TXCKP${modNum}", None, Output(Clock()), None))
 }
-case class RxClk(submodNum: Int, isRedundant: Boolean) extends AIB3DBump {
-  val bumpName = s"RXCKP${submodNum}"
+case class RxClk(modNum: Int, isRedundant: Boolean) extends AIB3DBump {
+  val bumpName = s"RXCKP${modNum}"
   override val coreSig = if (isRedundant) None
-    else Some(AIB3DCore(s"RXCKP${submodNum}", None, Input(Clock()), None))
+    else Some(AIB3DCore(s"RXCKP${modNum}", None, Input(Clock()), None))
 }

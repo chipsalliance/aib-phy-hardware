@@ -32,12 +32,16 @@ import aib3d.io._
   * 0 = none, 1 = coding, 2 = signal shift
   * @param redundRatio is the redundancy ratio (default: 4).
   * Denotes the number of signal bumps per redundant bump.
+  * Only used for signal shift redundancy.
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
-  * @param submodSize is the max number of data bits (Tx/Rx, each) in a sub-module
+  * @param modSize is the max number of data bits (Tx/Rx, each) in a module
   * @param pinSide is the side where pins are to be assigned, pre-mirroring/rotation.
   * One of "N", "S", "E", "W".
   * @param dataBundle is the data bundle of the leader die
+  * @param dataStatistic is the average statistics of the buses in the data bundle.
+  * One of "random", "correlated", "one-hot", or "normal".
+  * Used for pin-to-bump assignment in all redundancy modes and low-power coding in coding redundancy mode.
   */
 case class AIB3DGlblParams(
   pitch: Double = 10.0,
@@ -52,9 +56,10 @@ case class AIB3DGlblParams(
   redundRatio: Int = 4,
   hasDBI: Boolean = false,
   deskewArch: Int = 0,
-  submodSize: Int = 64,
+  modSize: Int = 64,
   pinSide: String = "N",
-  dataBundle: Bundle) {
+  dataBundle: Bundle,
+  dataStatistic: String = "random") {
 
   // Checks
   require(pitch >= 1.0 && pitch <= 25.0, "Pitch must be within [1, 25] um")
@@ -96,10 +101,12 @@ case class AIB3DGlblParams(
   require(deskewArch >= 0 && deskewArch <= 2, "Only 0, 1, 2 supported for deskewArch")
   require(Set("N","S","E","W").contains(pinSide),
     "pinSides Set can only be 'N', 'S', 'E', or 'W'")
+  require(Set("random", "correlated", "one-hot", "normal").contains(dataStatistic),
+    "dataStatistic must be one of 'random', 'correlated', 'one-hot', or 'normal'")
 
-  // TODO: submodSize depends on pitch, additional signals, redundancy
-  // require(submodSize >= pow(maxParticleSize, 2).toInt,
-  //   "submodSize too small, must be at least maxParticleSize^2")
+  // TODO: modSize depends on pitch, additional signals, redundancy
+  // require(modSize >= pow(maxParticleSize, 2).toInt,
+  //   "modSize too small, must be at least maxParticleSize^2")
 }
 
 /** Instance AIB3D Parameters
@@ -178,333 +185,150 @@ case class AIB3DParams(
   gp: AIB3DGlblParams,
   ip: AIB3DInstParams) {
 
-  // Extract the Tx and Rx IOs
+  /** Step 1: Extract and flatten the Tx and Rx IOs */
   private val data = if (ip.isLeader) gp.dataBundle else Flipped(gp.dataBundle)
-  private val txIOs = data.elements.filter(elt =>
-    DataMirror.specifiedDirectionOf(elt._2) == SpecifiedDirection.Output)
-  private val rxIOs = data.elements.filter(elt =>
-    DataMirror.specifiedDirectionOf(elt._2) == SpecifiedDirection.Input)
-  private val numTxIOs = txIOs.map(_._2.getWidth).sum
-  private val numRxIOs = rxIOs.map(_._2.getWidth).sum
+  private val flatTx = Utils.flattenIOs(data, SpecifiedDirection.Output)
+  private val flatRx = Utils.flattenIOs(data, SpecifiedDirection.Input)
   // TODO: support unbalanced Tx/Rx IO count
-  require(numTxIOs == numRxIOs, "Only balanced Tx/Rx IO count supported at this time.")
+  require(flatTx.length == flatRx.length, "Only balanced Tx/Rx IO count supported at this time.")
 
-  // IO flattening
-  private def flattenIOs(orig: SeqMap[String, Data]) : Seq[AIB3DCore] = {
-    def cloneDirection(d: Data) = DataMirror.specifiedDirectionOf(d) match {
-      case SpecifiedDirection.Input => Input(UInt(1.W))
-      case SpecifiedDirection.Output => Output(UInt(1.W))
-      case _ => throw new Exception("Only Input/Output supported")
-    }
-    val flat = ArrayBuffer.empty[AIB3DCore]
-    //for (((sig, data), width) <- (orig zip orig.map(_._2.getWidth))) {
-    for ((oname, odata) <- orig) {
-      // Add single bit IOs as-is, otherwise break into individual bits
-      // Need to deal with Vec and Seq types (recursively flatten with naming)
-      def flattenVecSeq(name: String, d: Data): Seq[(String, Data)] = d match {
-        case v: Vec[_] => v.zipWithIndex.flatMap{ case (elt, i) =>
-          flattenVecSeq(s"${name}_${i}", elt)
-        }
-        case s: Seq[_] => s.zipWithIndex.flatMap{ case (elt, i) =>
-          flattenVecSeq(s"${name}_${i}", elt.asInstanceOf[Data])
-        }
-        case _ => Seq((name, d))
-      }
-      flattenVecSeq(oname, odata).foreach{ case (name, data) =>
-        val width = data.getWidth
-        if (width > 1)
-          for (i <- (0 until width).reverse) {  // MSB to LSB
-            // TODO: support scrambling of bus bits for switching activity distribution
-            // Bit indexing can't be done unless it is actually hardware.
-            // Thus, we need to copy the direction and make it a 1-bit Data.
-            flat += AIB3DCore(name, Some(i), cloneDirection(odata), None)
-          }
-        else
-          flat += AIB3DCore(name, None, cloneDirection(odata), None)
-      }
-    }
-    flat.toSeq
-  }
-  private val flatTx = flattenIOs(txIOs)
-  private val flatRx = flattenIOs(rxIOs)
+  /** Step 2: Calculate public constants */
 
-  // Some public constants
+  // Determine number of modules and signals per module
   // TODO: for coding, need to take the ratio into account...
-  val numSubmods = (numTxIOs / gp.submodSize.toDouble).ceil.toInt
-  require(numTxIOs % numSubmods == 0,
-    s"Number of IOs (${numTxIOs}) not evenly divisible by derived number of submodules (${numSubmods})")
-  val sigsPerSubmod = numTxIOs / numSubmods
-  // TODO: allow for more/less than 2 redundant submods, don't require even number
-  val redSubmods = if (gp.redundArch == 2) numSubmods / gp.redundRatio else 0
-  if (redSubmods > 0) require(numSubmods % redSubmods == 0,
-    s"Number of signal submods (${numSubmods}) must be evenly divisible by number of redundant submods (${redSubmods})")
-  // TODO: fix this: determined globally
+  val numMods = (flatTx.length / gp.modSize.toDouble).ceil.toInt
+  require(flatTx.length % numMods == 0,
+    s"Number of IOs (${flatTx.length}) not evenly divisible by derived number of modules (${numMods})")
+  val sigsPerMod = flatTx.length / numMods
+  // TODO: allow for more/less than 2 redundant modules, don't require even number
+  val redMods = if (gp.redundArch == 2) numMods / gp.redundRatio else 0
+  if (redMods > 0) require(numMods % redMods == 0,
+    s"Number of signal mods (${numMods}) must be evenly divisible by number of redundant mods (${redMods})")
+  val numModsWR = numMods + redMods
+
+  // Resolve aspect ratio and pin side
   val isWide = Set("N", "S").contains(gp.pinSide)
-  val pinSide = if (ip.pinSide.isDefined) ip.pinSide.get else gp.pinSide
-  val numSubmodsWR = numSubmods + redSubmods
-  // These are total, not Tx/Rx individually
-  // If no redundancy, want to find the most "square" arrangement from the factor pairs of numSubmods
-  // Else, shorter dimension is determined by the number of redundant submods
-  val (submodRows, submodCols) =
-    if (gp.redundArch == 2)
-      if (isWide) (redSubmods, numSubmods / redSubmods * 2)
-      else (numSubmods / redSubmods * 2, redSubmods)
+  val pinSide = if (ip.pinSide.isDefined) {
+    val compat = Set("N", "S").contains(ip.pinSide.get) == isWide
+    require(compat, "Instance pinSide parameter incompatible with global pinSide parameter.")
+    if (compat) ip.pinSide.get else gp.pinSide
+  } else gp.pinSide
+
+  // Rows and columns of modules (total, not Tx/Rx individually)
+  // If no redundancy, want to find the most "square" arrangement from the factor pairs of numMods
+  // Else, shorter dimension is determined by the number of redundant modules
+  val (modRows, modCols) =
+    if (gp.redundArch == 2)  // signal shift
+      if (isWide) (redMods, numMods / redMods * 2)
+      else (numMods / redMods * 2, redMods)
     else {
       // Find factor pairs, and return the most "square" one
-      // This still works if numSubmods is a square number
-      val bestFactor = (1 to sqrt(numSubmods).toInt).filter(numSubmods % _ == 0).last
-      if (isWide) (bestFactor, numSubmods / bestFactor)  // wide
-      else (numSubmods / bestFactor, bestFactor)  // tall
+      // This still works if numMods is a square number
+      val bestFactor = (1 to sqrt(numMods).toInt).filter(numMods % _ == 0).last
+      if (isWide) (bestFactor, numMods / bestFactor)  // wide
+      else (numMods / bestFactor, bestFactor)  // tall
     }
-  val (submodRowsWR, submodColsWR) =
-    if (gp.redundArch == 2)
-      if (isWide) (redSubmods, submodCols + 2) else (submodRows + 2, redSubmods)
-    else (submodRows, submodCols)
+  val (modRowsWR, modColsWR) =
+    if (gp.redundArch == 2)  // signal shift
+      if (isWide) (redMods, modCols + 2) else (modRows + 2, redMods)
+    else (modRows, modCols)
 
-  /** Following is the process of creating the bump map.
+  /** Step 3: Create the bump map.
     * It is different depending on the redundancy scheme.
     */
 
   val bumpMap: Array[Array[AIB3DBump]] = if (gp.redundArch != 1) {  // none or signal shift
-    /* Submodule calculations */
-
-    // Prioritize least number of bumps
-    // Choose the ordering with fewer bumps facing pin edge
-    // TODO: is this the right decision?
-    val rowsSigOpts = Seq(sqrt(sigsPerSubmod.toDouble).floor.toInt,
-                                sqrt(sigsPerSubmod.toDouble).ceil.toInt)
-    val colsSigOpts = rowsSigOpts.map(r =>
-      (sigsPerSubmod / r.toDouble).ceil.toInt)
-    val (rowsSig, colsSig) = {
-      if (rowsSigOpts(0) * colsSigOpts(0) < rowsSigOpts(1) * colsSigOpts(1))
-        if (isWide) (colsSigOpts(0), rowsSigOpts(0))
-        else (rowsSigOpts(0), colsSigOpts(0))
-      else
-        if (isWide) (rowsSigOpts(1), colsSigOpts(1))
-        else (colsSigOpts(1), rowsSigOpts(1))
-    }
-    val extras = rowsSig * colsSig - sigsPerSubmod
-
-    // There must be an intersection for clock
+    // Rows/cols of signal/PG bumps and extras
+    val (rowsSig, colsSig, extras) = Utils.sigRowsCols(sigsPerMod, isWide)
     val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1
     val colsG = ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1
-    val rowsPerSubmod = rowsSig + rowsP
-    val colsPerSubmod = colsSig + colsG
+    val rowsPerMod = rowsSig + rowsP
+    val colsPerMod = colsSig + colsG
 
-    // Evenly distribute rowsSig and colsSig between power rows and ground columns
-    // To do this, need to make a Seq filled with the quotient, and obtain the remainder
-    // Then split the quotient Seq at the remainder position, and add 1 to the first half
-    // Then perform binary recursion to evenly diffuse the smaller Seq into the larger
-    def spgPatternGen(sigs: Int, pg: Int): Seq[Int] = {
-      val splitQuotient = Seq.fill(pg + 1)(sigs / (pg + 1)).splitAt(sigs % (pg + 1))
-      def diffuse(l: Seq[Int], s: Seq[Int]): Seq[Int] = {
-        val splitL = l.splitAt(l.length / 2)
-        if (s.length == 0) l
-        else if (s.length == 1) splitL._1 ++ s ++ splitL._2
-        else {
-          val splitS = s.tail.splitAt(s.tail.length / 2)
-          diffuse(splitL._1 ++ s.take(1), splitS._1) ++ diffuse(splitL._2, splitS._2)
-        }
-      }
-      if (splitQuotient._1.length >= splitQuotient._2.length)
-        diffuse(splitQuotient._1.map(_ + 1), splitQuotient._2)
-      else
-        diffuse(splitQuotient._2, splitQuotient._1.map(_ + 1))
-    }
-    // Get the pattern and the row/column indices of the power/ground
-    // At the edges, the signals virtually spill over into adjacent submods
-    // So we must add sigsPerPG to the pattern gen then subtract half when we
-    // calculate the indicies of pRows and gCols
-    val spgPatternV = spgPatternGen(rowsSig + gp.sigsPerPG._2, rowsP)
-    val pRows = spgPatternV.scanLeft(0)(_ + _ + 1)
-                .map(_ - 1 - gp.sigsPerPG._2/2)
-                .drop(1).dropRight(1)
-    val spgPatternH = spgPatternGen(colsSig + gp.sigsPerPG._1, colsG)
-    val gCols = spgPatternH.scanLeft(0)(_ + _ + 1)
-                .map(_ - 1 - gp.sigsPerPG._1/2)
-                .drop(1).dropRight(1)
+    // Row/column indices of the power/ground
+    val pRows = Utils.pgIdxGen(rowsSig, rowsP, gp.sigsPerPG._2)
+    val gCols = Utils.pgIdxGen(colsSig, colsG, gp.sigsPerPG._1)
+    // Permute indices into coordinates based on row/cols per mod
+    val pCoords = pRows.flatMap(r => (0 until colsPerMod).map(c => (c, r)))
+    val gCoords = gCols.flatMap(c => (0 until rowsPerMod).map(r => (c, r)))
 
-    // Calculate which P/G intersections the clock signal will be located
+    // P/G intersection of the clock signal
     // It should be as close to the middle as possible and biased towards pin edge
-    // TODO: should really be on the center-most power/ground row/col, which
-    // is not necessarily an intersection
-    val biasLL = if (Set("S", "W").contains(gp.pinSide)) 1 else 0
-    val clkCoord: (Int, Int) = (colsG % 2 == 0, rowsP % 2 == 0) match {
-      case (true, true) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2 - biasLL))
-      case (true, false) => (gCols(colsG / 2 - biasLL), pRows(rowsP / 2))
-      case (false, true) => (gCols(colsG / 2), pRows(rowsP / 2 - biasLL))
-      case (false, false) => (gCols(colsG / 2), pRows(rowsP / 2))
-    }
+    val biasLL = if (Set("S", "W").contains(pinSide)) 1 else 0
+    val clkCoord: (Int, Int) =
+      (gCols(colsG / 2 - (if (colsG % 2 == 0) biasLL else 0)),
+       pRows(rowsP / 2 - (if (rowsP % 2 == 0) biasLL else 0)))
 
-    // Calculate which positions the extra signals will be located.
-    // In a counter-clockwise circle, get the cornermost bumps, starting at (0, 0)
-    // Then reorder based on which side the pin is on (prioritize farther ones).
-    // This method reduces the radius of the clock tree in each submodule
-    // while decreasing the total length of routing to all IO cells.
-    // For ranges: col pattern is (0), (0, 1), (0, 1, 2), (0, 1, 2, 3), etc.
-    // and row is reverse (count down within each of those groups in col pattern).
-    // We must also adjust for any rows/cols of power/ground.
-    // Use recursion to generate this pattern and take as many entries as necessary.
-    val sideDropTake = gp.pinSide match{
-      case "N" => 0
-      case "W" => 1
-      case "S" => 2
-      case "E" => 3
-    }
-    val extraCoords = (1 to (extras / 4.0).ceil.toInt)  // recursion
-      .foldLeft(Seq.empty[(Int, Int)]){ case (coords, e) =>
-        val range = Range(0, e)
-        val nextCoords = (range zip range.reverse).map{ case(c, r) =>
-          val cAdjUp = gCols.indexWhere(c >= _) + 1
-          val cAdjDown = gCols.reverse.indexWhere(colsPerSubmod - c - 1 <= _) + 2
-          val rAdjUp = pRows.indexWhere(r >= _) + 1
-          val rAdjDown = pRows.reverse.indexWhere(rowsPerSubmod - r - 1 <= _) + 2
-          val ord = Seq((c + cAdjUp, r + rAdjUp),
-                        (colsPerSubmod - c - cAdjDown, r + rAdjUp),
-                        (colsPerSubmod - c - cAdjDown, rowsPerSubmod - r - rAdjDown),
-                        (c + cAdjUp, rowsPerSubmod - r - rAdjDown))
-          ord.drop(sideDropTake) ++ ord.take(sideDropTake)
-        }.flatten
-        coords ++ nextCoords
-      }.take(extras)
+    // Calculate positions of the extra signals
+    val extraCoords = Utils.extraCoordGen(extras, pinSide, pRows, gCols,
+                                          rowsPerMod, colsPerMod)
+
+    // Calculate (ordered) positions of the data signals
+    // Permute row and column indices and filter out the above coordinates
+    // TODO: use data statistics
+    val sigCoords = (0 until rowsPerMod).flatMap(r =>
+      (0 until colsPerMod).map(c => (c, r)))
+      .filterNot((pCoords ++ gCoords ++ extraCoords :+ clkCoord) contains _)
 
     // Map to bump map
-    val txBumpMap, rxBumpMap = Array.ofDim[AIB3DBump](numSubmodsWR, rowsPerSubmod, colsPerSubmod)
-    var bitCnt = 0
-    for (s <- 0 until numSubmodsWR) {
-      for (r <- 0 until rowsPerSubmod; c <- 0 until colsPerSubmod) {
-        breakable {
-          // Clock
-          if (clkCoord == (c, r)) {
-            txBumpMap(s)(r)(c) = TxClk(s, s >= numSubmods)
-            rxBumpMap(s)(r)(c) = RxClk(s, s >= numSubmods)
-            break()
-          }
+    val (txBumpMap, rxBumpMap) = Utils.bumpMapGen(tx = flatTx,
+                                                  rx = flatRx,
+                                                  mods = numMods,
+                                                  redMods = redMods,
+                                                  cCoords = Seq(clkCoord),
+                                                  pCoords = pCoords,
+                                                  gCoords = gCoords,
+                                                  eCoords = extraCoords,
+                                                  sCoords = sigCoords)
 
-          // Grounds. Extra gets set to ground too
-          if (gCols.contains(c) || extraCoords.contains((c, r))) {
-            txBumpMap(s)(r)(c) = Gnd()
-            rxBumpMap(s)(r)(c) = Gnd()
-            break()
-          }
-
-          // Power
-          if (pRows.contains(r)) {
-            txBumpMap(s)(r)(c) = Pwr()
-            rxBumpMap(s)(r)(c) = Pwr()
-            break()
-          }
-
-          // Signal
-          txBumpMap(s)(r)(c) = TxSig(bitCnt, if (s < numSubmods) s else s - redSubmods,
-            if (s < numSubmods) Some(flatTx(bitCnt).copy(relatedClk = Some(s"TXCKP$s"))) else None)
-          rxBumpMap(s)(r)(c) = RxSig(bitCnt, s,
-            if (s < numSubmods) Some(flatRx(bitCnt).copy(relatedClk = Some(s"RXCKP$s"))) else None)
-
-          bitCnt += 1
-        }
-      }
-      if (s == numSubmods - 1) bitCnt = 0  // reset bit count for redundant submods
-    }
-
-    // Concatenate bump maps then generate the correct ordering of submodule origins
-    // Depending on pin side, the rows/cols of submods are different
+    // Concatenate bump maps then generate the correct ordering of module origins
+    // Depending on pin side, the rows/cols of modules are different
     // Note modules in the longer dimension is doubled since Tx and Rx are separate
     val concatenated = Array(txBumpMap, rxBumpMap).flatten
-    // Ordering of submodules
-    // TODO: support more/less than 2 rows/cols of submods
-    val submodOrigins = {
+    // Ordering of modules
+    // TODO: support more/less than 2 rows/cols of modules
+    val modOrigins = {
       if (isWide)  // Tx left of Rx
-        ((0 until submodColsWR by 2) ++ (1 until submodColsWR by 2)).flatMap(c =>
-          (0 until submodRowsWR).map(r =>
-            (r * rowsPerSubmod, c * colsPerSubmod)))
+        ((0 until modColsWR by 2) ++ (1 until modColsWR by 2)).flatMap(c =>
+          (0 until modRowsWR).map(r =>
+            (r * rowsPerMod, c * colsPerMod)))
       else  // Tx under Rx
-        ((0 until submodRowsWR by 2) ++ (1 until submodRowsWR by 2)).flatMap(r =>
-          (0 until submodColsWR).map(c =>
-            (r * rowsPerSubmod, c * colsPerSubmod)))
+        ((0 until modRowsWR by 2) ++ (1 until modRowsWR by 2)).flatMap(r =>
+          (0 until modColsWR).map(c =>
+            (r * rowsPerMod, c * colsPerMod)))
     }
-    require(submodOrigins.length == concatenated.length,
-      "Error in Tx/Rx submodule to full module mapping.")
+    require(modOrigins.length == concatenated.length,
+      "Error in Tx/Rx module to full module mapping.")
 
-    // Flatten submodules into final map
-    // Submodule index tag is added to each bump for submodule redundancy mapping
-    val finalRows = submodRowsWR * rowsPerSubmod
-    val finalCols = submodColsWR * colsPerSubmod
-    val finalMap = Array.ofDim[AIB3DBump](finalRows, finalCols)
-    submodOrigins.zipWithIndex.foreach { case ((r, c), s) =>
-      for (sr <- 0 until rowsPerSubmod; sc <- 0 until colsPerSubmod) {
+    // Flatten modules into final map
+    // Module index tag is added to each bump for module redundancy mapping
+    val finalMap = Array.ofDim[AIB3DBump](modRowsWR * rowsPerMod, modColsWR * colsPerMod)
+    modOrigins.zipWithIndex.foreach { case ((r, c), s) =>
+      for (sr <- 0 until rowsPerMod; sc <- 0 until colsPerMod) {
         finalMap(r + sr)(c + sc) = concatenated(s)(sr)(sc)
-        finalMap(r + sr)(c + sc).submodIdx =
+        finalMap(r + sr)(c + sc).modIdx =
           Some(AIB3DCoordinates[Int](
-            x = c / colsPerSubmod,
-            y = r / rowsPerSubmod))
+            x = c / colsPerMod,
+            y = r / rowsPerMod))
       }
     }
-
-    // Calculate bump/iocell location
-    // TODO: ignore tech grids and let the tools snap or use BigDecimal?
-    for (r <- 0 until finalRows; c <- 0 until finalCols) {
-      // Update coordinates using calculated pitch.
-      // Assume 0.5 * pitch to each edge. Can offset later.
-      finalMap(r)(c).location =
-        Some(AIB3DCoordinates[Double](
-          x = (c + 0.5) * gp.pitchH,
-          y = (r + 0.5) * gp.pitchV))
-    }
-
-    // Calculate pin locations
-    // Check for available routing resources
-    // Assume 20% power assumption + 50% shielding/space penalty
-    val routingTracks = ip.layerPitch.map{ case(layer, pitch) =>
-      layer -> (gp.pitch / pitch * 1000).floor.toInt}
-    val sumTracks = routingTracks.map(_._2).sum
-    val reqdSigs =
-      if (Set("E", "W").contains(pinSide)) colsSig * submodCols
-      else rowsSig * submodRows
-    require(sumTracks * 0.4 >= reqdSigs,
-      s"""Not enough routing tracks on pin side (${pinSide}).
-      |${reqdSigs} tracks requested but only ${sumTracks * 0.4} available.
-      |There are ${submodRowsWR} rows and ${submodColsWR} columns of submodules.
-      |""".stripMargin)
-    // Query bumps with core signals in each row/col depending on pinSide
-    val coreSigs = (if (isWide) finalMap.transpose else finalMap).map{
-      _.withFilter(_.coreSig.isDefined).map(_.coreSig.get)}
-    // Spread signals out evenly across all layers,
-    // starting from the lowest layer in the middle of the row/column
-    // Assume that tools will snap to track
-    val pinOffsetsPos = routingTracks.map{ case(layer, tracks) =>
-      (0 until tracks / 2).map( t => (t * ip.layerPitch(layer) / 1000, layer))
-      }.flatten.grouped(sumTracks / reqdSigs).map(_.head).toSeq
-    val pinOffsetsNeg = pinOffsetsPos.map{ case(os, lay) => (-os, lay)}.toSeq
-    val pinOffsets: Seq[(Double, String)] = pinSide match {  // interleaving
-      case "N" | "E" =>  // reverse (farthest I/O appears first)
-        Seq(pinOffsetsPos.reverse, pinOffsetsNeg.reverse).transpose.flatten
-      case _ => Seq(pinOffsetsPos, pinOffsetsNeg).transpose.flatten.tail
-    }
-    coreSigs.zipWithIndex.foreach{ case (grp, i) =>
-      (grp zip pinOffsets.take(grp.length)).foreach{ case (sig, (os, lay)) =>
-        sig.pinLayer = Some(lay)
-        sig.pinLocation = pinSide match {
-          case "W" => Some(AIB3DCoordinates[Double](
-                        x = 0,
-                        y = (i + 0.5) * gp.pitchV + os))
-          case "E" => Some(AIB3DCoordinates[Double](
-                        x = finalCols * gp.pitchH + ip.bumpOffset,
-                        y = (i + 0.5) * gp.pitchV + os))
-          case "S" => Some(AIB3DCoordinates[Double](
-                        x = (i + 0.5) * gp.pitchH + os,
-                        y = 0))
-          case "N" => Some(AIB3DCoordinates[Double](
-                        x = (i + 0.5) * gp.pitchH + os,
-                        y = finalRows * gp.pitchV + ip.bumpOffset))
-        }
-      }
-    }
-
     // Return
     finalMap
 
   } else {  // coding
+    /** Procedure:
+      1. From the particle size, max sigs per module, calculate the number of coding clusters using circle packing in a square rules
+      2. Calculate the number of signals per coding cluster using square packing in a circle rules
+      3. From the data bundle statistics, determine if the buses are arranged within a cluster or group.
+        a. If within a cluster, if correlated, use spiral mapping; if normal, use sawtooth; else, no special mapping required.
+        b. If within a group, no special mapping required.
+    */
+
+    // Calculate coding group size and number of coding clusters
+    // Currently only supports 5 or 9 coding clusters (4 + 1 or 8 + 1)
+    // TODO: support more cluster size combinations
+    // val numClusters =
+
     Array.ofDim[AIB3DBump](1, 1)
   }
 
@@ -512,4 +336,6 @@ case class AIB3DParams(
   // Check
   require(!flatBumpMap.contains(null), "Error in final bump map creation!")
 
+  // Calculate locations
+  Utils.calcLocations(bumpMap, pinSide, gp, ip)
 }

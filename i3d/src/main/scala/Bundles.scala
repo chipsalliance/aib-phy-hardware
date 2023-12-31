@@ -30,8 +30,8 @@ class BumpsBundle(atBumps: Boolean)
   })}):_*)
 	def apply(elt: String): Data = elements(elt)
 
-  // Connect the correct bumps in this bundle to the corresponding submodule bundle
-  def connectToMux(that: SubmodBundle): Unit = {
+  // Connect the correct bumps in this bundle to the corresponding module bundle
+  def connectToMux(that: ModuleBundle): Unit = {
     that.elements foreach { elt => elt._2 <> elements(elt._1) }
     // TODO: For Chisel 3.6+: (that: Data).waiveAll <> (this: Data).waiveAll
   }
@@ -45,10 +45,10 @@ class BumpsBundle(atBumps: Boolean)
         if (bump.coreSig.isDefined) {
           elements(bump.coreSig.get.relatedClk.get).asUInt(0).asClock
         } else {
-          val submodNum = bump.submodIdx.get.linearIdx
+          val modNum = bump.modIdx.get.linearIdx
           bump match {
-            case _:TxSig => elements(s"TXCKP${submodNum}").asUInt(0).asClock
-            case _:RxSig => elements(s"RXCKP${submodNum}").asUInt(0).asClock
+            case _:TxSig => elements(s"TXCKP${modNum}").asUInt(0).asClock
+            case _:RxSig => elements(s"RXCKP${modNum}").asUInt(0).asClock
             case _ => throw new Exception("Should not get here")
           }
         }
@@ -69,9 +69,9 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
   }:_*)
 	def apply(elt: String): Data = elements(elt)
 
-  // Connect the correct core signals in this bundle to the corresponding submodule bundle
-  def connectToMux(that: SubmodBundle): Unit = {
-    if (that.submodIdx.isRedundant) {  // redundant submodule, tie to 0
+  // Connect the correct core signals in this bundle to the corresponding module bundle
+  def connectToMux(that: ModuleBundle): Unit = {
+    if (that.modIdx.isRedundant) {  // redundant module, tie to 0
       that.getElements.foreach( d => d := 0.U.asTypeOf(d) )
     } else that.elements.foreach( elt => elt._2 <> elements(elt._1) )
   }
@@ -96,7 +96,7 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
 
   // Hook up to the data bundle at the top level
   def connectDataBundle(dataBundle: Bundle): Unit = {
-    // Connection inwards is straigtforward
+    // Connection inwards is straightforward
     // Convert to seq of bools and connect each core bit to each data bit
     val dbIn = dataBundle.elements.withFilter{ case(_, d) =>
       DataMirror.directionOf(d) == ActualDirection.Input
@@ -122,22 +122,22 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
   }
 }
 
-/** Submod-specific bundle, used for redundancy muxes*/
-class SubmodBundle(
-  val submodIdx: AIB3DCoordinates[Int], coreFacing: Boolean)
+/** Module-specific bundle, used for redundancy muxes*/
+class ModuleBundle(
+  val modIdx: AIB3DCoordinates[Int], coreFacing: Boolean)
   (implicit params: AIB3DParams) extends Record with AutoCloneType {
 
-  // First, extract the bumps corresponding to this submod index
-  val submodSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
+  // First, extract the bumps corresponding to this module index
+  val modSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
-    case _ => b.submodIdx.get == submodIdx  // defined for all non-power/ground bumps
+    case _ => b.modIdx.get == modIdx  // defined for all non-power/ground bumps
   })
 
   // elements map is the bump/core signal name -> (cloned) ioType
   // If this bundle is core-facing, get the coreSig name
   // Else, get the bumpName
-  val elements: SeqMap[String, Data] = SeqMap(submodSigs.map(b => {
-    if (submodIdx.isRedundant) {  // redundant submodule, get from bumpName
+  val elements: SeqMap[String, Data] = SeqMap(modSigs.map(b => {
+    if (modIdx.isRedundant) {  // redundant module, get from bumpName
       // TODO: make this more elegant than a string search
       val dtype = if (b.bumpName.contains("CK")) Clock() else UInt(1.W)
       b.bumpName -> (

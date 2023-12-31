@@ -32,7 +32,7 @@ object GenCollateral {
       ("bump_y" -> b.location.get.y) ~
       ("pin_x" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.x) else None)) ~
       ("pin_y" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.pinLocation.get.y) else None)) ~
-      ("submod_idx" -> (if (b.submodIdx.isDefined) Some(b.submodIdx.get.linearIdx) else None))
+      ("mod_idx" -> (if (b.modIdx.isDefined) Some(b.modIdx.get.linearIdx) else None))
     })))
   }
 
@@ -152,7 +152,7 @@ object GenCollateral {
     val txClocks = coreSigs.collect{ case c if (
       DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output)
-      => (c.fullName, "clocks_" + c.fullName, c.muxedClk(offset=params.redSubmods))}
+      => (c.fullName, "clocks_" + c.fullName, c.muxedClk(offset=params.redMods))}
     // TODO: don't match by name
     // rxClocks returns (bump name, core path, iocell output path)
     val rxClocks = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
@@ -272,8 +272,8 @@ object GenCollateral {
     val power =
       ("vlsi.inputs.power_spec_mode" -> "auto") ~
       ("vlsi.inputs.power_spec_type" -> "upf") ~
-      ("vlsi.inputs.supplies.power" -> Seq(("name" -> "VDDAIB") ~ ("pin" -> "VDDAIB"))) ~
-      ("vlsi.inputs.supplies.ground" -> Seq(("name" -> "VSS") ~ ("pin" -> "VSS")))
+      ("vlsi.inputs.supplies.power" -> Seq(("name" -> "VDDAIB") ~ ("pins" -> Seq("VDDAIB")))) ~
+      ("vlsi.inputs.supplies.ground" -> Seq(("name" -> "VSS") ~ ("pins" -> Seq("VSS"))))
 
     pretty(render(bumps merge pins merge places merge sdc merge power))
   }
@@ -327,7 +327,7 @@ object GenCollateral {
         }.above(below)
       )
 
-    // Overlay a dotted grid for submodules
+    // Overlay a dotted grid for modules
     // Unfortunately, can't get bounding box or size of patch because it's a bug in doodle 0.19.0
     // Fixed for 0.20.0 but that is only available for Scala 3
     // So we have to do it manually - get dimensions of bump map and draw grid
@@ -336,10 +336,10 @@ object GenCollateral {
     val bumpsWidth = bumpsH * unitWidth
     val bumpsHeight = bumpsV * unitHeight
     val grid =  // 2D recursion
-      (0 until params.submodRowsWR).foldLeft(Picture.empty)((below, y) =>
-        (0 until params.submodColsWR).foldLeft(Picture.empty)((right, x) =>
-          Picture.rectangle(bumpsWidth / params.submodColsWR - 1,
-                            bumpsHeight / params.submodRowsWR - 1)
+      (0 until params.modRowsWR).foldLeft(Picture.empty)((below, y) =>
+        (0 until params.modColsWR).foldLeft(Picture.empty)((right, x) =>
+          Picture.rectangle(bumpsWidth / params.modColsWR - 1,
+                            bumpsHeight / params.modRowsWR - 1)
           .strokeColor(Color.gray).strokeDash(Array(scale / 2, scale / 5))
           .beside(right)
         ).above(below)
