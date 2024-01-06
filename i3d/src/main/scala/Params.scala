@@ -101,8 +101,8 @@ case class AIB3DGlblParams(
   require(deskewArch >= 0 && deskewArch <= 2, "Only 0, 1, 2 supported for deskewArch")
   require(Set("N","S","E","W").contains(pinSide),
     "pinSides Set can only be 'N', 'S', 'E', or 'W'")
-  require(Set("random", "correlated", "one-hot", "normal").contains(dataStatistic),
-    "dataStatistic must be one of 'random', 'correlated', 'one-hot', or 'normal'")
+  require(Set("random", "sequential", "one-hot", "normal").contains(dataStatistic),
+    "dataStatistic must be one of 'random', 'sequential', 'one-hot', or 'normal'")
 
   // TODO: modSize depends on pitch, additional signals, redundancy
   // require(modSize >= pow(maxParticleSize, 2).toInt,
@@ -191,11 +191,13 @@ case class AIB3DParams(
   private val flatRx = Utils.flattenIOs(data, SpecifiedDirection.Input)
   // TODO: support unbalanced Tx/Rx IO count
   require(flatTx.length == flatRx.length, "Only balanced Tx/Rx IO count supported at this time.")
+  // For sorting
+  val flatTxOrder = flatTx.map(_.fullName)
+  val flatRxOrder = flatRx.map(_.fullName)
 
   /** Step 2: Calculate public constants */
 
-  // Determine number of modules and signals per module
-  // TODO: for coding, need to take the ratio into account...
+  // Determine number of modules (Tx/Rx individually) and signals per module
   val numMods = (flatTx.length / gp.modSize.toDouble).ceil.toInt
   require(flatTx.length % numMods == 0,
     s"Number of IOs (${flatTx.length}) not evenly divisible by derived number of modules (${numMods})")
@@ -224,115 +226,185 @@ case class AIB3DParams(
     else {
       // Find factor pairs, and return the most "square" one
       // This still works if numMods is a square number
-      val bestFactor = (1 to sqrt(numMods).toInt).filter(numMods % _ == 0).last
-      if (isWide) (bestFactor, numMods / bestFactor)  // wide
-      else (numMods / bestFactor, bestFactor)  // tall
+      val bestFactor = (1 to sqrt(numMods * 2).toInt).filter((numMods * 2) % _ == 0).last
+      if (isWide) (bestFactor, numMods * 2 / bestFactor)  // wide
+      else (numMods * 2 / bestFactor, bestFactor)  // tall
     }
   val (modRowsWR, modColsWR) =
     if (gp.redundArch == 2)  // signal shift
       if (isWide) (redMods, modCols + 2) else (modRows + 2, redMods)
     else (modRows, modCols)
 
+  // Calculate coding cluster properties
+  val (clusterDiam, numClusters, clusterPattern, sigsPerCluster) =
+    if (gp.redundArch == 1)  // coding
+      Utils.gridPacking(gp, sigsPerMod)
+    else (0.0, 0, Seq.empty, 0)
+
   /** Step 3: Create the bump map.
     * It is different depending on the redundancy scheme.
     */
 
-  val bumpMap: Array[Array[AIB3DBump]] = if (gp.redundArch != 1) {  // none or signal shift
-    // Rows/cols of signal/PG bumps and extras
-    val (rowsSig, colsSig, extras) = Utils.sigRowsCols(sigsPerMod, isWide)
-    val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1
-    val colsG = ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1
-    val rowsPerMod = rowsSig + rowsP
-    val colsPerMod = colsSig + colsG
+  val (bumpMap: Array[Array[AIB3DBump]], flatBumpMap: Seq[AIB3DBump]) =
+    if (gp.redundArch != 1) {  // none or signal shift
+      // Rows/cols of signal/PG bumps and extras
+      val (rowsSig, colsSig, extras) = Utils.calcRowsCols(sigsPerMod, isWide)
+      val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1
+      val colsG = ((colsSig.toDouble / gp.sigsPerPG._1) - 1).ceil.toInt + 1
+      val rowsPerMod = rowsSig + rowsP
+      val colsPerMod = colsSig + colsG
 
-    // Row/column indices of the power/ground
-    val pRows = Utils.pgIdxGen(rowsSig, rowsP, gp.sigsPerPG._2)
-    val gCols = Utils.pgIdxGen(colsSig, colsG, gp.sigsPerPG._1)
-    // Permute indices into coordinates based on row/cols per mod
-    val pCoords = pRows.flatMap(r => (0 until colsPerMod).map(c => (c, r)))
-    val gCoords = gCols.flatMap(c => (0 until rowsPerMod).map(r => (c, r)))
+      // Row/column indices of the power/ground
+      val pRows = Utils.pgIdxGen(rowsSig, rowsP, gp.sigsPerPG._2)
+      val gCols = Utils.pgIdxGen(colsSig, colsG, gp.sigsPerPG._1)
+      // Permute indices into coordinates based on row/cols per mod
+      val pCoords = pRows.flatMap(r => (0 until colsPerMod).map(c => (c, r)))
+      val gCoords = gCols.flatMap(c => (0 until rowsPerMod).map(r => (c, r)))
 
-    // P/G intersection of the clock signal
-    // It should be as close to the middle as possible and biased towards pin edge
-    val biasLL = if (Set("S", "W").contains(pinSide)) 1 else 0
-    val clkCoord: (Int, Int) =
-      (gCols(colsG / 2 - (if (colsG % 2 == 0) biasLL else 0)),
-       pRows(rowsP / 2 - (if (rowsP % 2 == 0) biasLL else 0)))
+      // P/G intersection of the clock signal
+      // It should be as close to the middle as possible and biased towards pin edge
+      val biasLL = if (Set("S", "W").contains(pinSide)) 1 else 0
+      val clkCoord: (Int, Int) =
+        (gCols(colsG / 2 - (if (colsG % 2 == 0) biasLL else 0)),
+         pRows(rowsP / 2 - (if (rowsP % 2 == 0) biasLL else 0)))
 
-    // Calculate positions of the extra signals
-    val extraCoords = Utils.extraCoordGen(extras, pinSide, pRows, gCols,
-                                          rowsPerMod, colsPerMod)
+      // Calculate positions of the extra signals
+      val extraCoords = Utils.extraCoordGen(extras, pinSide, pRows, gCols,
+                                            rowsPerMod, colsPerMod)
 
-    // Calculate (ordered) positions of the data signals
-    // Permute row and column indices and filter out the above coordinates
-    // TODO: use data statistics
-    val sigCoords = (0 until rowsPerMod).flatMap(r =>
-      (0 until colsPerMod).map(c => (c, r)))
-      .filterNot((pCoords ++ gCoords ++ extraCoords :+ clkCoord) contains _)
+      // Calculate (ordered) positions of the data signals
+      // Permute row and column indices and filter out the above coordinates
+      // TODO: use data statistics
+      val sigCoords = (0 until rowsPerMod).flatMap(r =>
+        (0 until colsPerMod).map(c => (c, r)))
+        .filterNot((pCoords ++ gCoords ++ extraCoords :+ clkCoord) contains _)
 
-    // Map to bump map
-    val (txBumpMap, rxBumpMap) = Utils.bumpMapGen(tx = flatTx,
-                                                  rx = flatRx,
-                                                  mods = numMods,
-                                                  redMods = redMods,
-                                                  cCoords = Seq(clkCoord),
-                                                  pCoords = pCoords,
-                                                  gCoords = gCoords,
-                                                  eCoords = extraCoords,
-                                                  sCoords = sigCoords)
+      // Map to bump map
+      val (txBumpMap, rxBumpMap) = Utils.bumpMapGen(tx = flatTx,
+                                                    rx = flatRx,
+                                                    mods = numMods,
+                                                    redMods = redMods,
+                                                    numSigs = sigCoords.length,
+                                                    sCoords = sigCoords,
+                                                    cCoords = Seq(clkCoord),
+                                                    pCoords = pCoords,
+                                                    gCoords = gCoords,
+                                                    eCoords = extraCoords)
 
-    // Concatenate bump maps then generate the correct ordering of module origins
-    // Depending on pin side, the rows/cols of modules are different
-    // Note modules in the longer dimension is doubled since Tx and Rx are separate
-    val concatenated = Array(txBumpMap, rxBumpMap).flatten
-    // Ordering of modules
-    // TODO: support more/less than 2 rows/cols of modules
-    val modOrigins = {
-      if (isWide)  // Tx left of Rx
-        ((0 until modColsWR by 2) ++ (1 until modColsWR by 2)).flatMap(c =>
-          (0 until modRowsWR).map(r =>
-            (r * rowsPerMod, c * colsPerMod)))
-      else  // Tx under Rx
-        ((0 until modRowsWR by 2) ++ (1 until modRowsWR by 2)).flatMap(r =>
-          (0 until modColsWR).map(c =>
-            (r * rowsPerMod, c * colsPerMod)))
-    }
-    require(modOrigins.length == concatenated.length,
-      "Error in Tx/Rx module to full module mapping.")
-
-    // Flatten modules into final map
-    // Module index tag is added to each bump for module redundancy mapping
-    val finalMap = Array.ofDim[AIB3DBump](modRowsWR * rowsPerMod, modColsWR * colsPerMod)
-    modOrigins.zipWithIndex.foreach { case ((r, c), s) =>
-      for (sr <- 0 until rowsPerMod; sc <- 0 until colsPerMod) {
-        finalMap(r + sr)(c + sc) = concatenated(s)(sr)(sc)
-        finalMap(r + sr)(c + sc).modIdx =
-          Some(AIB3DCoordinates[Int](
-            x = c / colsPerMod,
-            y = r / rowsPerMod))
+      // Concatenate bump maps then generate the correct ordering of module origins
+      // Depending on pin side, the rows/cols of modules are different
+      // Note modules in the longer dimension is doubled since Tx and Rx are separate
+      val concatenated = Array(txBumpMap, rxBumpMap).flatten
+      // Ordering of modules
+      // TODO: support more/less than 2 rows/cols of modules
+      val modOrigins = {
+        if (isWide)  // Tx left of Rx
+          ((0 until modColsWR by 2) ++ (1 until modColsWR by 2)).flatMap(c =>
+            (0 until modRowsWR).map(r =>
+              (r * rowsPerMod, c * colsPerMod)))
+        else  // Tx under Rx
+          ((0 until modRowsWR by 2) ++ (1 until modRowsWR by 2)).flatMap(r =>
+            (0 until modColsWR).map(c =>
+              (r * rowsPerMod, c * colsPerMod)))
       }
+      require(modOrigins.length == concatenated.length,
+        "Error in Tx/Rx module to full module mapping.")
+
+      // Flatten modules into final map
+      // Module index tag is added to each bump for module redundancy mapping
+      val finalMap = Array.ofDim[AIB3DBump](modRowsWR * rowsPerMod, modColsWR * colsPerMod)
+      modOrigins.zipWithIndex.foreach { case ((r, c), s) =>
+        for (sr <- 0 until rowsPerMod; sc <- 0 until colsPerMod) {
+          finalMap(r + sr)(c + sc) = concatenated(s)(sr)(sc)
+          finalMap(r + sr)(c + sc).modIdx =
+            Some(AIB3DCoordinates[Int](
+              x = c / colsPerMod,
+              y = r / rowsPerMod))
+        }
+      }
+      // Return
+      (finalMap, finalMap.flatten.toSeq)
     }
-    // Return
-    finalMap
+    else {  // coding
+      val (sCoords, cCoords, pCoords, gCoords) =
+        Utils.calcCoding(gp = gp,
+                         diam = clusterDiam,
+                         circles = numClusters,
+                         pattern = clusterPattern,
+                         sigsPerCircle = sigsPerCluster,
+                         sigsPerMod = sigsPerMod,
+                         isWide = isWide)
+      // Now need to re-map Tx/Rx IO order based on data statistics for coding
+      /*
+      val txWithRed = flatTx.grouped(sigsPerMod).zipWithIndex.flatMap { case (mod, mi) =>
+        mod ++ (0 until sigsPerCircle).map(si => AIB3DCore(
+          name = s"TXRED${mi * sigsPerMod + si}",
+          bitIdx = None,
 
-  } else {  // coding
-    /** Procedure:
-      1. From the particle size, max sigs per module, calculate the number of coding clusters using circle packing in a square rules
-      2. Calculate the number of signals per coding cluster using square packing in a circle rules
-      3. From the data bundle statistics, determine if the buses are arranged within a cluster or group.
-        a. If within a cluster, if correlated, use spiral mapping; if normal, use sawtooth; else, no special mapping required.
-        b. If within a group, no special mapping required.
-    */
+        ))
+      }.toSeq
+      */
+      val (txBumpMap, rxBumpMap) = Utils.bumpMapGen(tx = flatTx,
+                                                    rx = flatRx,
+                                                    mods = numMods,
+                                                    redMods = 0,
+                                                    numSigs = sigsPerMod,
+                                                    sCoords = sCoords,
+                                                    cCoords = cCoords,
+                                                    pCoords = pCoords,
+                                                    gCoords = gCoords,
+                                                    eCoords = Seq.empty)
+      val rowsPerMod = txBumpMap(0).length
+      val colsPerMod = txBumpMap(0)(0).length
 
-    // Calculate coding group size and number of coding clusters
-    // Currently only supports 5 or 9 coding clusters (4 + 1 or 8 + 1)
-    // TODO: support more cluster size combinations
-    // val numClusters =
+      // Interleave bump maps then generate the correct ordering of module origins
+      // Depending on pin side, the rows/cols of modules are different
+      // Note modules in the longer dimension is doubled since Tx and Rx are separate
+      val interleaved = Array(txBumpMap, rxBumpMap).transpose.flatten
+      // Ordering of modules
+      // TODO: support more/less than 2 rows/cols of modules
+      val modOrigins = {
+        if (isWide)  // row-by-row
+          (0 until modRows).flatMap(r =>
+            (0 until modCols).map(c =>
+              (r * rowsPerMod, c * colsPerMod)))
+        else  // col-by-col
+          (0 until modCols).flatMap(c =>
+            (0 until modRows).map(r =>
+              (r * rowsPerMod, c * colsPerMod)))
+      }
+      require(modOrigins.length == interleaved.length,
+        "Error in Tx/Rx module to full module mapping.")
 
-    Array.ofDim[AIB3DBump](1, 1)
-  }
+      // Flatten modules into final map
+      // Module index tag is added to each bump for module redundancy mapping
+      val finalMap = Array.ofDim[AIB3DBump](modRows * rowsPerMod, modCols * colsPerMod)
+      modOrigins.zipWithIndex.foreach { case ((r, c), m) =>
+        for (mr <- 0 until rowsPerMod; mc <- 0 until colsPerMod) {
+          finalMap(r + mr)(c + mc) = interleaved(m)(mr)(mc)
+          finalMap(r + mr)(c + mc).modIdx =
+            Some(AIB3DCoordinates[Int](
+              x = c / colsPerMod,
+              y = r / rowsPerMod))
+        }
+      }
 
-  val flatBumpMap : Seq[AIB3DBump] = bumpMap.flatten.toSeq
+      // For the flat bump map, the ordering needs to go cluster-by-cluster
+      // to aid in the coding redundancy module IO assignment.
+      // Use the coordinates derived above for signal bumps
+      val flatMap: ArrayBuffer[AIB3DBump] = ArrayBuffer.empty
+      for ((r, c) <- modOrigins) {
+        // Get signal bumps first, then clock, power, ground
+        val order = Seq(sCoords, cCoords, pCoords, gCoords)
+        for (coords <- order) {
+          for ((x, y) <- coords) flatMap += finalMap(r + y)(c + x)
+        }
+      }
+
+      // Return
+      (finalMap, flatMap.toSeq)
+    }
+
   // Check
   require(!flatBumpMap.contains(null), "Error in final bump map creation!")
 

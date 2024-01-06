@@ -46,7 +46,7 @@ object AIB3DGenerator extends App with AIB3DDummyNode {
 
 /** For generating raw AIB3D module */
 object AIB3DRawGenerator extends App {
-  implicit val p = new Config(new AIB3DWideConfig)
+  implicit val p = new Config(new AIB3DCodingConfig)
 
   (new AIB3DStage).run(Seq(ChiselGeneratorAnnotation(() => new RawPatch)))
 }

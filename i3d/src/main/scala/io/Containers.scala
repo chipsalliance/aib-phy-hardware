@@ -73,13 +73,13 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
   override val coreSig = if (sig.isDefined) sig else None
 }
 // Clock
-case class TxClk(modNum: Int, isRedundant: Boolean) extends AIB3DBump {
-  val bumpName = s"TXCKP${modNum}"
-  override val coreSig = if (isRedundant) None
+case class TxClk(modNum: Int, codeRed: Boolean, muxRed: Boolean) extends AIB3DBump {
+  val bumpName = if (codeRed) s"TXCKR${modNum}" else s"TXCKP${modNum}"
+  override val coreSig = if (codeRed || muxRed) None
     else Some(AIB3DCore(s"TXCKP${modNum}", None, Output(Clock()), None))
 }
-case class RxClk(modNum: Int, isRedundant: Boolean) extends AIB3DBump {
-  val bumpName = s"RXCKP${modNum}"
-  override val coreSig = if (isRedundant) None
+case class RxClk(modNum: Int, codeRed: Boolean, muxRed: Boolean) extends AIB3DBump {
+  val bumpName = if (codeRed) s"RXCKR${modNum}" else s"RXCKP${modNum}"
+  override val coreSig = if (codeRed || muxRed) None
     else Some(AIB3DCore(s"RXCKP${modNum}", None, Input(Clock()), None))
 }

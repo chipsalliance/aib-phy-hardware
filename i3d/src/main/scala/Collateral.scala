@@ -155,8 +155,10 @@ object GenCollateral {
       => (c.fullName, "clocks_" + c.fullName, c.muxedClk(offset=params.redMods))}
     // TODO: don't match by name
     // rxClocks returns (bump name, core path, iocell output path)
-    val rxClocks = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
+    val rxClocksOOO = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
       (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
+    val rxClocks = rxClocksOOO.grouped(rxClocksOOO.length / 2).toSeq.transpose.flatten
+    println(rxClocks)
     val coreTxs = coreSigs.filter(c =>
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
       !DataMirror.checkTypeEquivalence(c.ioType, Clock())

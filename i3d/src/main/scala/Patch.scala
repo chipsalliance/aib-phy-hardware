@@ -14,6 +14,7 @@ import freechips.rocketchip.util.{ResetCatchAndSync, ElaborationArtefacts}
 // import aib3d.deskew._
 import aib3d.io._
 import aib3d.redundancy._
+import chisel3.util.log2Ceil
 
 trait BasePatch {
   implicit val p: Parameters
@@ -44,24 +45,47 @@ trait BasePatch {
     }.toSeq
   val ioCtrlWire = Wire(new IOControlBundle)
 
-  // Redundancy affects how IO cells are connected
-  val hasRed = glblParams.redundArch == 2
-  val redundancy = if (hasRed) Some(Module(new RedundancyMuxTop)) else None
+  // Coding redundancy option
+  val codeRed = glblParams.redundArch == 1
+  val coding = if (codeRed) Some(Module(new CodingRedundancyTop)) else None
+  val faultyWire = if (codeRed) Some(Wire(chiselTypeOf(coding.get.faulty))) else None
+  val faultyClkWire = if (codeRed) Some(Wire(UInt(coding.get.faultyClk.getWidth.W))) else None
+  val dbiWire = if (codeRed && glblParams.hasDBI) Some(Wire(Bool())) else None
+
+  // Shift (mux) redundancy option
+  val shiftRed = glblParams.redundArch == 2
+  val shifting = if (shiftRed) Some(Module(new RedundancyMuxTop)) else None
   val txFaultyWire =
-    if (hasRed) Some(Wire(UInt(redundancy.get.txFaulty.getWidth.W))) else None
+    if (shiftRed) Some(Wire(UInt(shifting.get.txFaulty.getWidth.W))) else None
   val rxFaultyWire =
-    if (hasRed) Some(Wire(UInt(redundancy.get.rxFaulty.getWidth.W))) else None
-  if (hasRed) {
-    // Connect core side of muxes to coreio
-    coreio <> redundancy.get.core
-    // Connect bumps side of muxes to iocells
-    (iocells zip redundancy.get.bumps.elements) foreach { case (i, (bs, bd)) =>
+    if (shiftRed) Some(Wire(UInt(shifting.get.rxFaulty.getWidth.W))) else None
+
+  // Redundancy affects how IO cells are connected
+  if (codeRed) {
+    // Connect coreio to coding
+    coreio <> coding.get.core
+    // Connect iocells to coding
+    (iocells zip coding.get.bumps.elements) foreach { case (i, (bs, bd)) =>
       // Get related clock (all submodules should have a clock)
-      val relatedClk = redundancy.get.bumps.getRelatedClk(bs)
+      val relatedClk = coding.get.bumps.getRelatedClk(bs)
       i.connectInternal(bd, relatedClk, ioCtrlWire)
     }
-    redundancy.get.txFaulty := txFaultyWire.get
-    redundancy.get.rxFaulty := rxFaultyWire.get
+    // Connect redundancy control signals
+    coding.get.faulty := faultyWire.get
+    coding.get.faultyClk := faultyClkWire.get
+    coding.get.dbi := dbiWire.getOrElse(false.B)
+  } else if (shiftRed) {
+    // Connect core side of muxes to coreio
+    coreio <> shifting.get.core
+    // Connect bumps side of muxes to iocells
+    (iocells zip shifting.get.bumps.elements) foreach { case (i, (bs, bd)) =>
+      // Get related clock (all submodules should have a clock)
+      val relatedClk = shifting.get.bumps.getRelatedClk(bs)
+      i.connectInternal(bd, relatedClk, ioCtrlWire)
+    }
+    // Connect redundancy control signals
+    shifting.get.txFaulty := txFaultyWire.get
+    shifting.get.rxFaulty := rxFaultyWire.get
   } else {
     // Connect coreio to iocells directly
     coreio.elements zip iocells foreach { case ((cs, cd), i) =>
@@ -97,9 +121,19 @@ class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
   val ioCtrl = IO(Input(new IOControlBundle))
   ioCtrlWire := ioCtrl
 
-  if (hasRed) {
-    val txFaulty = IO(Input(redundancy.get.txFaulty.cloneType))
-    val rxFaulty = IO(Input(redundancy.get.rxFaulty.cloneType))
+  if (codeRed) {
+    val faulty = IO(Input(chiselTypeOf(coding.get.faulty)))
+    val faultyClk = IO(Input(chiselTypeOf(coding.get.faultyClk)))
+    faultyWire.get := faulty
+    faultyClkWire.get := faultyClk
+    if (glblParams.hasDBI) {
+      val dbi = IO(Input(chiselTypeOf(coding.get.dbi)))
+      dbiWire.get := dbi
+    }
+  }
+  if (shiftRed) {
+    val txFaulty = IO(Input(chiselTypeOf(shifting.get.txFaulty)))
+    val rxFaulty = IO(Input(chiselTypeOf(shifting.get.rxFaulty)))
     txFaultyWire.get := txFaulty
     rxFaultyWire.get := rxFaulty
   }
@@ -130,7 +164,30 @@ abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
     )
 
     // Redundancy affects how IO cells are connected
-    if (hasRed) {
+    if (codeRed) {
+      // TODO: figure out how to init these to 0
+      val faulty = Reg(chiselTypeOf(faultyWire.get))
+      val faultyClk = Reg(chiselTypeOf(faultyClkWire.get))
+      faultyWire.get := faulty
+      faultyClkWire.get := faultyClk
+      patchSCRs = patchSCRs ++
+        faulty.zipWithIndex.flatMap{ case (fm, mi) =>
+          fm.zipWithIndex.map{ case (fc, ci) =>
+            Seq(RegField(fc.getWidth, fc,
+              RegFieldDesc(s"faulty_${mi}_${ci}", s"Faulty bits for module $mi, cluster $ci.")))
+          }
+        }.toSeq :+
+          Seq(RegField(faultyClk.getWidth, faultyClk,
+            RegFieldDesc("faultyClk", "Faulty Tx clock (one-hot module encoded).")))
+      if (glblParams.hasDBI) {
+        val dbi = RegInit(false.B)
+        dbiWire.get := dbi
+        patchSCRs = patchSCRs :+
+          Seq(RegField(1, dbi,
+            RegFieldDesc("dbi", "DBI enable.")))
+      }
+    }
+    if (shiftRed) {
       // Faulty control registers
       val txFaulty = RegInit(0.U(txFaultyWire.get.getWidth.W))
       val rxFaulty = RegInit(0.U(rxFaultyWire.get.getWidth.W))
