@@ -11,7 +11,7 @@ import chisel3.util.{log2Ceil, Cat, Fill}
 import chisel3.util.MuxLookup
 
 /** Redundancy muxes per module*/
-class RedundancyMuxMod(
+class RedundancyMux(
   modIdxA: AIB3DCoordinates[Int],
   modIdxB: AIB3DCoordinates[Int],
   isTx: Boolean = true)(implicit params: AIB3DParams) extends RawModule {
@@ -54,15 +54,11 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
   // Shift in the longer dimension
   // Order is (tx.a, tx.b, rx.a, rx.b)
   val modIdxs = if (params.isWide) {
-    for {
-      j <- 0 until params.modRowsWR
-      i <- 0 until params.modColsWR - 2 by 2
-    } yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i+k, j))
+    for (j <- 0 until params.modRows; i <- 0 until params.modCols)
+      yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](2*i+k, j))
   } else {
-    for {
-      i <- 0 until params.modColsWR
-      j <- 0 until params.modRowsWR - 2 by 2
-    } yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i, j+k))
+    for (i <- 0 until params.modCols; j <- 0 until params.modRows)
+      yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i, 2*j+k))
   }
 
   // Use these indices to generate the shift signal for each mux
@@ -78,13 +74,13 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
 
   // Generate redundancy muxes and set inputs/outputs based on indices
   val (txMuxes, rxMuxes) = modIdxs.map { idx =>
-    val txMux = Module(new RedundancyMuxMod(idx(1), idx(0), isTx = true))
+    val txMux = Module(new RedundancyMux(idx(1), idx(0), isTx = true))
     core.connectToModuleBundle(txMux.a)
     core.connectToModuleBundle(txMux.b)
     bumps.connectToModuleBundle(txMux.o)
     txMux.shift := txShift(idx(0).linearIdx).asBool
 
-    val rxMux = Module(new RedundancyMuxMod(idx(2), idx(3), isTx = false))
+    val rxMux = Module(new RedundancyMux(idx(2), idx(3), isTx = false))
     bumps.connectToModuleBundle(rxMux.a)
     bumps.connectToModuleBundle(rxMux.b)
     core.connectToModuleBundle(rxMux.o)
@@ -113,7 +109,7 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
 }
 
 /** Module-level encoder */
-class ModuleEncoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
+class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
   val faulty = IO(Input(Vec(params.sigsPerCluster, UInt(log2Ceil(params.numClusters - 1).W))))
@@ -167,7 +163,7 @@ class ModuleEncoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DPar
 }
 
 /** Module-level decoder */
-class ModuleDecoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
+class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
 
@@ -218,17 +214,15 @@ class CodingRedundancyTop(implicit params: AIB3DParams) extends RawModule {
   val dbi = IO(Input(Bool()))
 
   // Instantiate encoders and decoders
-  val modCoords = (if (params.isWide) {  // row-by-row
-    (0 until params.modRows).flatMap(r =>
-      (0 until params.modCols).map(c =>
-        AIB3DCoordinates[Int](c, r)))
-  } else {  // col-by-col
-    (0 until params.modCols).flatMap(c =>
-      (0 until params.modRows).map(r =>
-        AIB3DCoordinates[Int](c, r)))
-  }).grouped(2).toSeq.transpose  // Assumes Tx/Rx interleaved
-  val encoders = modCoords(0).map(c => Module(new ModuleEncoder(c)))
-  val decoders = modCoords(1).map(c => Module(new ModuleDecoder(c)))
+  // Assumes Tx/Rx interleaved
+  val modCoords = if (params.isWide)  // col-by-col
+    for (c <- 0 until params.modCols; r <- 0 until params.modRows)
+      yield (AIB3DCoordinates[Int](2*c, r), AIB3DCoordinates[Int](2*c+1, r))
+  else  // row-by-row
+    for (r <- 0 until params.modRows; c <- 0 until params.modCols)
+      yield (AIB3DCoordinates[Int](c, 2*r), AIB3DCoordinates[Int](c, 2*r+1))
+  val encoders = modCoords.map(c => Module(new Encoder(c._1)))
+  val decoders = modCoords.map(c => Module(new Decoder(c._2)))
 
   // Connect encoder inputs
   encoders.zipWithIndex.foreach { case (enc, i) =>

@@ -163,7 +163,6 @@ abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
         RegFieldDesc("ioCtrl", "{loopback, txWkpu, txWkpd, rxWkpu, rxWkpd} - pulls-down when reset.")))
     )
 
-    // Redundancy affects how IO cells are connected
     if (codeRed) {
       // TODO: figure out how to init these to 0
       val faulty = Reg(chiselTypeOf(faultyWire.get))

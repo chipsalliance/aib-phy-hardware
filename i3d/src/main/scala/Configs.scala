@@ -35,9 +35,9 @@ class AIB3DBaseConfig extends Config ((site, here, up) => {
 
 class AIB3DWideConfig extends Config ((site, here, up) => {
   case AIB3DGlblKey => AIB3DGlblParams(
-    dataBundle = new ExampleArrayBundle(6, 9, 8),
+    dataBundle = new ExampleArrayBundle(4, 9, 8),
     pitch = 9.0,
-    redundRatio = 3,
+    redundRatio = 2,
     modSize = 72,
     pinSide = "N",
     sigsPerPGOvrdV = Some(4),
@@ -52,13 +52,33 @@ class AIB3DWideConfig extends Config ((site, here, up) => {
   case AIB3DKey => AIB3DParams(here(AIB3DGlblKey), here(AIB3DInstKey))
 })
 
-class AIB3DCodingConfig extends Config ((site, here, up) => {
+class AIB3DCoding5Config extends Config ((site, here, up) => {
   case AIB3DGlblKey => AIB3DGlblParams(
     dataBundle = new ExampleArrayBundle(4, 9, 8),
     dataStatistic = "sequential",
     pitch = 9.0,
     redundArch = 1,
     maxParticleSize = 5,
+    hasDBI = true,
+    modSize = 72,
+    pinSide = "N")
+  case AIB3DInstKey => AIB3DInstParams(
+    layerPitch = Map("m3" -> 90.0, "m5" -> 90.0),
+    viaKOZRatio = 0.3,
+    tsvKOZRatio = Some(0.75),
+    isLeader = true,
+    bumpOffset = 0,
+    blackBoxModels = true)
+  case AIB3DKey => AIB3DParams(here(AIB3DGlblKey), here(AIB3DInstKey))
+})
+
+class AIB3DCoding9Config extends Config ((site, here, up) => {
+  case AIB3DGlblKey => AIB3DGlblParams(
+    dataBundle = new ExampleArrayBundle(4, 9, 8),
+    dataStatistic = "sequential",
+    pitch = 9.0,
+    redundArch = 1,
+    maxParticleSize = 3,
     hasDBI = true,
     modSize = 72,
     pinSide = "N")

@@ -46,7 +46,7 @@ object GenCollateral {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
     // Redundancy
-    val hasRed = params.gp.redundArch == 2
+    val shiftRed = params.gp.redundArch == 2
 
     // Bumps
     val bumps =
@@ -157,8 +157,11 @@ object GenCollateral {
     // rxClocks returns (bump name, core path, iocell output path)
     val rxClocksOOO = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
       (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
-    val rxClocks = rxClocksOOO.grouped(rxClocksOOO.length / 2).toSeq.transpose.flatten
-    println(rxClocks)
+    val rxClocks =
+      if (params.isWide)  // transpose to get in ascending order
+        rxClocksOOO.grouped(params.modColsWR).toSeq.transpose.flatten
+      else
+        rxClocksOOO
     val coreTxs = coreSigs.filter(c =>
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
       !DataMirror.checkTypeEquivalence(c.ioType, Clock())
@@ -234,14 +237,15 @@ object GenCollateral {
       ("vlsi.inputs.default_output_load" -> "5 fF") ~
       ("vlsi.inputs.output_loads" -> (Seq(
         // TODO: parameterize pad cap
-        ("name" -> "[get_ports \"TXDATA* TXCKP*\"]") ~
+        ("name" -> "[get_ports \"TXDATA* TXCK*\"]") ~
         ("load" -> "20 fF")
       ))) ~
       ("vlsi.inputs.custom_sdc_constraints" -> (Seq(
         // Global constraints
         // These are static bits
         "set_false_path -from *ioCtrl*",
-        "set_false_path -from *Faulty*",  // OK even if no redundancy
+        "set_false_path -from *faulty*",  // OK even if no redundancy
+        "set_false_path -from *dbi*",  // OK even if no redundancy
         // TODO: determine power/jitter tradeoff of transition
         "set_max_transition 0.05 [current_design]",  // Max transition for entire design. Assumes Lib units in ns.
         f"set_max_dynamic_power [expr 0.05 * $bits / 0.25]mW",  // Max dynamic power for the entire design.
@@ -252,23 +256,26 @@ object GenCollateral {
         "set_clock_latency $Tclkmax -max [get_clocks TXCKP*]",
         "set_clock_latency $Tclkmin -min [get_clocks RXCKP*]",
         "set_clock_latency $Tclkmax -max [get_clocks RXCKP*]",
-        "set_min_transition [expr 0.25/10] [get_ports \"TXDATA* TXCKP*\"]",
-        "set_max_transition [expr 0.25/6] [get_ports \"TXDATA* TXCKP*\"]",
-        "set_input_transition -min [expr 0.25/10] [get_ports \"RXDATA* RXCKP*\"]",
-        "set_input_transition -max [expr 0.25/6] [get_ports \"RXDATA* RXCKP*\"]",
+        "set_min_transition [expr 0.25/10] [get_ports \"TXDATA* TXCK*\"]",
+        "set_max_transition [expr 0.25/6] [get_ports \"TXDATA* TXCK*\"]",
+        "set_input_transition -min [expr 0.25/10] [get_ports \"RXDATA* RXCK*\"]",
+        "set_input_transition -max [expr 0.25/6] [get_ports \"RXDATA* RXCK*\"]",
         "set_clock_skew 0.03 [all_clocks]",
         "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]"  // Max capacitance for Rx core-facing clocks (assumes Lib units in pF).
       ) ++ coreRxs.map(c => s"set_max_capacitance 0.01 [get_ports ${c.fullName}]"  // Max capacitance for Rx data (assumes Lib units in pF).
-      ) ++ txClocks.flatMap(c => Seq(
-        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] 0.02",  // direct Tx clocks
+      ) ++ txClocks.map(c =>
+        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] 0.02"  // direct Tx clocks
+      ) ++ (if (shiftRed) txClocks.map(c =>
         s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._3}] 0.05"   // muxed Tx clocks
-      )) ++ rxClocks.dropRight(2).flatMap(c => Seq(  // direct Rx clocks
+        ) else Seq.empty
+      ) ++ (if (shiftRed) rxClocks.dropRight(2) else rxClocks).flatMap(c => Seq(  // direct Rx clocks
         s"set_min_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmin",
         s"set_max_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmax"
-      )) ++ (rxClocks.drop(2) zip rxClocks.dropRight(2)).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks
+      )) ++ (if (shiftRed) (rxClocks.drop(2) zip rxClocks.dropRight(2)).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks
         s"set_min_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmin + 0.05]",
         s"set_max_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmax + 0.05]"
-      )}))
+        )} else Seq.empty
+      )))
 
     // Power intent
     val power =

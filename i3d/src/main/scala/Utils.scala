@@ -56,6 +56,194 @@ object Utils {
   }
 
   /**
+    * Crude square packing in circle algorithm
+    * Valid only for gridded (square) bump arrangement
+    * Given particle size, signals per module, and any additional
+    * required bumps within a circle given sig/PG rules:
+    * @param gp: global params (AIB3DGlblParams)
+    * @param sigs: number of signal bumps per module
+    * @return A Tuple of (diameter, number of circles, pattern, number of signals)
+    */
+  def gridPacking(gp: AIB3DGlblParams, sigs: Int): (Double, Int, Seq[Int], Int) = {
+    // This is a look-up table corresponding to the options for the maximal
+    // signal pattern (row-by-row) inside of a circle
+    val patternInCircle = Seq(
+      Seq(1),
+      Seq(2),
+      Seq(2, 2),
+      Seq(1, 3, 1),
+      Seq(3, 3),  // transpose: (2, 2, 2)
+      Seq(2, 4, 2),
+      Seq(3, 3, 3),
+      Seq(2, 4, 4, 2),
+      Seq(1, 3, 5, 3, 1),
+      Seq(2, 4, 4, 4, 2),  // transpose: (3, 5, 5, 3)
+      Seq(3, 5, 5, 5, 3),
+      Seq(2, 4, 6, 6, 4, 2),
+      Seq(1, 5, 5, 7, 5, 5, 1),
+      Seq(3, 5, 7, 7, 7, 5, 3)
+    )
+    val sigOpts = patternInCircle.map(_.sum)
+    val diameters = patternInCircle.map { case p =>
+      val dim1h = p.max  // longest horiz. dimension
+      val dim2h = p.count(_ == dim1h)  // instances of longest horiz. dimension
+      val diagh = sqrt(pow(dim1h, 2) + pow(dim2h, 2))  // Pythagorean theorem
+      val dim1v = p.length  // longest vert. dimension
+      val dim2v = p.head  // instances of longest vert. dimension
+      val diagv = sqrt(pow(dim1v, 2) + pow(dim2v, 2))  // Pythagorean theorem
+      max(diagh, diagv)
+    }
+    // Determine number of circles
+    // TODO: Support number of circles other than 5 or 9 (module doesn't need to be square)
+    // Target: 9, 8, 6, 5, and 4 (others are too awkwardly shaped)
+    val circleOpts = Seq(8, 4)  // exclude redundant circle. Order matters.
+    val sigsPerCircle = circleOpts.map(n => (sigs / n.toDouble).ceil.toInt)
+    val sigsPerCircleIdx = sigsPerCircle.map(n => sigOpts.indexWhere(_ >= n))
+    val diameterOpts = sigsPerCircleIdx.collect(diameters)
+    // Choose the pattern with diameter closest to and larger than the particle size
+    // TODO: take into account the signal to power/ground ratio
+    val closestIdx = diameterOpts.indexWhere(_ >= gp.maxParticleSize)
+    val finalCircles = circleOpts(closestIdx) + 1
+    val finalSigsPerCircle = sigsPerCircle(closestIdx)
+    val finalIdx = sigsPerCircleIdx(closestIdx)
+    val finalDiameter = diameters(finalIdx)
+    val finalPattern = patternInCircle(finalIdx)
+
+    println(s"\tCircles per module: $finalCircles with diameter: $finalDiameter")
+    println(s"\tSignals per circle: $finalSigsPerCircle in pattern: $finalPattern")
+    (finalDiameter, finalCircles, finalPattern, finalSigsPerCircle)
+  }
+
+  /** Crude circle packing in square algorithm
+    * Given parameters from gridPacking:
+    * Calculate coordinates of clock, signal, power, and ground bumps contained within each module
+    * The coords are Seq[(Int, Int)] with (x, y) coordinates of bumps
+    * @param gp: global params (AIB3DGlblParams)
+    * @param diam: diameter of circle
+    * @param circles: number of circles
+    * @param pattern: pattern of signal bumps in circle (row-by-row)
+    * @param sigsPerCircle: number of signal bumps per circle (note: not necessarily sum of pattern)
+    * @param sigsPerMod: number of signal bumps per module
+    * @param isWide: true if circles should be arranged more horizontally
+    * @return A Tuple of (signal coords, clock coords, power coords, ground coords)
+    */
+  def calcCoding(gp: AIB3DGlblParams, diam: Double, circles: Int, pattern: Seq[Int],
+    sigsPerCircle: Int, sigsPerMod: Int, isWide: Boolean):
+    (Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)]) = {
+    // Generate the coordinate order in the pattern
+    def patternCoords(pattern: Seq[Int], ringOnly: Boolean): Seq[(Int, Int)] = {
+      pattern.zipWithIndex.flatMap{ case (rowWidth, y) =>
+        val offset = (pattern.max - rowWidth) / 2
+        if (ringOnly && y > 0 && y < pattern.length - 1)
+          // Interior rows only return outer bumps
+          Seq((offset, y), (rowWidth - offset - 1, y))
+        else
+          (0 until rowWidth).map(x => (x + offset, y))
+      }
+    }
+    val coordsInCirle = patternCoords(pattern, false)
+    val outerRing = patternCoords(pattern, true)
+
+    val order = (gp.dataStatistic match {
+      case "random" | "one-hot" => coordsInCirle  // sequential
+      case "sequential" =>  // spiral
+        val c = pattern.max  // circle width
+        val r = pattern.length  // circle height
+        val turns = (min(c, r) / 2.0).ceil.toInt  // number of turns
+        (0 until turns).flatMap{ ti =>
+          if (ti == r - 1 - ti && ti == c - 1 - ti)  // center
+            Seq((ti, ti))
+          else  // iterate clockwise over edges
+            (ti until r - 1 - ti).map((ti, _)) ++
+            (ti until c - 1 - ti).map((_, r - 1 - ti)) ++
+            (ti + 1 until r - ti).reverse.map((c - 1 - ti, _)) ++
+            (ti + 1 until c - ti).reverse.map((_, ti))
+        }.filter(coordsInCirle.contains(_))  // only take coords in pattern
+      case "normal" =>  // modified sawtooth - start point depends on pattern
+        // TODO
+        coordsInCirle
+      case _ => throw new Exception("Invalid data statistic")
+    }).take(sigsPerCircle)
+
+    /* Next, pack circles into rectangle */
+
+    // Determine offsets of circles (iterate clockwise)
+    val offsets = circles match {
+      case 5 =>  // 4 surrounding 1
+        val mid = (diam / sqrt(2)).ceil.toInt
+        Seq((0, 0), (0, 2*mid), (2*mid, 2*mid), (2*mid, 0), (mid, mid))
+      case 9 =>  // 3 x 3
+        val step = diam.ceil.toInt
+        Seq((0, 0), (0, step), (0, 2*step),
+            (step, 2*step), (2*step, 2*step), (2*step, step),
+            (2*step, 0), (step, 0), (step, step))
+      case _ => throw new Exception(s"Unsupported number of circles: ${circles}")
+    }
+
+    // Generate signal coordinates using ordering and offsets
+    // Note: we must only take the correct number of signals per module
+    // then concatenate with the redundant cluster (last in offsets)
+    val sigCoords = (
+      for ((x_os, y_os) <- offsets.init; (x, y) <- order)
+        yield (x + x_os, y + y_os)
+      ).take(sigsPerMod) ++ (
+      for ((x, y) <- order)
+        yield (x + offsets.last._1, y + offsets.last._2)
+      )
+    val cols = sigCoords.map(_._1).max + 1
+    val rows = sigCoords.map(_._2).max + 1
+    println(s"\tModule dimensions: $rows rows by $cols columns of bumps")
+
+    // Generate power/ground coordinates
+    // Rule: Immediately adjacent to a signal bump, use ground. Otherwise, use power.
+    // In the unassigned (to signal) in each circle, use power
+    // (Note in bumpMapGen that power/ground bumps are assigned first so this is OK)
+    val pInCircles = for ((x_os, y_os) <- offsets; (x, y) <- coordsInCirle)
+      yield (x + x_os, y + y_os)
+    val gCoords = (for ((x_os, y_os) <- offsets; (x, y) <- outerRing)
+      yield Seq((x - 1 + x_os, y + y_os),
+                (x + 1 + x_os, y + y_os),
+                (x + x_os, y - 1 + y_os),
+                (x + x_os, y + 1 + y_os))
+      ).flatten
+      .filterNot{ case c => sigCoords.contains(c) || pInCircles.contains(c) }
+      .filter{ case (x, y) => x >= 0 && x < cols && y >= 0 && y < rows }
+    val pCoords = pInCircles ++ (
+      for (r <- 0 until rows; c <- 0 until cols) yield (c, r)
+      ).filterNot{ case c => sigCoords.contains(c) || gCoords.contains(c) }
+
+    // Finally, calculate clock bump locations
+    // Rule: Placed closest to center of module, but outside of circles
+    // and at least a particle radius away from the center
+    // TODO: this only works for a circle in the center (5 or 9 total)
+    val clkCoordOpts = outerRing.flatMap { case (x, y) =>
+      val x_os = offsets.last._1
+      val y_os = offsets.last._2
+      Seq((x + x_os - 1, y + y_os - 1),
+          (x + x_os - 1, y + y_os),
+          (x + x_os - 1, y + y_os + 1),
+          (x + x_os, y + y_os - 1),
+          (x + x_os, y + y_os + 1),
+          (x + x_os + 1, y + y_os - 1),
+          (x + x_os + 1, y + y_os),
+          (x + x_os + 1, y + y_os + 1))
+    }.filterNot{ case c => sigCoords.contains(c) || pInCircles.contains(c) || gCoords.contains(c) }
+    .filter{ case (x, y) => x >= 0 && x < cols && y >= 0 && y < rows }
+    val center = ((cols - 1) / 2.0, (rows - 1) / 2.0)
+    val pclk = clkCoordOpts.filter{ case(x, y) =>
+      sqrt(pow(center._1 - x, 2) + pow(center._2 - y, 2)) >= (gp.maxParticleSize + 1) / 2.0
+    }.minBy{ case (x, y) =>
+      sqrt(pow(center._1 - x, 2) + pow(center._2 - y, 2))
+    }
+    // Redundant clock is placed in the opposite corner relative to the center
+    val rclk = ((center._1 + (center._1 - pclk._1)).toInt,
+                (center._2 + (center._2 - pclk._2)).toInt)
+
+    // Return
+    (sigCoords, Seq(pclk, rclk), pCoords, gCoords)
+  }
+
+  /**
     * Calculate number of signal rows/columns, prioritizing the least number of bumps
     * and the ordering with fewer bumps facing pin edge
     * @param sigs: number of signal bumps
@@ -159,217 +347,30 @@ object Utils {
   }
 
   /**
-    * Crude square packing in circle algorithm
-    * Valid only for gridded (square) bump arrangement
-    * Given particle size, signals per module, and any additional
-    * required bumps within a circle given sig/PG rules:
-    * @param gp: global params (AIB3DGlblParams)
-    * @param sigs: number of signal bumps per module
-    * @return A Tuple of (diameter, number of circles, pattern, number of signals)
-    */
-  def gridPacking(gp: AIB3DGlblParams, sigs: Int): (Double, Int, Seq[Int], Int) = {
-    // This is a look-up table corresponding to the options for the maximal
-    // signal pattern (row-by-row) inside of a circle
-    val patternInCircle = Seq(
-      Seq(1),
-      Seq(2),
-      Seq(2, 2),
-      Seq(1, 3, 1),
-      Seq(3, 3),  // transpose: (2, 2, 2)
-      Seq(2, 4, 2),
-      Seq(3, 3, 3),
-      Seq(2, 4, 4, 2),
-      Seq(1, 3, 5, 3, 1),
-      Seq(2, 4, 4, 4, 2),  // transpose: (3, 5, 5, 3)
-      Seq(3, 5, 5, 5, 3),
-      Seq(2, 4, 6, 6, 4, 2),
-      Seq(1, 5, 5, 7, 5, 5, 1),
-      Seq(3, 5, 7, 7, 7, 5, 3)
-    )
-    val sigOpts = patternInCircle.map(_.sum)
-    val diameters = patternInCircle.map { case p =>
-      val dim1h = p.max  // longest horiz. dimension
-      val dim2h = p.count(_ == dim1h)  // instances of longest horiz. dimension
-      val diagh = sqrt(pow(dim1h, 2) + pow(dim2h, 2))  // Pythagorean theorem
-      val dim1v = p.length  // longest vert. dimension
-      val dim2v = p.head  // instances of longest vert. dimension
-      val diagv = sqrt(pow(dim1v, 2) + pow(dim2v, 2))  // Pythagorean theorem
-      max(diagh, diagv)
-    }
-    println((sigOpts zip diameters).map{ case (s, d) => s"${s}: ${d}" })
-    // Determine number of circles
-    // TODO: Support number of circles other than 5 or 9 (module doesn't need to be square)
-    // Target: 9, 8, 6, 5, and 4 (others are too awkwardly shaped)
-    val circleOpts = Seq(8, 4)  // exclude redundant circle. Order matters.
-    val sigsPerCircle = circleOpts.map(n => (sigs / n.toDouble).ceil.toInt)
-    val sigsPerCircleIdx = sigsPerCircle.map(n => sigOpts.indexWhere(_ >= n))
-    val diameterOpts = sigsPerCircleIdx.collect(diameters)
-    // Choose the pattern with diameter closest to and larger than the particle size
-    // TODO: take into account the signal to power/ground ratio
-    val closestIdx = diameterOpts.indexWhere(_ >= gp.maxParticleSize)
-    val finalCircles = circleOpts(closestIdx) + 1
-    val finalSigsPerCircle = sigsPerCircle(closestIdx)
-    val finalIdx = sigsPerCircleIdx(closestIdx)
-    val finalDiameter = diameters(finalIdx)
-    val finalPattern = patternInCircle(finalIdx)
-
-    println(s"$finalDiameter, $finalCircles, $finalPattern, $finalSigsPerCircle")
-    (finalDiameter, finalCircles, finalPattern, finalSigsPerCircle)
-  }
-
-  /** Crude circle packing in square algorithm
-    * Given parameters from gridPacking:
-    * Calculate coordinates of clock, signal, power, and ground bumps contained within each module
-    * The coords are Seq[(Int, Int)] with (x, y) coordinates of bumps
-    * @param gp: global params (AIB3DGlblParams)
-    * @param diam: diameter of circle
-    * @param circles: number of circles
-    * @param pattern: pattern of signal bumps in circle (row-by-row)
-    * @param sigsPerCircle: number of signal bumps per circle (note: not necessarily sum of pattern)
-    * @param sigsPerMod: number of signal bumps per module
-    * @param isWide: true if circles should be arranged more horizontally
-    * @return A Tuple of (signal coords, clock coords, power coords, ground coords)
-    */
-  def calcCoding(gp: AIB3DGlblParams, diam: Double, circles: Int, pattern: Seq[Int],
-    sigsPerCircle: Int, sigsPerMod: Int, isWide: Boolean):
-    (Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)]) = {
-    // Generate the coordinate order in the pattern
-    def patternCoords(pattern: Seq[Int], ringOnly: Boolean): Seq[(Int, Int)] = {
-      pattern.zipWithIndex.flatMap{ case (rowWidth, y) =>
-        val offset = (pattern.max - rowWidth) / 2
-        if (ringOnly && y > 0 && y < pattern.length - 1)
-          // Interior rows only return outer bumps
-          Seq((offset, y), (rowWidth - offset - 1, y))
-        else
-          (0 until rowWidth).map(x => (x + offset, y))
-      }
-    }
-    val coordsInCirle = patternCoords(pattern, false)
-    val outerRing = patternCoords(pattern, true)
-
-    val order = gp.dataStatistic match {
-      case "random" | "one-hot" => coordsInCirle  // sequential
-      case "sequential" =>  // spiral
-        val c = pattern.max  // circle width
-        val r = pattern.length  // circle height
-        val turns = (min(c, r) / 2.0).ceil.toInt  // number of turns
-        (0 until turns).flatMap{ ti =>
-          if (ti == r - 1 - ti && ti == c - 1 - ti)  // center
-            Seq((ti, ti))
-          else {  // iterate clockwise over edges
-            (ti until r - 1 - ti).map((ti, _)) ++
-            (ti until c - 1 - ti).map((_, r - 1 - ti)) ++
-            (ti + 1 until r - ti).reverse.map((c - 1 - ti, _)) ++
-            (ti + 1 until c - ti).reverse.map((_, ti))
-          }
-        }.filter(coordsInCirle.contains(_))  // only take coords in pattern
-      case "normal" =>  // modified sawtooth - start point depends on pattern
-        // TODO
-        coordsInCirle
-      case _ => throw new Exception("Invalid data statistic")
-    }
-
-    /* Next, pack circles into rectangle */
-
-    // Determine offsets of circles (iterate clockwise)
-    val offsets = circles match {
-      case 5 =>  // 4 surrounding 1
-        val mid = (diam / sqrt(2)).ceil.toInt
-        Seq((0, 0), (0, 2*mid), (2*mid, 2*mid), (2*mid, 0), (mid, mid))
-      case 9 =>  // 3 x 3
-        val step = diam.ceil.toInt
-        Seq((0, 0), (0, step), (0, 2*step),
-            (step, 2*step), (2*step, 2*step), (2*step, step),
-            (2*step, 0), (step, 0), (step, step))
-      case _ => throw new Exception(s"Unsupported number of circles: ${circles}")
-    }
-
-    // Generate signal coordinates using ordering and offsets
-    // Note: we must only take the correct number of signals per module
-    // then concatenate with the redundant cluster (last in offsets)
-    val sigCoords = offsets.init.flatMap{ case (x_os, y_os) =>
-      order.take(sigsPerCircle).map{ case(x, y) =>
-        (x + x_os, y + y_os)
-      }
-    }.take(sigsPerMod) ++
-      order.take(sigsPerCircle).map{ case(x, y) =>
-        (x + offsets.last._1, y + offsets.last._2)
-      }
-    val cols = sigCoords.map(_._1).max + 1
-    val rows = sigCoords.map(_._2).max + 1
-
-    // Generate power/ground coordinates
-    // Rule: Immediately adjacent to a signal bump, use ground. Otherwise, use power.
-    // In the unassigned (to signal) in each circle, use power
-    // (Note in bumpMapGen that power/ground bumps are assigned first so this is OK)
-    val pInCircles = offsets.flatMap{ case (x_os, y_os) =>
-      coordsInCirle.map{ case (x, y) => (x + x_os, y + y_os) }
-    }
-    val gCoords = offsets.flatMap{ case (x_os, y_os) =>
-      outerRing.flatMap{ case (x, y) =>
-        Seq((x - 1 + x_os, y + y_os),
-            (x + 1 + x_os, y + y_os),
-            (x + x_os, y - 1 + y_os),
-            (x + x_os, y + 1 + y_os))
-      }.filterNot{ case c => sigCoords.contains(c) || pInCircles.contains(c) }
-      .filter{ case (x, y) => x >= 0 && x < cols && y >= 0 && y < rows }
-    }
-    val pCoords = pInCircles ++ (0 until rows).flatMap{ r =>
-      (0 until cols).map(c => (c, r))
-    }.filterNot{ case c => sigCoords.contains(c) || gCoords.contains(c) }
-
-    // Finally, calculate clock bump locations
-    // Rule: Placed closest to center of module, but outside of circles
-    // and at least a particle radius away from the center
-    // TODO: this only works for a circle in the center (5 or 9 total)
-    val clkCoordOpts = outerRing.flatMap { case (x, y) =>
-      val x_os = offsets.last._1
-      val y_os = offsets.last._2
-      Seq((x + x_os - 1, y + y_os - 1),
-          (x + x_os - 1, y + y_os),
-          (x + x_os - 1, y + y_os + 1),
-          (x + x_os, y + y_os - 1),
-          (x + x_os, y + y_os + 1),
-          (x + x_os + 1, y + y_os - 1),
-          (x + x_os + 1, y + y_os),
-          (x + x_os + 1, y + y_os + 1))
-    }.filterNot{ case c => sigCoords.contains(c) || pInCircles.contains(c) || gCoords.contains(c) }
-    .filter{ case (x, y) => x >= 0 && x < cols && y >= 0 && y < rows }
-    val center = ((cols - 1) / 2.0, (rows - 1) / 2.0)
-    val pclk = clkCoordOpts.filter{ case(x, y) =>
-      sqrt(pow(center._1 - x, 2) + pow(center._2 - y, 2)) >= (gp.maxParticleSize + 1) / 2.0
-    }.minBy{ case (x, y) =>
-      sqrt(pow(center._1 - x, 2) + pow(center._2 - y, 2))
-    }
-    // Redundant clock is placed in the opposite corner relative to the center
-    val rclk = ((center._1 + (center._1 - pclk._1)).toInt,
-                (center._2 + (center._2 - pclk._2)).toInt)
-
-    // Return
-    (sigCoords, Seq(pclk, rclk), pCoords, gCoords)
-  }
-
-  /**
     * Perform bump map generation
     * @param tx: flattened TX IOs
     * @param rx: flattened RX IOs
-    * @param mods: number of modules
-    * @param redMods: number of redundant modules
-    * @param numSigs: number of signals per module
+    * @param numSigs: number of signal bumps per module (excl. redundant bumps)
+    * @param mods: Tuple of module dimensions incl. redundant modules (rows, cols)
+    * @param isWide: wide orientation
     * @param sCoords: (ordered) coordinates of signal bumps
     * @param cCoords: coordinates of clock bumps
     * @param pCoords: coordinates of power bumps
     * @param gCoords: coordinates of ground bumps
     * @param eCoords: coordinates of extra signal bumps
-    * @return Two bump maps: one for TX and one for RX
+    * @return Tuple of (the final 2D bump map, final 1D bump map)
     */
   def bumpMapGen(tx: Seq[AIB3DCore], rx: Seq[AIB3DCore],
-                 mods: Int, redMods: Int, numSigs: Int, sCoords: Seq[(Int, Int)],
-                 cCoords: Seq[(Int, Int)], pCoords: Seq[(Int, Int)],
-                 gCoords: Seq[(Int, Int)], eCoords: Seq[(Int, Int)]):
-                (Array[Array[Array[AIB3DBump]]], Array[Array[Array[AIB3DBump]]]) = {
-    // Determine number of rows and columns from the maximum indices found in the coordinates
-    val allCoords = cCoords ++ pCoords ++ gCoords ++ eCoords ++ sCoords
+                 numSigs: Int, modDims: (Int, Int), isWide: Boolean,
+                 sCoords: Seq[(Int, Int)], cCoords: Seq[(Int, Int)],
+                 pCoords: Seq[(Int, Int)], gCoords: Seq[(Int, Int)],
+                 eCoords: Seq[(Int, Int)]):
+                  (Array[Array[AIB3DBump]], Seq[AIB3DBump]) = {
+    // Determine number of (non-)redundant modules
+    val mods = tx.length / numSigs
+    val redMods = modDims._1 * modDims._2 - mods
+    // Determine number of rows and columns per module from the maximum indices found in the coordinates
+    val allCoords = sCoords ++ gCoords  // only these are needed
     val rows = allCoords.map(_._2).max + 1
     val cols = allCoords.map(_._1).max + 1
     // Initialize bump maps
@@ -419,8 +420,49 @@ object Utils {
       redBitCnt = (m + 1) * numSigs  // set redundant bit counter for next module
       if (m == mods - 1) bitCnt = 0  // reset bit counter for redundant modules
     }
+
+    // Interleave bump maps then generate the correct ordering of module origins
+    // Depending on pin side, the rows/cols of modules are different
+    // Note modules in the longer dimension is doubled since Tx and Rx are separate
+    val interleaved = Array(txBumpMap, rxBumpMap).transpose.flatten
+    // Ordering of modules
+    val totModRows = if (isWide) modDims._1 else modDims._1 * 2
+    val totModCols = if (isWide) modDims._2 * 2 else modDims._2
+    val modOrigins = {
+      if (isWide)  // Tx left of Rx, col-by-col
+        for (c <- 0 until totModCols by 2; r <- 0 until totModRows)
+          yield Seq((r * rows, c * cols), (r * rows, (c + 1) * cols))
+      else  // Tx under Rx, row-by-row
+        for (r <- 0 until totModRows by 2; c <- 0 until totModCols)
+          yield Seq((r * rows, c * cols), ((r + 1) * rows, c * cols))
+    }.flatten
+    require(modOrigins.length == interleaved.length,
+      s"Error in Tx/Rx module to full module mapping: (${modOrigins.length} vs. ${interleaved.length})")
+
+    // Flatten modules into final map
+    // Module index tag is added to each bump for module redundancy mapping
+    val finalMap = Array.ofDim[AIB3DBump](totModRows * rows, totModCols * cols)
+    modOrigins.zipWithIndex.foreach { case ((r, c), m) =>
+      for (mr <- 0 until rows; mc <- 0 until cols) {
+        finalMap(r + mr)(c + mc) = interleaved(m)(mr)(mc)
+        finalMap(r + mr)(c + mc).modIdx =
+          Some(AIB3DCoordinates[Int](
+            x = c / cols,
+            y = r / rows))
+      }
+    }
+
+    // For the flat bump map, the ordering needs to go cluster-by-cluster
+    // to aid in the coding redundancy module IO assignment.
+    // Use the coordinates derived above for signal bumps
+    // Get signal bumps first, then clock, power, ground, extras
+    val flatMap: ArrayBuffer[AIB3DBump] = ArrayBuffer.empty
+    val order = Seq(sCoords, cCoords, pCoords, gCoords, eCoords).flatten.distinct
+    for ((r, c) <- modOrigins; (x, y) <- order)
+      flatMap += finalMap(r + y)(c + x)
+
     // Return
-    (txBumpMap, rxBumpMap)
+    (finalMap, flatMap.toSeq)
   }
 
   /**
@@ -438,13 +480,12 @@ object Utils {
 
     // Calculate bump/iocell location
     // TODO: ignore tech grids and let the tools snap or use BigDecimal?
-    for (r <- 0 until rows; c <- 0 until cols) {
+    for (r <- 0 until rows; c <- 0 until cols)
       // Update coordinates using calculated pitch and bumpOffset.
       bumpMap(r)(c).location = Some(AIB3DCoordinates[Double](
         x = (c + 0.5) * gp.pitchH + (if (pinSide == "W") ip.bumpOffset else 0.0),
         y = (r + 0.5) * gp.pitchV + (if (pinSide == "S") ip.bumpOffset else 0.0))
       )
-    }
 
     // Calculate pin locations
     // Check for available routing resources
@@ -454,27 +495,27 @@ object Utils {
     val sumTracks = routingTracks.map(_._2).sum
     // Traverse row-by-row or column-by-column and get max number of signals
     val reqdSigs =
-      if (Set("E", "W").contains(pinSide)) {
+      if (Set("E", "W").contains(pinSide))
         (0 until cols).map{ c =>
           bumpMap.map(_(c)).filter(_.coreSig.isDefined).length}.max
-      } else {
+      else
         (0 until rows).map{ r =>
           bumpMap(r).filter(_.coreSig.isDefined).length}.max
-      }
     require(sumTracks * 0.4 >= reqdSigs,
       s"""Not enough routing tracks on pin side (${pinSide}).
       |${reqdSigs} tracks requested but only ${sumTracks * 0.4} available.
       |""".stripMargin)
     // Query bumps with core signals in each row/col depending on pinSide
     val coreSigs = (if (isWide) bumpMap.transpose else bumpMap).map{
-      _.withFilter(_.coreSig.isDefined).map(_.coreSig.get)}
+      _.collect{ case b if b.coreSig.isDefined => b.coreSig.get}}
     // Spread signals out evenly across all layers,
     // starting from the lowest layer in the middle of the row/column
     // Assume that tools will snap to track
-    val pinOffsetsPos = routingTracks.map{ case(layer, tracks) =>
-      (0 until tracks / 2).map( t => (t * ip.layerPitch(layer) / 1000, layer))
-      }.flatten.grouped(sumTracks / reqdSigs).map(_.head).toSeq
-    val pinOffsetsNeg = pinOffsetsPos.map{ case(os, lay) => (-os, lay)}.toSeq
+    val pinOffsetsPos = (
+      for ((layer, tracks) <- routingTracks; t <- 0 until tracks / 2)
+        yield (t * ip.layerPitch(layer) / 1000, layer)
+      ).grouped(sumTracks / reqdSigs).map(_.head).toSeq
+    val pinOffsetsNeg = pinOffsetsPos.map{ case(os, lay) => (-os, lay)}
     val pinOffsets: Seq[(Double, String)] = pinSide match {  // interleaving
       case "N" | "E" =>  // reverse (farthest I/O appears first)
         Seq(pinOffsetsPos.reverse, pinOffsetsNeg.reverse).transpose.flatten

@@ -15,14 +15,16 @@ import aib3d._
 case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   import Numeric.Implicits._
   // Following methods are to be used for module indices only
+  // Get the linear index of the module (Tx/Rx are separate)
   // Divide by 2 since modules are created in pairs
   def linearIdx(implicit params: AIB3DParams): Int = {
     if (params.isWide) x.toInt / 2 * params.modRowsWR + y.toInt
     else y.toInt / 2 * params.modColsWR + x.toInt
   }
+  // Determine if the module is redundant
   def isRedundant(implicit params: AIB3DParams): Boolean = {
-    if (params.isWide) x.toInt >= params.modCols
-    else y.toInt >= params.modRows
+    if (params.isWide) x.toInt >= 2 * params.modCols
+    else y.toInt >= 2 * params.modRows
   }
 }
 
