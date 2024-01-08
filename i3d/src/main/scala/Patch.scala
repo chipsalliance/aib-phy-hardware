@@ -55,10 +55,10 @@ trait BasePatch {
   // Shift (mux) redundancy option
   val shiftRed = glblParams.redundArch == 2
   val shifting = if (shiftRed) Some(Module(new RedundancyMuxTop)) else None
-  val txFaultyWire =
-    if (shiftRed) Some(Wire(UInt(shifting.get.txFaulty.getWidth.W))) else None
-  val rxFaultyWire =
-    if (shiftRed) Some(Wire(UInt(shifting.get.rxFaulty.getWidth.W))) else None
+  val faultyTxWire =
+    if (shiftRed) Some(Wire(UInt(shifting.get.faultyTx.getWidth.W))) else None
+  val faultyRxWire =
+    if (shiftRed) Some(Wire(UInt(shifting.get.faultyRx.getWidth.W))) else None
 
   // Redundancy affects how IO cells are connected
   if (codeRed) {
@@ -84,8 +84,8 @@ trait BasePatch {
       i.connectInternal(bd, relatedClk, ioCtrlWire)
     }
     // Connect redundancy control signals
-    shifting.get.txFaulty := txFaultyWire.get
-    shifting.get.rxFaulty := rxFaultyWire.get
+    shifting.get.faultyTx := txFaultyWire.get
+    shifting.get.faultyRx := faultyRxWire.get
   } else {
     // Connect coreio to iocells directly
     coreio.elements zip iocells foreach { case ((cs, cd), i) =>
@@ -132,10 +132,10 @@ class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
     }
   }
   if (shiftRed) {
-    val txFaulty = IO(Input(chiselTypeOf(shifting.get.txFaulty)))
-    val rxFaulty = IO(Input(chiselTypeOf(shifting.get.rxFaulty)))
-    txFaultyWire.get := txFaulty
-    rxFaultyWire.get := rxFaulty
+    val faultyTx = IO(Input(chiselTypeOf(shifting.get.txFaulty)))
+    val faultyRx = IO(Input(chiselTypeOf(shifting.get.faultyRx)))
+    faultyTxWire.get := txFaulty
+    faultyRxWire.get := faultyRx
   }
 }
 
@@ -188,15 +188,15 @@ abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
     }
     if (shiftRed) {
       // Faulty control registers
-      val txFaulty = RegInit(0.U(txFaultyWire.get.getWidth.W))
-      val rxFaulty = RegInit(0.U(rxFaultyWire.get.getWidth.W))
-      txFaultyWire.get := txFaulty
-      rxFaultyWire.get := rxFaulty
+      val faultyTx = RegInit(0.U(txFaultyWire.get.getWidth.W))
+      val faultyRx = RegInit(0.U(faultyRxWire.get.getWidth.W))
+      faultyTxWire.get := txFaulty
+      faultyRxWire.get := faultyRx
       patchSCRs = patchSCRs ++ Seq(
-        Seq(RegField(txFaulty.getWidth, txFaulty,
-          RegFieldDesc("txFaulty", "One-hot encoding of faulty submodules (Tx)."))),
-        Seq(RegField(rxFaulty.getWidth, rxFaulty,
-          RegFieldDesc("rxFaulty", "One-hot encoding of faulty submodules (Rx).")))
+        Seq(RegField(faultyTx.getWidth, txFaulty,
+          RegFieldDesc("faultyTx", "One-hot encoding of faulty submodules (Tx)."))),
+        Seq(RegField(faultyRx.getWidth, faultyRx,
+          RegFieldDesc("faultyRx", "One-hot encoding of faulty submodules (Rx).")))
       )
     }
 
