@@ -3,6 +3,7 @@ package aib3d.io
 import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror}
+import testchipip.{ClockMux2, ClockInverter}
 
 import aib3d._
 
@@ -17,7 +18,7 @@ class IOCellBundle extends Bundle {
   val txClk, rxClk = Input(Clock())
   val txData = Input(Bits(1.W))
   val rxData = Output(Bits(1.W))
-  val async, txEn, rxEn, wkpuEn, wkpdEn = Input(Bool())
+  val txEn, rxEn, wkpuEn, wkpdEn = Input(Bool())
   val pad = Analog(1.W)
 }
 
@@ -32,7 +33,6 @@ trait IOCellConnects {
       case ActualDirection.Output => connectTx(d, clk, ioCtrl.loopback)
       case _ => throw new Exception("Data to be connected must have a direction")
     }
-    io.async := DataMirror.checkTypeEquivalence(d, clk).B  // is clock
     io.wkpuEn := ioCtrl.txWkpu
     io.wkpdEn := ioCtrl.txWkpd
   }
@@ -60,27 +60,59 @@ trait IOCellConnects {
 }
 
 class IOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
+  // Different logic for clocks
+  val isClk = forBump match {
+    case _: TxClk | _: RxClk => true
+    case _ => false
+  }
+
+  // Uncomment if tristates supported in technology
+  /*
   // Analog to directional
   val toPad = Wire(Bits(1.W))
   val fromPad = Wire(Bits(1.W))
-  // Uncomment if tristates supported in technology
-  // UIntToAnalog(toPad, io.pad, io.txEn)
-  // AnalogToUInt(io.pad, fromPad)
-  // Else uncomment this
-  AnalogUIntBidir(io.pad, toPad, fromPad, io.txEn, io.rxEn)
-
-  // TODO: detect clock cells and don't have retimers
-
+  UIntToAnalogInvert(toPad, io.pad, io.txEn)
+  AnalogToUInt(io.pad, fromPad)
   // Tx logic
-  val txRetimed = withClockAndReset(io.txClk, !io.txEn)(RegNext(io.txData, 0.U))
-  val tx = Mux(io.async, io.txData, txRetimed)
-  val txp = Mux(io.wkpuEn ^ io.wkpdEn, io.wkpuEn & ~io.wkpdEn, tx)
-  toPad := Mux(io.txEn, tx, txp)
+  if (isClk) {
+    // Direct output
+    toPad := ~io.txData
+  } else {
+    val txRetimed = withClock(io.txClk)(RegNext(~io.txData)) // invert, no reset
+    toPad := Mux(io.wkpuEn ^ io.wkpdEn, io.wkpuEn & ~io.wkpdEn, txRetimed)
+  }
 
   // Rx logic
-  val rxRetimed = withClockAndReset(io.rxClk, !io.rxEn)(RegNext(fromPad, 0.U))
-  // Clock is assumed for now to be the only async signal. Invert it.
-  io.rxData := Mux(io.async, ~fromPad & io.rxEn, rxRetimed)
+  if (isClk)
+    // Direct output via clock inverter
+    io.rxData := ClockInverter(fromPad.asBool.asClock).asUInt
+  else
+    io.rxData := withClock(io.rxClk)(RegNext(fromPad))
+  */
+
+  // Else uncomment this
+  forBump match {
+    case _: TxClk =>
+      UIntToAnalogNoTristate(io.txData, io.pad)
+      io.rxData := DontCare
+    case _: RxClk =>
+      val fromPad = Wire(Bits(1.W))
+      AnalogToUInt(io.pad, fromPad)
+      // Invert received clock
+      io.rxData := ClockInverter(fromPad.asBool.asClock).asUInt
+    case _: TxSig =>
+      val toPad = Wire(Bits(1.W))
+      UIntToAnalogNoTristate(toPad, io.pad)
+      val txRetimed = withClock(io.txClk)(RegNext(io.txData)) // no reset
+      toPad := Mux(io.wkpuEn ^ io.wkpdEn, io.wkpuEn & ~io.wkpdEn, txRetimed)
+      io.rxData := withClock(io.rxClk)(RegNext(toPad))
+    case _: RxSig =>
+      val fromPad = Wire(Bits(1.W))
+      AnalogToUInt(io.pad, fromPad)
+      val txRetimed = withClock(io.txClk)(RegNext(io.txData)) // no reset
+      val muxedRx = Mux(io.txEn, txRetimed, fromPad)
+      io.rxData := withClock(io.rxClk)(RegNext(muxedRx))
+  }
 }
 
 class IOCellBB(val forBump: AIB3DBump)(implicit params: AIB3DInstParams)

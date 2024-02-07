@@ -3,7 +3,7 @@ package aib3d.redundancy
 import chisel3._
 
 import chisel3.experimental.DataMirror
-import testchipip.ClockMux2
+import testchipip.{ClockMux2, ClockOr2}
 
 import aib3d._
 import aib3d.io._
@@ -49,7 +49,7 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
   val bumps = IO(new BumpsBundle(atBumps = false))  // internal
 
   // One hot encoding
-  val txFaulty, rxFaulty = IO(Input(UInt(params.numMods.W)))
+  val faultyTx, faultyRx = IO(Input(UInt(params.numMods.W)))
 
   // Shift in the longer dimension
   // Order is (tx.a, tx.b, rx.a, rx.b)
@@ -63,12 +63,12 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
 
   // Use these indices to generate the shift signal for each mux
   // Essentially, count the bit positions (by 2) to the right of the current one
-  // that contains a 1 in the one-hot encoding of txFaulty and rxFaulty
+  // that contains a 1 in the one-hot encoding of faultyTx and faultyRx
   val (txShift, rxShift) = modIdxs.indices.map { idx =>
     val tx, rx = Wire(Bool())
     val dependsOn = (idx % 2 to idx by 2)
-    tx := dependsOn.map(i => txFaulty(i)).reduce(_ | _)
-    rx := dependsOn.map(i => rxFaulty(i)).reduce(_ | _)
+    tx := dependsOn.map(i => faultyTx(i)).reduce(_ | _)
+    rx := dependsOn.map(i => faultyRx(i)).reduce(_ | _)
     (tx, rx)
   }.unzip
 
@@ -112,6 +112,7 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
 class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
+  val clkOut = IO(Output(Clock()))
   val faulty = IO(Input(Vec(params.sigsPerCluster, UInt(log2Ceil(params.numClusters - 1).W))))
   val faultyClk = IO(Input(Bool()))
   val dbi = IO(Input(Bool()))
@@ -154,18 +155,33 @@ class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
   // Clocks
   val cClk = core.getElements.find(
     DataMirror.checkTypeEquivalence(_, Clock())
-  ).get
+  ).get.asUInt()(0).asClock
   val bClks = bumps.getElements.filter(
     DataMirror.checkTypeEquivalence(_, Clock())
   )
-  bClks.head := Mux(faultyClk, 0.U, cClk.asUInt).asTypeOf(bClks.head)
-  bClks.last := Mux(faultyClk, cClk.asUInt, 0.U).asTypeOf(bClks.last)
+  clkOut := cClk
+  // Implement as clock gate
+  bClks.head := EICG_wrapper(cClk, ~faultyClk)
+  bClks.last := EICG_wrapper(cClk, faultyClk)
+  /*
+  val pClkMux = Module(new ClockMux2)
+  pClkMux.io.sel := faultyClk
+  pClkMux.io.clocksIn(0) := cClk
+  pClkMux.io.clocksIn(1) := false.B.asClock
+  bClks.head := pClkMux.io.clockOut
+  val rClkMux = Module(new ClockMux2)
+  rClkMux.io.sel := faultyClk
+  rClkMux.io.clocksIn(0) := false.B.asClock
+  rClkMux.io.clocksIn(1) := cClk
+  bClks.last := rClkMux.io.clockOut
+  */
 }
 
 /** Module-level decoder */
 class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
+  val clkOut = IO(Output(Clock()))
 
   // Process bits into coding groups
   // Need to deal with the last cluster not necessarily having the same number of bits
@@ -200,14 +216,40 @@ class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
   ).get
   val bClks = bumps.getElements.filter(
     DataMirror.checkTypeEquivalence(_, Clock())
-  ).map(_.asUInt)
-  cClk := (bClks.head ^ bClks.last).asTypeOf(cClk)
+  ).map(_.asUInt()(0).asClock)
+
+  // Decoding clock depends on if SA1 faults are to be detected
+  val decodedClk = Wire(Clock())
+
+  // Circuit for just SA0 faults:
+  val clkOr = Module(new ClockOr2)
+  clkOr.io.clocksIn(0) := bClks.head
+  clkOr.io.clocksIn(1) := bClks.last
+  decodedClk := clkOr.io.clockOut
+
+  // Circuit for SA0 and SA1 faults:
+  // TODO: need reset, ClockOr2, ClockAnd2
+  // val clkOr = Wire(Clock())
+  // val clkAnd = Wire(Clock())
+  // clkOr := bClks.head | bClks.last
+  // clkAnd := bClks.head & bClks.last
+  // val switchReg = withClock(clkAnd)(RegNext(true.B, false.B))
+  // val clkMux = Module(new ClockMux2)
+  // clkMux.io.sel := switchReg
+  // clkMux.io.clocksIn(0) := clkOr
+  // clkMux.io.clocksIn(1) := clkAnd
+  // decodedClk := clkMux.io.clockOut
+
+  cClk := decodedClk.asTypeOf(cClk)
+  clkOut := decodedClk
 }
 
 /** Top-level coding redundancy add-on module */
 class CodingRedundancyTop(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
   val bumps = IO(new BumpsBundle(atBumps = false))  // internal
+  val clksToTx = IO(Output(Vec(params.numMods, Clock())))
+  val clksToRx = IO(Output(Vec(params.numMods, Clock())))
   val faulty = IO(Input(Vec(params.numMods,  // Tx only
     Vec(params.sigsPerCluster, UInt(log2Ceil(params.numClusters - 1).W)))))  // binary-coded
   val faultyClk = IO(Input(UInt(params.numMods.W)))  // Tx only, one-hot
@@ -228,13 +270,15 @@ class CodingRedundancyTop(implicit params: AIB3DParams) extends RawModule {
   encoders.zipWithIndex.foreach { case (enc, i) =>
     core.connectToModuleBundle(enc.core)
     bumps.connectToModuleBundle(enc.bumps)
+    clksToTx(i) := enc.clkOut
     enc.faulty := faulty(i)
     enc.faultyClk := faultyClk(i)
     enc.dbi := dbi
   }
   // Connect decoder inputs
-  decoders.foreach { dec =>
+  decoders.zipWithIndex.foreach { case (dec, i) =>
     core.connectToModuleBundle(dec.core)
     bumps.connectToModuleBundle(dec.bumps)
+    clksToRx(i) := dec.clkOut
   }
 }

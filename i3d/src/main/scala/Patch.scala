@@ -65,11 +65,21 @@ trait BasePatch {
     // Connect coreio to coding
     coreio <> coding.get.core
     // Connect iocells to coding
-    (iocells zip coding.get.bumps.elements) foreach { case (i, (bs, bd)) =>
-      // Get related clock (all submodules should have a clock)
-      val relatedClk = coding.get.bumps.getRelatedClk(bs)
-      i.connectInternal(bd, relatedClk, ioCtrlWire)
+    (iocells zip coding.get.bumps.sigBumps zip coding.get.bumps.getElements) foreach {
+      case ((i, sb), bd) =>
+        // Get related clock (all modules should have a clock)
+        val relatedTxClk = coding.get.clksToTx(sb.modIdx.get.linearIdx)
+        val relatedRxClk = coding.get.clksToRx(sb.modIdx.get.linearIdx)
+        if (DataMirror.directionOf(bd) == ActualDirection.Output)  // Tx
+          i.connectInternal(bd, relatedTxClk, ioCtrlWire)
+        else  // Rx
+          i.connectInternal(bd, relatedRxClk, ioCtrlWire)
     }
+    //(iocells zip coding.get.bumps.elements) foreach { case (i, (bs, bd)) =>
+    //  // Get related clock (all modules should have a clock)
+    //  val relatedClk = coding.get.bumps.getRelatedClk(bs)
+    //  i.connectInternal(bd, relatedClk, ioCtrlWire)
+    //}
     // Connect redundancy control signals
     coding.get.faulty := faultyWire.get
     coding.get.faultyClk := faultyClkWire.get
@@ -79,17 +89,17 @@ trait BasePatch {
     coreio <> shifting.get.core
     // Connect bumps side of muxes to iocells
     (iocells zip shifting.get.bumps.elements) foreach { case (i, (bs, bd)) =>
-      // Get related clock (all submodules should have a clock)
+      // Get related clock (all modules should have a clock)
       val relatedClk = shifting.get.bumps.getRelatedClk(bs)
       i.connectInternal(bd, relatedClk, ioCtrlWire)
     }
     // Connect redundancy control signals
-    shifting.get.faultyTx := txFaultyWire.get
+    shifting.get.faultyTx := faultyTxWire.get
     shifting.get.faultyRx := faultyRxWire.get
   } else {
     // Connect coreio to iocells directly
     coreio.elements zip iocells foreach { case ((cs, cd), i) =>
-      // Get related clock (all submodules should have a clock)
+      // Get related clock (all modules should have a clock)
       val relatedClk = coreio.getRelatedClk(cs)
       i.connectInternal(cd, relatedClk, ioCtrlWire)
     }
@@ -112,7 +122,7 @@ trait BasePatch {
   ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON(iocells))
   ElaborationArtefacts.add(s"hammer.json", GenCollateral.toHammerJSON(iocells))
   ElaborationArtefacts.add(s"bumpmap.csv", GenCollateral.toCSV)
-  GenCollateral.toImg
+  //GenCollateral.toImg
 }
 
 class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
@@ -132,9 +142,9 @@ class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
     }
   }
   if (shiftRed) {
-    val faultyTx = IO(Input(chiselTypeOf(shifting.get.txFaulty)))
+    val faultyTx = IO(Input(chiselTypeOf(shifting.get.faultyTx)))
     val faultyRx = IO(Input(chiselTypeOf(shifting.get.faultyRx)))
-    faultyTxWire.get := txFaulty
+    faultyTxWire.get := faultyTx
     faultyRxWire.get := faultyRx
   }
 }
@@ -188,12 +198,12 @@ abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
     }
     if (shiftRed) {
       // Faulty control registers
-      val faultyTx = RegInit(0.U(txFaultyWire.get.getWidth.W))
+      val faultyTx = RegInit(0.U(faultyTxWire.get.getWidth.W))
       val faultyRx = RegInit(0.U(faultyRxWire.get.getWidth.W))
-      faultyTxWire.get := txFaulty
+      faultyTxWire.get := faultyTx
       faultyRxWire.get := faultyRx
       patchSCRs = patchSCRs ++ Seq(
-        Seq(RegField(faultyTx.getWidth, txFaulty,
+        Seq(RegField(faultyTx.getWidth, faultyTx,
           RegFieldDesc("faultyTx", "One-hot encoding of faulty submodules (Tx)."))),
         Seq(RegField(faultyRx.getWidth, faultyRx,
           RegFieldDesc("faultyRx", "One-hot encoding of faulty submodules (Rx).")))

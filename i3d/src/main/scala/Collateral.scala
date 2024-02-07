@@ -46,7 +46,9 @@ object GenCollateral {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
     // Redundancy
+    val codeRed = params.gp.redundArch == 1
     val shiftRed = params.gp.redundArch == 2
+    val redModName = if (codeRed) "coding" else if (shiftRed) "shifting" else ""
 
     // Bumps
     val bumps =
@@ -144,10 +146,18 @@ object GenCollateral {
       ("vlsi.inputs.placement_constraints_meta" -> "append")
 
     // SDC: clocks, delays, loads
-    // Note: directions seem reversed (derived from bumps, not facing the core)
+    // Note 1: directions seem reversed (derived from bumps, not facing the core)
+    // Note 2: it is assumed clk tree delay is 2/3 of clk in to data out delay
     // TODO: this depends on the voltage-delay curve of the spec
-    val tClkMin = (1-0.43)*0.25/2 + 0.05
-    val tClkMax = (1+0.43)*0.25/2 + 0.05
+    val tPeriod = 0.25  // 4 GT/s
+    val spread = 0.2 * tPeriod  // 20% UI spread between corners
+    val tdMin = 0.1 * tPeriod  // min for Dtx & Drx
+    val tdMax = tdMin + spread  // max for Dtx & Drx
+    //val tclkMax = 0.16 * tPeriod  // Core <-> bump delay. 0.32 UI split b/w Tx & Rx
+    //val tclkMin = 0.06 * tPeriod // Needed for synthesis
+    val tSetupHold = 0.01  // Conservative estimate of setup/hold time
+    val tj = 0.05 * tPeriod  // Manifested Tx/Rx clk differential jitter
+    val psmm = 300  // pS/mm estimate
     // txClocks returns (bump name, core path, muxed clock name)
     val txClocks = coreSigs.collect{ case c if (
       DataMirror.checkTypeEquivalence(c.ioType, Clock()) &&
@@ -155,13 +165,16 @@ object GenCollateral {
       => (c.fullName, "clocks_" + c.fullName, c.muxedClk(offset=params.redMods))}
     // TODO: don't match by name
     // rxClocks returns (bump name, core path, iocell output path)
-    val rxClocksOOO = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
+    val rxClocks = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
       (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
-    val rxClocks =
+    // rxClocksCoded should be empty if no coding
+    val rxClocksCoded = iocells.filter(_.forBump.bumpName.contains("RXCKR")).map(i =>
+      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
+    val rxClocksForMuxing =
       if (params.isWide)  // transpose to get in ascending order
-        rxClocksOOO.grouped(params.modColsWR).toSeq.transpose.flatten
+        rxClocks.grouped(params.modColsWR).toSeq.transpose.flatten
       else
-        rxClocksOOO
+        rxClocks
     val coreTxs = coreSigs.filter(c =>
       DataMirror.specifiedDirectionOf(c.ioType) == SpecifiedDirection.Output &&
       !DataMirror.checkTypeEquivalence(c.ioType, Clock())
@@ -177,60 +190,140 @@ object GenCollateral {
       ("vlsi.inputs.clocks" -> (Seq(
         ("name" -> "clock") ~
         ("period" -> "1 ns") ~
-        ("uncertainty" -> "0.1 ns")
+        ("uncertainty" -> "0.02 ns")
       ) ++ txClocks.map(c =>
         ("name" -> c._1) ~
         ("path" -> c._2) ~
         ("period" -> "250 ps") ~
-        ("uncertainty" -> "25 ps")
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ) ++ txClocks.zipWithIndex.map{ case(c, i) =>  // clocks to Tx IO cells
+        ("name" -> s"io_${c._1}") ~
+        ("path" -> s"[get_pins */clksToTx_$i]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> c._2) ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+        // Tx direct clocks
+      } ++ txClocks.map(c =>
+        ("name" -> s"direct_${c._1}") ~
+        ("path" -> s"[get_pins */bumps_${c._1}]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> c._2) ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ) ++ txClocks.map(c =>
+        ("name" -> s"direct_${c._1.replace("CKP","CKR")}") ~
+        ("path" -> s"[get_pins */bumps_${c._1.replace("CKP","CKR")}]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> c._2) ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ) ++ txClocks.map(c =>
+        ("name" -> s"out_${c._1}") ~
+        ("path" -> s"[get_ports ${c._1}]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> s"[get_pins */bumps_${c._1}]") ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ) ++ txClocks.map(c =>
+        ("name" -> s"out_${c._1.replace("CKP","CKR")}") ~
+        ("path" -> s"[get_ports ${c._1.replace("CKP","CKR")}]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> s"[get_pins */bumps_${c._1.replace("CKP","CKR")}]") ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
       ) ++ rxClocks.map(c =>
-        ("name" -> s"${c._1}_invert") ~
+        ("name" -> s"invert_${c._1}") ~
         ("path" -> c._1) ~
         ("period" -> "250 ps") ~
-        ("uncertainty" -> "25 ps")
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
       ) ++ rxClocks.map(c =>
         ("name" -> c._1) ~
         ("path" -> s"hpin:${c._3}") ~
         ("generated" -> true) ~
         ("divisor" -> -1) ~
-        ("source_path" -> c._1)
-      ))) ~
+        ("source_path" -> c._1) ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ) ++ rxClocksCoded.map(c =>
+        ("name" -> s"invert_${c._1}") ~
+        ("path" -> c._1) ~
+        ("period" -> "250 ps") ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> s"${c._1.replace("RXCKR", "RXCKP")}")
+      ) ++ rxClocksCoded.map(c =>
+        ("name" -> c._1) ~
+        ("path" -> s"hpin:${c._3}") ~
+        ("generated" -> true) ~
+        ("divisor" -> -1) ~
+        ("source_path" -> c._1) ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> s"${c._1.replace("RXCKR", "RXCKP")}")
+      ) ++ rxClocks.zipWithIndex.map{ case (c, i) =>  // clocks to Rx IO cells
+        ("name" -> s"io_${c._1}") ~
+        ("path" -> s"[get_pins */clksToRx_$i]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> s"hpin:${c._3}") ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      })) ~
       // Core-side signal delays relative to core-facing clocks
+      // Must be written out to final LIB if standalone
       ("vlsi.inputs.delays" -> (coreTxs.map(c =>
         ("name" -> c.fullName) ~
         ("clock" -> c.relatedClk.get) ~
         ("direction" -> "input") ~
-        ("delay" -> f"${tClkMax - 0.01 - 0.05}%.3f ns") ~
+        //("delay" -> f"${(tdMax + tclkMax) * 2/3 - tSetupHold}%.4f ns") ~
+        ("delay" -> f"${4 * tdMin + spread}%.4f ns") ~
         ("corner" -> "setup")
       ) ++ coreTxs.map(c =>
         ("name" -> c.fullName) ~
         ("clock" -> c.relatedClk.get) ~
         ("direction" -> "input") ~
-        ("delay" -> f"${tClkMin + 0.01}%.3f ns") ~
+        //("delay" -> f"${(tdMin + tclkMin) * 2/3 + tSetupHold}%.4f ns") ~
+        ("delay" -> f"${4 * tdMin}%.4f ns") ~
         ("corner" -> "hold")
-      ) ++ coreRxs.map(c =>
-        ("name" -> c.fullName) ~
-        ("clock" -> c.relatedClk.get) ~
-        ("direction" -> "output") ~
-        ("delay" -> f"${0.25 - 0.01 - 0.05}%.3f ns") ~
-        ("corner" -> "setup")
-      ) ++ bumpTxs.map(b =>
+//      ) ++ coreRxs.map(c =>
+//        ("name" -> c.fullName) ~
+//        ("clock" -> c.relatedClk.get) ~
+//        ("direction" -> "output") ~
+//        ("delay" -> f"${tdMax + tclkMax - tSetupHold}%.4f ns") ~
+//        ("corner" -> "setup")
+//      ) ++ bumpTxs.map(b =>
+//        ("name" -> b.bumpName) ~
+//        ("clock" -> b.relatedClk.get) ~
+//        ("direction" -> "output") ~
+//        ("delay" -> f"${tdMax + tclkMax}%.4f ns") ~
+//        ("corner" -> "setup")
+//      ) ++ bumpTxs.map(b =>
+//        ("name" -> b.bumpName) ~
+//        ("clock" -> b.relatedClk.get) ~
+//        ("direction" -> "output") ~
+//        ("delay" -> f"${tdMin + tclkMin}%.4f ns") ~
+//        ("corner" -> "hold")
+      ) ++ bumpRxs.map(b =>
         ("name" -> b.bumpName) ~
-        ("clock" -> b.relatedClk.get) ~
-        ("direction" -> "output") ~
-        ("delay" -> f"${0.25 - 0.01 - 0.05}%.3f ns") ~
+        //("clock" -> b.relatedClk.get) ~
+        ("clock" -> s"invert_${b.relatedClk.get}") ~
+        ("direction" -> "input") ~
+        //("delay" -> f"${tdMax - tPeriod/2}%.4f ns") ~
+        ("delay" -> f"${tdMax}%.4f ns") ~
         ("corner" -> "setup")
       ) ++ bumpRxs.map(b =>
         ("name" -> b.bumpName) ~
-        ("clock" -> b.relatedClk.get) ~
+        //("clock" -> b.relatedClk.get) ~
+        ("clock" -> s"invert_${b.relatedClk.get}") ~
         ("direction" -> "input") ~
-        ("delay" -> f"${tClkMax}%.3f ns") ~
-        ("corner" -> "setup")
-      ) ++ bumpRxs.map(b =>
-        ("name" -> b.bumpName) ~
-        ("clock" -> b.relatedClk.get) ~
-        ("direction" -> "input") ~
-        ("delay" -> f"${tClkMin}%.3f ns") ~
+        //("delay" -> f"${tdMin - tPeriod/2}%.4f ns") ~
+        ("delay" -> f"${tdMin}%.4f ns") ~
         ("corner" -> "hold")
       ))) ~
       // TODO: parameterize default loading based on technology
@@ -238,7 +331,7 @@ object GenCollateral {
       ("vlsi.inputs.output_loads" -> (Seq(
         // TODO: parameterize pad cap
         ("name" -> "[get_ports \"TXDATA* TXCK*\"]") ~
-        ("load" -> "20 fF")
+        ("load" -> "40 fF")
       ))) ~
       ("vlsi.inputs.custom_sdc_constraints" -> (Seq(
         // Global constraints
@@ -246,36 +339,80 @@ object GenCollateral {
         "set_false_path -from *ioCtrl*",
         "set_false_path -from *faulty*",  // OK even if no redundancy
         "set_false_path -from *dbi*",  // OK even if no redundancy
+        // Max transition for entire design. Assumes Lib units in ns.
         // TODO: determine power/jitter tradeoff of transition
-        "set_max_transition 0.05 [current_design]",  // Max transition for entire design. Assumes Lib units in ns.
-        f"set_max_dynamic_power [expr 0.05 * $bits / 0.25]mW",  // Max dynamic power for the entire design.
-        // Clock network latency, transition, skew
-        f"set Tclkmin $tClkMin%.3f",
-        f"set Tclkmax $tClkMax%.3f",
-        "set_clock_latency $Tclkmin -min [get_clocks TXCKP*]",
-        "set_clock_latency $Tclkmax -max [get_clocks TXCKP*]",
-        "set_clock_latency $Tclkmin -min [get_clocks RXCKP*]",
-        "set_clock_latency $Tclkmax -max [get_clocks RXCKP*]",
-        "set_min_transition [expr 0.25/10] [get_ports \"TXDATA* TXCK*\"]",
-        "set_max_transition [expr 0.25/6] [get_ports \"TXDATA* TXCK*\"]",
-        "set_input_transition -min [expr 0.25/10] [get_ports \"RXDATA* RXCK*\"]",
-        "set_input_transition -max [expr 0.25/6] [get_ports \"RXDATA* RXCK*\"]",
-        "set_clock_skew 0.03 [all_clocks]",
-        "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]"  // Max capacitance for Rx core-facing clocks (assumes Lib units in pF).
-      ) ++ coreRxs.map(c => s"set_max_capacitance 0.01 [get_ports ${c.fullName}]"  // Max capacitance for Rx data (assumes Lib units in pF).
-      ) ++ txClocks.map(c =>
-        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] 0.02"  // direct Tx clocks
-      ) ++ (if (shiftRed) txClocks.map(c =>
-        s"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._3}] 0.05"   // muxed Tx clocks
-        ) else Seq.empty
-      ) ++ (if (shiftRed) rxClocks.dropRight(2) else rxClocks).flatMap(c => Seq(  // direct Rx clocks
-        s"set_min_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmin",
-        s"set_max_delay -from hpin:${c._3} -to [get_ports ${c._2}] $$Tclkmax"
-      )) ++ (if (shiftRed) (rxClocks.drop(2) zip rxClocks.dropRight(2)).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks
-        s"set_min_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmin + 0.05]",
-        s"set_max_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] [expr $$Tclkmax + 0.05]"
-        )} else Seq.empty
-      )))
+        "set_max_transition 0.05 [current_design]",
+        // Max dynamic power for the entire design. Not supported by all tools.
+        f"set_max_dynamic_power [expr 0.05 * $bits / 0.25]mW",
+        // set_clock_latency models ideal clock tree delay during synthesis
+        // set_ideal_latency models ideal clock pass-thru delay during synthesis
+        // TODO: set_ideal_latency doesn't seem to have any effect unless network is set to ideal (incorrect)
+        // TODO: this depends on the bump pitch/number of clock sinks
+        f"set_clock_latency -min ${tdMin * 2/3}%.4f [get_clocks io_TXCK*]",
+        f"set_clock_latency -max ${tdMax * 2/3}%.4f [get_clocks io_TXCK*]",
+        //f"set_ideal_latency -min ${tclkMin}%.4f [get_ports TXCK*]",
+        //f"set_ideal_latency -max ${tclkMax}%.4f [get_ports TXCK*]",
+        f"set_clock_latency -min ${tdMin * 2/3}%.4f [get_clocks io_RXCK*]",
+        f"set_clock_latency -max ${tdMax * 2/3}%.4f [get_clocks io_RXCK*]",
+        //f"set_ideal_latency -min ${tclkMin}%.4f [get_ports clocks_RXCK*]",
+        //f"set_ideal_latency -max ${tclkMax}%.4f [get_ports clocks_RXCK*]",
+        "set_propagated_clock [all_clocks]",  // Use calculated clock network latency for timing analysis in P&R
+        // Set transition times on bumps
+        f"set_min_transition ${tPeriod/10}%.4f [get_ports \"TXDATA* TXCK*\"]",
+        f"set_max_transition ${tPeriod/6}%.4f [get_ports \"TXDATA* TXCK*\"]",
+        f"set_input_transition -min ${tPeriod/10}%.4f [get_ports \"RXDATA* RXCK*\"]",
+        f"set_input_transition -max ${tPeriod/6}%.4f [get_ports \"RXDATA* RXCK*\"]",
+        // Determines data-data skew (1st order). TODO: Add > 0.02UI margin?
+        // Note: may not be supported by all tools (set in CTS options instead)
+        // TODO: In synthesis, set_clock_skew is modeled as uncertainty. But we don't want this in P&R.
+        //f"set_clock_skew ${0.1 * tPeriod}%.4f [all_clocks]",
+        // Max capacitance for core-facing outputs (assumes Lib units in pF).
+        "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]"  // clocks
+      ) ++ coreRxs.map(c => s"set_max_capacitance 0.01 [get_ports ${c.fullName}]"  // data
+        // Tx data delay relative to Tx output clock
+        // For setup, output delay adjusts (earlier) the capturing edge (1 period away)
+        // So we need to set the max delay to 1 period - tdMax for setup
+        // Clock uncertainty should not be factored into this calculation - subtract it
+      ) ++ bumpTxs.flatMap(b => Seq(
+        //f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks ${b.relatedClk.get}] -max [get_ports ${b.bumpName}] -reference_pin [get_ports ${b.relatedClk.get}]",  // setup
+        //f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks ${b.relatedClk.get}] -min [get_ports ${b.bumpName}] -reference_pin [get_ports ${b.relatedClk.get}]"  // hold
+        f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks out_${b.relatedClk.get}] -max [get_ports ${b.bumpName}]",  // setup
+        f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks out_${b.relatedClk.get}] -min [get_ports ${b.bumpName}]"  // hold
+        // Tx & Rx data-to-data skew
+      //)) ++ bumpTxs.groupBy(_.relatedClk.get).map{ case(clk, ports) =>
+      //  val plist = ports.map(b => s"port:${b.bumpName}").mkString(" ")
+      //  f"set_data_check ${0.12 * tPeriod}%.4f -from {$plist} -to {$plist}"
+      //  // Rx data-to-data skew
+      //} ++ coreRxs.groupBy(_.relatedClk.get).map{ case(clk, ports) =>
+      //  val plist = ports.map(c => s"port:${c.fullName}").mkString(" ")
+      //  f"set_data_check ${0.12 * tPeriod}%.4f -from {$plist} -to {$plist}"
+      //)) ++ txClocks.zipWithIndex.map{ case(c, i) =>  // preserve the generated Tx clock networks in synthesis
+      //  s"set_dont_touch_network [get_clocks ${c._1}]"
+      //} ++ rxClocks.zipWithIndex.map{ case(c, i) =>  // preserve the generated Rx clock networks in synthesis
+      //  s"set_dont_touch_network [get_clocks ${c._1}]"
+      //} ++ rxClocksCoded.zipWithIndex.map{ case(c, i) =>  // preserve the generated Rx clock networks in synthesis
+      //  s"set_dont_touch_network [get_clocks ${c._1}]"
+      //} ++ txClocks.flatMap(c => Seq(  // direct Tx clocks delay
+      //  f"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] ${tclkMax}%.4f",
+      //  f"set_min_delay -from [get_ports ${c._2}] -to [get_ports ${c._1}] ${tclkMin}%.4f"
+      //)) ++ (if (codeRed) txClocks.flatMap(c => Seq(  // redundant Tx clocks delay
+      //  f"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] ${tclkMax}%.4f",
+      //  f"set_min_delay -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] ${tclkMin}%.4f"
+      //  )) else if (shiftRed) txClocks.flatMap(c => Seq(  // muxed Tx clocks delay
+      //  f"set_max_delay -from [get_ports ${c._2}] -to [get_ports ${c._3}] ${tclkMax}%.4f",
+      //  f"set_min_delay -from [get_ports ${c._2}] -to [get_ports ${c._3}] ${tclkMin}%.4f"
+      //  )) else Seq.empty
+      //) ++ (if (shiftRed) rxClocksForMuxing.dropRight(2) else rxClocksForMuxing).flatMap(c => Seq(  // direct Rx clocks delay
+      //  f"set_min_delay -from hpin:${c._3} -to [get_ports ${c._2}] ${tclkMin}%.4f",
+      //  f"set_max_delay -from hpin:${c._3} -to [get_ports ${c._2}] ${tclkMax}%.4f"
+      //)) ++ (if (shiftRed) (rxClocksForMuxing.drop(2) zip rxClocksForMuxing.dropRight(2)).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks delay
+      //  f"set_min_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] ${tclkMin}%.4f",
+      //  f"set_max_delay -from hpin:${c1._3} -to [get_ports ${c2._2}] ${tclkMax}%.4f"
+      //  )} else Seq.empty
+      )) ++ rxClocksCoded.flatMap(c => Seq(  // clock exclusivity for coded Rx clocks
+        s"set_false_path -from [get_clocks ${c._1}] -to [get_clocks ${c._1.replace("RXCKR", "RXCKP")}]",
+        s"set_false_path -from [get_clocks ${c._1.replace("RXCKR", "RXCKP")}] -to [get_clocks ${c._1}]"
+      ))))
 
     // Power intent
     val power =
