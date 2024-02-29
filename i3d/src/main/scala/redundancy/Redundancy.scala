@@ -46,7 +46,7 @@ class RedundancyMux(
 /** Top-level shift redundancy add-on module */
 class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
-  val bumps = IO(new BumpsBundle(atBumps = false))  // internal
+  val bumps = IO(new BumpsBundle)  // internal
 
   // One hot encoding
   val faultyTx, faultyRx = IO(Input(UInt(params.numMods.W)))
@@ -161,8 +161,11 @@ class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
   )
   clkOut := cClk
   // Implement as clock gate
-  bClks.head := EICG_wrapper(cClk, ~faultyClk)
-  bClks.last := EICG_wrapper(cClk, faultyClk)
+  // bClks.head := EICG_wrapper(cClk, ~faultyClk)
+  // bClks.last := EICG_wrapper(cClk, faultyClk)
+  // Simple AND
+  bClks.head := (cClk.asBool & ~faultyClk).asClock
+  bClks.last := (cClk.asBool & faultyClk).asClock
   /*
   val pClkMux = Module(new ClockMux2)
   pClkMux.io.sel := faultyClk
@@ -247,7 +250,7 @@ class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
 /** Top-level coding redundancy add-on module */
 class CodingRedundancyTop(implicit params: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
-  val bumps = IO(new BumpsBundle(atBumps = false))  // internal
+  val bumps = IO(new BumpsBundle)  // internal
   val clksToTx = IO(Output(Vec(params.numMods, Clock())))
   val clksToRx = IO(Output(Vec(params.numMods, Clock())))
   val faulty = IO(Input(Vec(params.numMods,  // Tx only

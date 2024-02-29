@@ -27,7 +27,7 @@ trait BasePatch {
   val coreio = Wire(new CoreBundle)
   val dataio = FlatIO(Flipped(glblParams.dataBundle.cloneType))  // no prefix
   val clocks = IO(coreio.clksRecord)  // prefix, since these are manually connected
-  val bumpio = FlatIO(new BumpsBundle(atBumps = true))  // no prefix
+  val bumpio = FlatIO(new BumpsBundle)  // no prefix
 
   // Connect coreio wires to dataio and clocks
   // TODO: With Chisel 3.6+, should be able to use :<>= and waiveAll
@@ -38,9 +38,15 @@ trait BasePatch {
   val iocells =
     (bumpio.sigBumps lazyZip bumpio.getElements).map{ (b: AIB3DBump, d: Data) =>
       val iocell = Module(
-        if (instParams.blackBoxModels) new IOCellModel(b)
+        if (instParams.blackBoxModels) { b match {
+          case _:TxClk => new TxClkIOCellModel(b)
+          case _:TxSig => new TxSigIOCellModel(b)
+          case _:RxClk => new RxClkIOCellModel(b)
+          case _:RxSig => new RxSigIOCellModel(b)
+          case _ => throw new Exception("Should not get here")
+        }}
         else new IOCellBB(b))
-      iocell.io.pad <> d
+      iocell.connectExternal(d)
       iocell
     }.toSeq
   val ioCtrlWire = Wire(new IOControlBundle)

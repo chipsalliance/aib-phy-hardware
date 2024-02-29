@@ -10,7 +10,7 @@ import chisel3.util.{log2Ceil, Cat}
 import aib3d.io._
 
 /** Top-level and adapter bundles */
-class BumpsBundle(atBumps: Boolean)
+class BumpsBundle
   (implicit params: AIB3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps
   val sigBumps: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
@@ -19,8 +19,7 @@ class BumpsBundle(atBumps: Boolean)
   })
   // elements map is the bump name -> (cloned) ioType
   val elements: SeqMap[String, Data] = SeqMap(sigBumps.map(b => b.bumpName -> {
-    if (atBumps) Analog(1.W)  // Analog type for bump pads
-    else if (b.coreSig.isDefined) b.coreSig.get.cloneIoType
+    if (b.coreSig.isDefined) b.coreSig.get.cloneIoType
     else (b match {
       case _:TxSig => Output(UInt(1.W))
       case _:RxSig => Input(UInt(1.W))

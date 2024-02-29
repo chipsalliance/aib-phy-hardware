@@ -38,13 +38,65 @@ case class AIB3DCore(
     var pinLayer: Option[String] = None
     // TODO: this uses a DataMirror internal API, subject to change/removal
     def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
-    def fullName: String =
-      name + (if (bitIdx.isDefined) "[" + bitIdx.get.toString() + "]" else "")
+    def fullName: String = {
+      val inBus = bitIdx.isDefined && !DataMirror.checkTypeEquivalence(ioType, Clock())
+      name + (if (inBus) s"[${bitIdx.get}]" else "")
+    }
     // This returns muxed clock name
     def muxedClk(offset: Int): String = {
       require(DataMirror.checkTypeEquivalence(ioType, Clock()), "muxedClk only works for clocks")
       val clkIdx = name.filter(_.isDigit).toInt + offset
       name.filterNot(_.isDigit) + clkIdx.toString()
+    }
+    def sdcConstraints(implicit p: AIB3DParams): Seq[String] = {
+      val dir = DataMirror.directionOf(ioType)
+      val isClk = DataMirror.checkTypeEquivalence(ioType, Clock())
+      (dir, isClk) match {
+        case (ActualDirection.Input, true) =>  // Tx clock
+          val base = Seq(
+            // Create clocks for forwarding
+            f"create_clock -name $name -period ${p.tPeriod}%.4f [get_ports clocks_$name]",
+            f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $name]",
+            s"create_generated_clock -name io_$name -source [get_ports clocks_$name] -divide_by 1 [get_pins */clksToTx_$bitIdx]",
+            f"set_clock_uncertainty ${p.tj}%.4f [get_clocks io_$name]",
+            s"create_generated_clock -name direct_$name -source [get_ports clocks_$name] -divide_by 1 [get_pins */bumps_$name]",
+            f"set_clock_uncertainty ${p.tj}%.4f [get_clocks direct_$name]",
+            s"create_generated_clock -name out_$name -source [get_pins */bumps_$name] -divide_by 1 [get_ports $name]",
+            f"set_clock_uncertainty ${p.tj}%.4f [get_clocks out_$name]",
+            // Model ideal clock tree delay in synthesis
+            f"set_clock_latency -min ${p.tdMin * 2/3}%.4f [get_clocks io_$name]",
+            f"set_clock_latency -max ${p.tdMax * 2/3}%.4f [get_clocks io_$name]",
+          )
+          val coded = {
+            val redName = name.replace("CKP", "CKR")
+            Seq(
+              s"create_generated_clock -name direct_$redName -source [get_ports clocks_$name] -divide_by 1 [get_pins */bumps_$redName]",
+              s"set_clock_uncertainty ${p.tj}%.4f [get_clocks direct_$redName]",
+              s"create_generated_clock -name out_$redName -source [get_pins */bumps_$redName] -divide_by 1 [get_ports $redName]",
+              s"set_clock_uncertainty ${p.tj}%.4f [get_clocks out_$redName]"
+            )
+          }
+          val muxed = Seq.empty  // TODO
+          base ++ (p.gp.redundArch match {
+            case 0 => Seq.empty
+            case 1 => coded
+            case 2 => muxed
+            case _ => throw new Exception("Invalid redundancy architecture")
+          })
+
+        case (ActualDirection.Output, true) =>  // Rx clock
+          Seq(
+            s"set_max_capacitance 0.01 [get_ports clocks_$name]"
+          )
+
+        case (ActualDirection.Input, false) =>  // Tx data
+          Seq(
+            s"set_input_delay -clock [get_clocks ${relatedClk.get}] -max ${p.tdMax}%.4f [get_ports $name]",
+            s"set_input_delay -clock [get_clocks ${relatedClk.get}] -min ${p.tdMin}%.4f [get_ports $name]",
+            s"set_output_delay -clock [get_clocks ${relatedClk.get}] -max ${p.tdMax}%.4f [get_ports $name]",
+            s"set_output_delay -clock [get_clocks ${relatedClk.get}] -min ${p.tdMin}%.4f [get_ports $name]"
+          )
+      }
     }
   }
 
@@ -78,10 +130,10 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
 case class TxClk(modNum: Int, codeRed: Boolean, muxRed: Boolean) extends AIB3DBump {
   val bumpName = if (codeRed) s"TXCKR${modNum}" else s"TXCKP${modNum}"
   override val coreSig = if (codeRed || muxRed) None
-    else Some(AIB3DCore(s"TXCKP${modNum}", None, Output(Clock()), None))
+    else Some(AIB3DCore(s"TXCKP${modNum}", Some(modNum), Output(Clock()), None))
 }
 case class RxClk(modNum: Int, codeRed: Boolean, muxRed: Boolean) extends AIB3DBump {
   val bumpName = if (codeRed) s"RXCKR${modNum}" else s"RXCKP${modNum}"
   override val coreSig = if (codeRed || muxRed) None
-    else Some(AIB3DCore(s"RXCKP${modNum}", None, Input(Clock()), None))
+    else Some(AIB3DCore(s"RXCKP${modNum}", Some(modNum), Input(Clock()), None))
 }

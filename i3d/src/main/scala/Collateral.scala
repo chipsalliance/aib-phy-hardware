@@ -126,14 +126,14 @@ object GenCollateral {
         ("master" -> (if (params.ip.blackBoxModels) None
                       else Some(i.desiredName)))
         // TODO: top layer for halos
-      ) ++ params.flatBumpMap.map( b =>  // Routing KOZ
-        ("path" -> s"Patch/${b.bumpName}_route_koz") ~
-        ("type" -> "obstruction") ~
-        ("obs_types" -> Seq("route", "power")) ~
-        ("x" -> roundToNm(b.location.get.x - params.ip.viaKOZRatio * params.gp.pitchH / 2)) ~
-        ("y" -> roundToNm(b.location.get.y - params.ip.viaKOZRatio * params.gp.pitchV / 2)) ~
-        ("width" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchH)) ~
-        ("height" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchV))
+      //) ++ params.flatBumpMap.map( b =>  // Routing KOZ
+      //  ("path" -> s"Patch/${b.bumpName}_route_koz") ~
+      //  ("type" -> "obstruction") ~
+      //  ("obs_types" -> Seq("route", "power")) ~
+      //  ("x" -> roundToNm(b.location.get.x - params.ip.viaKOZRatio * params.gp.pitchH / 2)) ~
+      //  ("y" -> roundToNm(b.location.get.y - params.ip.viaKOZRatio * params.gp.pitchV / 2)) ~
+      //  ("width" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchH)) ~
+      //  ("height" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchV))
       ) ++ (if (placeKOZ > 0) params.flatBumpMap.map( b =>  // Place KOZ
         ("path" -> s"Patch/${b.bumpName}_place_koz") ~
         ("type" -> "obstruction") ~
@@ -166,10 +166,10 @@ object GenCollateral {
     // TODO: don't match by name
     // rxClocks returns (bump name, core path, iocell output path)
     val rxClocks = iocells.filter(_.forBump.bumpName.contains("RXCKP")).map(i =>
-      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
+      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxClk"))
     // rxClocksCoded should be empty if no coding
     val rxClocksCoded = iocells.filter(_.forBump.bumpName.contains("RXCKR")).map(i =>
-      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxData"))
+      (i.forBump.bumpName, "clocks_" + i.forBump.bumpName, i.pathName.replace(".","/") + "/io_rxClk"))
     val rxClocksForMuxing =
       if (params.isWide)  // transpose to get in ascending order
         rxClocks.grouped(params.modColsWR).toSeq.transpose.flatten
@@ -207,27 +207,11 @@ object GenCollateral {
         ("group" -> c._1)
         // Tx direct clocks
       } ++ txClocks.map(c =>
-        ("name" -> s"direct_${c._1}") ~
-        ("path" -> s"[get_pins */bumps_${c._1}]") ~
-        ("generated" -> true) ~
-        ("divisor" -> 1) ~
-        ("source_path" -> c._2) ~
-        ("uncertainty" -> f"${tj}%.4f ns") ~
-        ("group" -> c._1)
-      ) ++ txClocks.map(c =>
-        ("name" -> s"direct_${c._1.replace("CKP","CKR")}") ~
-        ("path" -> s"[get_pins */bumps_${c._1.replace("CKP","CKR")}]") ~
-        ("generated" -> true) ~
-        ("divisor" -> 1) ~
-        ("source_path" -> c._2) ~
-        ("uncertainty" -> f"${tj}%.4f ns") ~
-        ("group" -> c._1)
-      ) ++ txClocks.map(c =>
         ("name" -> s"out_${c._1}") ~
         ("path" -> s"[get_ports ${c._1}]") ~
         ("generated" -> true) ~
         ("divisor" -> 1) ~
-        ("source_path" -> s"[get_pins */bumps_${c._1}]") ~
+        ("source_path" -> c._2) ~
         ("uncertainty" -> f"${tj}%.4f ns") ~
         ("group" -> c._1)
       ) ++ txClocks.map(c =>
@@ -235,7 +219,7 @@ object GenCollateral {
         ("path" -> s"[get_ports ${c._1.replace("CKP","CKR")}]") ~
         ("generated" -> true) ~
         ("divisor" -> 1) ~
-        ("source_path" -> s"[get_pins */bumps_${c._1.replace("CKP","CKR")}]") ~
+        ("source_path" -> c._2) ~
         ("uncertainty" -> f"${tj}%.4f ns") ~
         ("group" -> c._1)
       ) ++ rxClocks.map(c =>
@@ -274,7 +258,15 @@ object GenCollateral {
         ("source_path" -> s"hpin:${c._3}") ~
         ("uncertainty" -> f"${tj}%.4f ns") ~
         ("group" -> c._1)
-      })) ~
+      } ++ rxClocks.map(c =>  // Rx direct clocks
+        ("name" -> s"out_${c._1}") ~
+        ("path" -> s"[get_ports clocks_${c._1}]") ~
+        ("generated" -> true) ~
+        ("divisor" -> 1) ~
+        ("source_path" -> s"hpin:${c._3}") ~
+        ("uncertainty" -> f"${tj}%.4f ns") ~
+        ("group" -> c._1)
+      ))) ~
       // Core-side signal delays relative to core-facing clocks
       // Must be written out to final LIB if standalone
       ("vlsi.inputs.delays" -> (coreTxs.map(c =>
@@ -291,12 +283,18 @@ object GenCollateral {
         //("delay" -> f"${(tdMin + tclkMin) * 2/3 + tSetupHold}%.4f ns") ~
         ("delay" -> f"${4 * tdMin}%.4f ns") ~
         ("corner" -> "hold")
-//      ) ++ coreRxs.map(c =>
-//        ("name" -> c.fullName) ~
-//        ("clock" -> c.relatedClk.get) ~
-//        ("direction" -> "output") ~
-//        ("delay" -> f"${tdMax + tclkMax - tSetupHold}%.4f ns") ~
-//        ("corner" -> "setup")
+      ) ++ coreRxs.map(c =>
+        ("name" -> c.fullName) ~
+        ("clock" -> s"out_${c.relatedClk.get}") ~
+        ("direction" -> "output") ~
+        ("delay" -> f"${tPeriod/2}%.4f ns") ~  // half period budget
+        ("corner" -> "setup")
+      ) ++ coreRxs.map(c =>
+        ("name" -> c.fullName) ~
+        ("clock" -> s"out_${c.relatedClk.get}") ~
+        ("direction" -> "output") ~
+        ("delay" -> f"0 ns") ~  // no hold time budget
+        ("corner" -> "hold")
 //      ) ++ bumpTxs.map(b =>
 //        ("name" -> b.bumpName) ~
 //        ("clock" -> b.relatedClk.get) ~
@@ -320,7 +318,23 @@ object GenCollateral {
       ) ++ bumpRxs.map(b =>
         ("name" -> b.bumpName) ~
         //("clock" -> b.relatedClk.get) ~
+        ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
+        ("direction" -> "input") ~
+        //("delay" -> f"${tdMax - tPeriod/2}%.4f ns") ~
+        ("delay" -> f"${tdMax}%.4f ns") ~
+        ("corner" -> "setup")
+      ) ++ bumpRxs.map(b =>
+        ("name" -> b.bumpName) ~
+        //("clock" -> b.relatedClk.get) ~
         ("clock" -> s"invert_${b.relatedClk.get}") ~
+        ("direction" -> "input") ~
+        //("delay" -> f"${tdMin - tPeriod/2}%.4f ns") ~
+        ("delay" -> f"${tdMin}%.4f ns") ~
+        ("corner" -> "hold")
+      ) ++ bumpRxs.map(b =>
+        ("name" -> b.bumpName) ~
+        //("clock" -> b.relatedClk.get) ~
+        ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
         ("direction" -> "input") ~
         //("delay" -> f"${tdMin - tPeriod/2}%.4f ns") ~
         ("delay" -> f"${tdMin}%.4f ns") ~
@@ -330,7 +344,7 @@ object GenCollateral {
       ("vlsi.inputs.default_output_load" -> "5 fF") ~
       ("vlsi.inputs.output_loads" -> (Seq(
         // TODO: parameterize pad cap
-        ("name" -> "[get_ports \"TXDATA* TXCK*\"]") ~
+        ("name" -> "[get_ports \"TXDATA* TXCK* TXRED*\"]") ~
         ("load" -> "40 fF")
       ))) ~
       ("vlsi.inputs.custom_sdc_constraints" -> (Seq(
@@ -358,6 +372,7 @@ object GenCollateral {
         //f"set_ideal_latency -max ${tclkMax}%.4f [get_ports clocks_RXCK*]",
         "set_propagated_clock [all_clocks]",  // Use calculated clock network latency for timing analysis in P&R
         // Set transition times on bumps
+        // TODO: should this be set_drive in combo with set_load? Only works if bidir?
         f"set_min_transition ${tPeriod/10}%.4f [get_ports \"TXDATA* TXCK*\"]",
         f"set_max_transition ${tPeriod/6}%.4f [get_ports \"TXDATA* TXCK*\"]",
         f"set_input_transition -min ${tPeriod/10}%.4f [get_ports \"RXDATA* RXCK*\"]",
@@ -377,7 +392,9 @@ object GenCollateral {
         //f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks ${b.relatedClk.get}] -max [get_ports ${b.bumpName}] -reference_pin [get_ports ${b.relatedClk.get}]",  // setup
         //f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks ${b.relatedClk.get}] -min [get_ports ${b.bumpName}] -reference_pin [get_ports ${b.relatedClk.get}]"  // hold
         f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks out_${b.relatedClk.get}] -max [get_ports ${b.bumpName}]",  // setup
-        f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks out_${b.relatedClk.get}] -min [get_ports ${b.bumpName}]"  // hold
+        f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks out_${b.relatedClk.get.replace("CKP","CKR")}] -max [get_ports ${b.bumpName}]",  // setup
+        f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks out_${b.relatedClk.get}] -min [get_ports ${b.bumpName}]",  // hold
+        f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks out_${b.relatedClk.get.replace("CKP","CKR")}] -min [get_ports ${b.bumpName}]"  // hold
         // Tx & Rx data-to-data skew
       //)) ++ bumpTxs.groupBy(_.relatedClk.get).map{ case(clk, ports) =>
       //  val plist = ports.map(b => s"port:${b.bumpName}").mkString(" ")

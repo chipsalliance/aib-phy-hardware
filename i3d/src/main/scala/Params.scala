@@ -15,6 +15,7 @@ import chisel3.util.is
 /** Global AIB3D Parameters
   * These dictate the bump map and spec discretization
   * Following are technology parameters
+  * @param rate is the data rate in GT/s
   * @param pitch is the minimum bond pitch in um
   * @param pitchOvrdH overrides the bond pitch in the horizontal dimension
   * @param pitchOvrdV overrides the bond pitch in the vertical dimension
@@ -45,6 +46,7 @@ import chisel3.util.is
   * Used for pin-to-bump assignment in all redundancy modes and low-power coding in coding redundancy mode.
   */
 case class AIB3DGlblParams(
+  rate: Int = 4,
   pitch: Double = 10.0,
   pitchOvrdH: Option[Double] = None,
   pitchOvrdV: Option[Double] = None,
@@ -323,4 +325,11 @@ case class AIB3DParams(
 
   // Calculate locations
   Utils.calcLocations(bumpMap, pinSide, gp, ip)
+
+  // Timing parameters
+  // Values derived from spec. Assumes lib units in ns.
+  val tPeriod = 1.0 / gp.rate
+  val tj = 0.05 * tPeriod
+  val tdMin = 0.1 * tPeriod
+  val tdMax = 0.3 * tPeriod
 }
