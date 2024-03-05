@@ -124,6 +124,8 @@ case class AIB3DGlblParams(
   * @param faceToStack denotes if the FEOL is facing the rest of the stack (dependent on isLeader)
   * @param powerF is true if power/ground are supplied from/thru the frontside
   * @param powerB is true if power/ground are supplied from/thru the backside
+  * @param vNom is the nominal supply voltage
+  * @param psmm is the estimated delay (in ps) per distance (in mm) for paths in the nominal corner
   * Following are design parameters
   * @param isLeader denotes if this instance is the leader in the stack
   * @param orientation is the orientation of the instance, exported as a floorplan constraint.
@@ -149,6 +151,8 @@ case class AIB3DInstParams (
   faceToStack: Boolean = true,
   powerF: Boolean = true,
   powerB: Boolean = true,
+  vNom: Double = 0.75,
+  psmm: Double = 160,
   isLeader: Boolean,
   orientation: Option[String] = None,
   pinSide: Option[String] = None,
@@ -329,7 +333,24 @@ case class AIB3DParams(
   // Timing parameters
   // Values derived from spec. Assumes lib units in ns.
   val tPeriod = 1.0 / gp.rate
-  val tj = 0.05 * tPeriod
-  val tdMin = 0.1 * tPeriod
-  val tdMax = 0.3 * tPeriod
+  val ch = 0.1 * tPeriod  // Eye closure due to channel
+  val jpw = 0.08 * tPeriod  // Pulse width jitter
+  val skew = 0.12 * tPeriod  // Lane-to-lane skew
+  val atrx = 1.5  // Delay sensitivity to supply noise
+  val nvcc = 0.01  // Supply noise (factor of Vcc), peak-to-peak
+  val tj = 0.05 * tPeriod  // Manifested data/clk differential jitter
+  val ap = 0.02 * tPeriod  // Sampling aperture
+  // Tx delay follows curve fit. Min is nominal - 0.08UI. Max is nominal + 0.12UI. Assumes slow/fast corners are +/- 10% supply voltage.
+  val dtxMin = (ip.vNom*1.1) / (0.0153*pow(ip.vNom*1.1, 2) + 0.0188*ip.vNom*1.1 - 0.0084) / 1000 - 0.08 * tPeriod // min for Dtx
+  val dtxMax = (ip.vNom*0.9) / (0.0153*pow(ip.vNom*0.9, 2) + 0.0188*ip.vNom*0.9 - 0.0084) / 1000 + 0.12 * tPeriod // max for Dtx
+  // Rx input delay must also factor in jitter/eye closure/noise effects, but de-embed clock uncertainty.
+  // Jitter budget split evenly b/w min/max.
+  val drxMin = dtxMin*(1-atrx*nvcc/2) - skew/2 - jpw/2 - ch/2 - sqrt(2*pow(tj, 2))/2 + tj
+  val drxMax = dtxMax*(1+atrx*nvcc/2) + skew/2 + jpw/2 + ch/2 + sqrt(2*pow(tj, 2))/2 - tj
+
+  // Estimated latencies using ps/mm model
+  // Average module size, in bumps
+  private val avgModSize = (bumpMap(0).length / modColsWR * gp.pitchH + bumpMap.length / modRowsWR * gp.pitchV) / 2
+  // Nominal delay to traverse a module, in ns
+  val modDelay = avgModSize * ip.psmm / 1e6
 }
