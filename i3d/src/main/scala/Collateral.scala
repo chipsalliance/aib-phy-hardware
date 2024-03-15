@@ -109,7 +109,8 @@ object GenCollateral {
           ("right" -> 0) ~
           ("top" -> 0) ~
           ("bottom" -> 0))
-      ) ++ iocells.map( i =>  // IO cell placement
+      //) ++ iocells.map( i =>  // IO cell placement
+      ) ++ iocells.filterNot(_.forBump.bumpName.contains("CK")).map( i =>  // Constrain flip-flop placement
         // Replace Target delimiters with / for P&R
         // Fields depend on whether we are using blackboxes or models
         // TODO: breaks if IO cell beneath top hierarchy
@@ -313,34 +314,34 @@ object GenCollateral {
 //        ("delay" -> f"${tdMin + tclkMin}%.4f ns") ~
 //        ("corner" -> "hold")
       // Rx bump input delay
-      ) ++ bumpRxs.map(b =>
-        ("name" -> b.bumpName) ~
-        //("clock" -> b.relatedClk.get) ~
-        ("clock" -> s"invert_${b.relatedClk.get}") ~
-        ("direction" -> "input") ~
-        ("delay" -> f"${params.drxMax}%.4f ns") ~
-        ("corner" -> "setup")
-      ) ++ bumpRxs.map(b =>
-        ("name" -> b.bumpName) ~
-        //("clock" -> b.relatedClk.get) ~
-        ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
-        ("direction" -> "input") ~
-        ("delay" -> f"${params.drxMax}%.4f ns") ~
-        ("corner" -> "setup")
-      ) ++ bumpRxs.map(b =>
-        ("name" -> b.bumpName) ~
-        //("clock" -> b.relatedClk.get) ~
-        ("clock" -> s"invert_${b.relatedClk.get}") ~
-        ("direction" -> "input") ~
-        ("delay" -> f"${params.drxMin}%.4f ns") ~
-        ("corner" -> "hold")
-      ) ++ bumpRxs.map(b =>
-        ("name" -> b.bumpName) ~
-        //("clock" -> b.relatedClk.get) ~
-        ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
-        ("direction" -> "input") ~
-        ("delay" -> f"${params.drxMin}%.4f ns") ~
-        ("corner" -> "hold")
+      //) ++ bumpRxs.map(b =>
+      //  ("name" -> b.bumpName) ~
+      //  //("clock" -> b.relatedClk.get) ~
+      //  ("clock" -> s"invert_${b.relatedClk.get}") ~
+      //  ("direction" -> "input") ~
+      //  ("delay" -> f"${params.drxMax}%.4f ns") ~
+      //  ("corner" -> "setup")
+      //) ++ bumpRxs.map(b =>
+      //  ("name" -> b.bumpName) ~
+      //  //("clock" -> b.relatedClk.get) ~
+      //  ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
+      //  ("direction" -> "input") ~
+      //  ("delay" -> f"${params.drxMax}%.4f ns") ~
+      //  ("corner" -> "setup")
+      //) ++ bumpRxs.map(b =>
+      //  ("name" -> b.bumpName) ~
+      //  //("clock" -> b.relatedClk.get) ~
+      //  ("clock" -> s"invert_${b.relatedClk.get}") ~
+      //  ("direction" -> "input") ~
+      //  ("delay" -> f"${params.drxMin}%.4f ns") ~
+      //  ("corner" -> "hold")
+      //) ++ bumpRxs.map(b =>
+      //  ("name" -> b.bumpName) ~
+      //  //("clock" -> b.relatedClk.get) ~
+      //  ("clock" -> s"invert_${b.relatedClk.get.replace("CKP","CKR")}") ~
+      //  ("direction" -> "input") ~
+      //  ("delay" -> f"${params.drxMin}%.4f ns") ~
+      //  ("corner" -> "hold")
       ))) ~
       // TODO: parameterize default loading based on technology
       ("vlsi.inputs.default_output_load" -> "5 fF") ~
@@ -374,6 +375,9 @@ object GenCollateral {
         f"set_clock_latency -max ${params.modDelay * 1.1}%.4f [get_clocks io_${c._1}]"
       )) ++ Seq(
         "set_propagated_clock [all_clocks]",  // Use calculated clock network latency for timing analysis in P&R
+        // Set duty cycle on all output clocks
+        f"set_min_pulse_width ${params.tPeriod * 0.48 + params.tj}%.4f [get_ports TXCK*]",
+        f"set_min_pulse_width ${params.tPeriod * 0.48 + params.tj}%.4f [get_ports clocks_RXCK*]",
         // Set transition times on bumps
         // TODO: Determine power/jitter tradeoff of transition
         f"set_min_transition ${params.tPeriod/10}%.4f [get_ports \"TXDATA* TXCK* TXRED*\"]",
@@ -385,8 +389,21 @@ object GenCollateral {
         // Note: In synthesis, set_clock_skew is modeled as uncertainty. Physical flows should honor in initial placement.
         f"set_clock_skew ${params.skew/2}%.4f [get_clocks *CK*]",
         // Max capacitance for core-facing outputs (assumes Lib units in pF).
-        "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]"  // clocks
+        "set_max_capacitance 0.01 [get_ports clocks_RXCKP*]",  // clocks
+        // Pulse width jitter of data
+        f"set_min_pulse_width ${params.tPeriod - params.jpw/2 + params.tj}%.4f [get_ports \"TXDATA* TXRED*\"]"
+      //) ++ txClocks.flatMap(c => Seq(  // clock-to-clock skew. Remove uncertainty from check.
+      //  // Note: using on-chip variation will always lead to setup violations as the check is done in both directions.
+      //  // Since hold check is relative to previous edge, it will always pass. set_min_delay deals with it below.
+      //  f"set_data_check ${params.tj} -rise_from [get_ports ${c._1}] -rise_to [get_ports ${c._1.replace("CKP", "CKR")}]",  // rise-to-rise, setup and hold
+      //  f"set_data_check ${params.tj} -rise_from [get_ports ${c._1.replace("CKP", "CKR")}] -rise_to [get_ports ${c._1}]",  // rise-to-rise, setup and hold
+      //  f"set_data_check ${params.tj} -fall_from [get_ports ${c._1}] -fall_to [get_ports ${c._1.replace("CKP", "CKR")}]",  // fall-to-fall, setup and hold
+      //  f"set_data_check ${params.tj} -fall_from [get_ports ${c._1.replace("CKP", "CKR")}] -fall_to [get_ports ${c._1}]"  // fall-to-fall, setup and hold
       ) ++ coreRxs.map(c => s"set_max_capacitance 0.01 [get_ports ${c.fullName}]"  // data
+        // Rx data delay relative to Rx output clock
+      //) ++ coreRxs.flatMap(c => Seq(
+      //  f"set_data_check ${-params.tPeriod/2}%.4f -rise_from [get_ports clocks_${c.relatedClk.get}] -to [get_ports ${c.fullName}] -setup",  // setup
+      //  f"set_data_check ${params.tPeriod} -rise_from [get_ports clocks_${c.relatedClk.get}] -to [get_ports ${c.fullName}] -hold"  // hold
         // Tx data delay relative to Tx output clock
         // For setup, output delay adjusts (earlier) the capturing edge (1 period away)
         // So we need to set the max delay to 1 period - tdMax for setup
@@ -404,57 +421,74 @@ object GenCollateral {
 
         // Do a set_output_delay for internal clock and set_data_check on output clocks
         // This should try to equalize the direct clock out with io_<clock> timing point
-        // Note: set_data_check is a same cycle check. So instead of doing a set_multicycle_path, we add a period where necesary
+        // Note: set_data_check is a same cycle check. So instead of also doing a set_multicycle_path, we add a period where necesary
+        // Rising Output Delay
         //f"set_output_delay ${tPeriod - tdMax - tj}%.4f -clock [get_clocks io_${b.relatedClk.get}] -max [get_ports ${b.bumpName}]",  // setup
         //f"set_output_delay ${-(tdMin - tj)}%.4f -clock [get_clocks io_${b.relatedClk.get}] -min [get_ports ${b.bumpName}]",  // hold
-        f"set_data_check ${-params.dtxMax - params.tj}%.4f -rise_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -setup",  // setup
+        // Rising Data Check
+        //f"set_data_check ${-params.dtxMax - params.tj}%.4f -rise_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -setup",  // setup
         //f"set_data_check ${-tdMax + tj}%.4f -rise_from [get_ports ${b.relatedClk.get.replace("CKP", "CKR")}] -to [get_ports ${b.bumpName}] -setup",  // setup
-        f"set_data_check ${params.tPeriod + params.dtxMin - params.tj}%.4f -rise_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -hold"  // hold
+        //f"set_data_check ${params.tPeriod + params.dtxMin - params.tj}%.4f -rise_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -hold"  // hold
         //f"set_data_check ${tPeriod + tdMin - tj}%.4f -rise_from [get_ports ${b.relatedClk.get.replace("CKP", "CKR")}] -to [get_ports ${b.bumpName}] -hold"  // hold
-      //) ++ txClocks.map(c =>  // equalize direct clock outs with clock tree root
-      //  f"set_output_delay 0 -clock [get_clocks io_${c._1}] -to [get_ports ${c._1}]"  // setup and hold
-      )) ++ txClocks.flatMap(c => Seq(  // clock-to-clock skew. Remove uncertainty from check.
-        // Note: using on-chip variation will always lead to setup violations as the check is done in both directions.
-        // Since hold check is relative to previous edge, it will always pass. set_min_delay deals with it below.
-        f"set_data_check ${params.tj} -rise_from [get_ports ${c._1}] -rise_to [get_ports ${c._1.replace("CKP", "CKR")}]",  // rise-to-rise, setup and hold
-        f"set_data_check ${params.tj} -rise_from [get_ports ${c._1.replace("CKP", "CKR")}] -rise_to [get_ports ${c._1}]",  // rise-to-rise, setup and hold
-        f"set_data_check ${params.tj} -fall_from [get_ports ${c._1}] -fall_to [get_ports ${c._1.replace("CKP", "CKR")}]",  // fall-to-fall, setup and hold
-        f"set_data_check ${params.tj} -fall_from [get_ports ${c._1.replace("CKP", "CKR")}] -fall_to [get_ports ${c._1}]"  // fall-to-fall, setup and hold
+        // Falling Output Delay
+        //f"set_output_delay ${-params.dtxMax - params.tj + params.tPeriod/2}%.4f -clock out_${b.relatedClk.get} -clock_fall -max [get_ports ${b.bumpName}] -add_delay",  // setup
+        //f"set_output_delay ${-params.dtxMax - params.tj + params.tPeriod/2}%.4f -clock out_${b.relatedClk.get.replace("CKP","CKR")} -clock_fall -max [get_ports ${b.bumpName}] -add_delay",  // setup
+        //f"set_output_delay ${-params.dtxMin + params.tj - params.tPeriod/2}%.4f -clock out_${b.relatedClk.get} -clock_fall -min [get_ports ${b.bumpName}] -add_delay",  // hold
+        //f"set_output_delay ${-params.dtxMin + params.tj - params.tPeriod/2}%.4f -clock out_${b.relatedClk.get.replace("CKP","CKR")} -clock_fall -min [get_ports ${b.bumpName}] -add_delay"  // hold
+        // Falling Data Check
+        f"set_data_check ${-params.dtxMax - params.tj - params.tPeriod / 2}%.4f -fall_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -setup",  // setup
+        f"set_data_check ${-params.dtxMax - params.tj - params.tPeriod / 2}%.4f -fall_from [get_ports ${b.relatedClk.get.replace("CKP","CKR")}] -to [get_ports ${b.bumpName}] -setup",  // setup
+        f"set_data_check ${params.tPeriod * 1.5 + params.dtxMin - params.tj}%.4f -fall_from [get_ports ${b.relatedClk.get}] -to [get_ports ${b.bumpName}] -hold",  // hold
+        f"set_data_check ${params.tPeriod * 1.5 + params.dtxMin - params.tj}%.4f -fall_from [get_ports ${b.relatedClk.get.replace("CKP","CKR")}] -to [get_ports ${b.bumpName}] -hold"  // hold
+        // Tx lane-to-lane skew
+      )) ++ bumpTxs.groupBy(_.relatedClk.get).flatMap{ case(clk, ports) =>
+        for {
+          p1 <- ports
+          p2 <- ports
+          if p1 != p2
+        } yield
+          f"set_data_check ${-params.skew - params.tj}%.4f -from [get_ports ${p1.bumpName}] -to [get_ports ${p2.bumpName}]"
 
-        // Tx & Rx data-to-data skew
-      //)) ++ bumpTxs.groupBy(_.relatedClk.get).map{ case(clk, ports) =>
-      //  val plist = ports.map(b => s"port:${b.bumpName}").mkString(" ")
-      //  f"set_data_check ${0.12 * tPeriod}%.4f -from {$plist} -to {$plist}"
+        // Rx bump input delay
+      } ++ bumpRxs.flatMap(b => Seq(
+        f"set_input_delay ${params.drxMax}%.4f -clock [get_clocks invert_${b.relatedClk.get}] -max [get_ports ${b.bumpName}] -add_delay",  // setup
+        f"set_input_delay ${params.drxMax}%.4f -clock [get_clocks invert_${b.relatedClk.get.replace("CKP","CKR")}] -max [get_ports ${b.bumpName}] -add_delay",  // setup
+        f"set_input_delay ${params.drxMin}%.4f -clock [get_clocks invert_${b.relatedClk.get}] -min [get_ports ${b.bumpName}] -add_delay",  // hold
+        f"set_input_delay ${params.drxMin}%.4f -clock [get_clocks invert_${b.relatedClk.get.replace("CKP","CKR")}] -min [get_ports ${b.bumpName}] -add_delay"  // hold
       //  // Rx data-to-data skew
-      //} ++ coreRxs.groupBy(_.relatedClk.get).map{ case(clk, ports) =>
-      //  val plist = ports.map(c => s"port:${c.fullName}").mkString(" ")
-      //  f"set_data_check ${0.12 * tPeriod}%.4f -from {$plist} -to {$plist}"
+      )) ++ coreRxs.groupBy(_.relatedClk.get).flatMap{ case(clk, ports) =>
+        for {
+          p1 <- ports
+          p2 <- ports
+          if p1 != p2
+        } yield
+          f"set_data_check ${-params.skew - params.tj}%.4f -from [get_ports ${p1.fullName}] -to [get_ports ${p2.fullName}]"
       //)) ++ txClocks.zipWithIndex.map{ case(c, i) =>  // preserve the generated Tx clock networks in synthesis
       //  s"set_dont_touch_network [get_clocks ${c._1}]"
       //} ++ rxClocks.zipWithIndex.map{ case(c, i) =>  // preserve the generated Rx clock networks in synthesis
       //  s"set_dont_touch_network [get_clocks ${c._1}]"
       //} ++ rxClocksCoded.zipWithIndex.map{ case(c, i) =>  // preserve the generated Rx clock networks in synthesis
       //  s"set_dont_touch_network [get_clocks ${c._1}]"
-      )) ++ txClocks.flatMap(c => Seq(  // direct Tx clocks delay
-        f"set_max_delay ${params.tPeriod} -from [get_ports ${c._2}] -to [get_ports ${c._1}] -ignore_clock_latency",
-        f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._1}] -ignore_clock_latency"
-      )) ++ (if (codeRed) txClocks.flatMap(c => Seq(  // redundant Tx clocks delay
-        f"set_max_delay ${params.tPeriod} -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] -ignore_clock_latency",
-        f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] -ignore_clock_latency"
-      )) else if (shiftRed) txClocks.flatMap(c => Seq(  // muxed Tx clocks delay
-        f"set_max_delay ${params.tPeriod} -from [get_ports ${c._2}] -to [get_ports ${c._3}] -ignore_clock_latency",
-        f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._3}] -ignore_clock_latency"
-      )) else Seq.empty
-      ) ++ rxClocks.flatMap(c => Seq(  // direct Rx clocks delay
-        f"set_max_delay ${params.tPeriod} -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency",
-        f"set_min_delay 0 -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency"
-      )) ++ rxClocksCoded.flatMap(c => Seq(  // direct coded Rx clocks delay
-        f"set_max_delay ${params.tPeriod} -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency",
-        f"set_min_delay 0 -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency"
-      )) ++ (if (shiftRed) rxClocksForMuxing.drop(2) zip rxClocksForMuxing.dropRight(2) else Seq.empty).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks delay
-        f"set_min_delay ${params.tPeriod} -from hpin:${c1._3} -to [get_ports ${c2._2}] -ignore_clock_latency",
-        f"set_max_delay 0 -from hpin:${c1._3} -to [get_ports ${c2._2}] -ignore_clock_latency"
-      )} ++ rxClocksCoded.flatMap(c => Seq(  // clock exclusivity for coded Rx clocks
+      //} ++ txClocks.flatMap(c => Seq(  // direct Tx clocks delay
+      //  f"set_max_delay ${txClockLatencies(c._1)}%.4f -from [get_ports ${c._2}] -to [get_ports ${c._1}] -ignore_clock_latency",
+      //  f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._1}] -ignore_clock_latency"
+      //)) ++ (if (codeRed) txClocks.flatMap(c => Seq(  // redundant Tx clocks delay
+      //  f"set_max_delay ${txClockLatencies(c._1)}%.4f -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] -ignore_clock_latency",
+      //  f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._1.replace("CKP", "CKR")}] -ignore_clock_latency"
+      //)) else if (shiftRed) txClocks.flatMap(c => Seq(  // muxed Tx clocks delay
+      //  f"set_max_delay ${txClockLatencies(c._1)}%.4f -from [get_ports ${c._2}] -to [get_ports ${c._3}] -ignore_clock_latency",
+      //  f"set_min_delay 0 -from [get_ports ${c._2}] -to [get_ports ${c._3}] -ignore_clock_latency"
+      //)) else Seq.empty
+      //) ++ rxClocks.flatMap(c => Seq(  // direct Rx clocks delay
+      //  f"set_max_delay ${rxClockLatencies(c._1)}%.4f -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency",
+      //  f"set_min_delay 0 -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency"
+      //)) ++ rxClocksCoded.flatMap(c => Seq(  // direct coded Rx clocks delay
+      //  f"set_max_delay ${rxClockLatencies(c._1.replace("CKR","CKP"))}%.4f -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency",
+      //  f"set_min_delay 0 -from [get_ports ${c._1}] -to [get_ports ${c._2}] -ignore_clock_latency"
+      //)) ++ (if (shiftRed) rxClocksForMuxing.drop(2) zip rxClocksForMuxing.dropRight(2) else Seq.empty).flatMap{ case (c1, c2) => Seq(  // muxed Rx clocks delay
+      //  f"set_min_delay ${rxClockLatencies(c1._1)}%.4f -from hpin:${c1._3} -to [get_ports ${c2._2}] -ignore_clock_latency",
+      //  f"set_max_delay 0 -from hpin:${c1._3} -to [get_ports ${c2._2}] -ignore_clock_latency"
+      } ++ rxClocksCoded.flatMap(c => Seq(  // clock exclusivity for coded Rx clocks
         s"set_false_path -from [get_clocks ${c._1}] -to [get_clocks ${c._1.replace("RXCKR", "RXCKP")}]",
         s"set_false_path -from [get_clocks ${c._1.replace("RXCKR", "RXCKP")}] -to [get_clocks ${c._1}]"
       ))))
