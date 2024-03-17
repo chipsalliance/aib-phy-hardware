@@ -10,6 +10,25 @@ import aib3d.io._
 import chisel3.util.{log2Ceil, Cat, Fill}
 import chisel3.util.MuxLookup
 
+object RedundancyArch extends Enumeration {
+  type RedundancyArch = Value
+  val None, Coding, Muxing = Value
+
+  def fromInt(i: Int): RedundancyArch = i match {
+    case 0 => None
+    case 1 => Coding
+    case 2 => Muxing
+    case _ => throw new Exception("Invalid redundancy architecture")
+  }
+
+  def fromString(s: String): RedundancyArch = s match {
+    case "none" => None
+    case "coding" => Coding
+    case "muxing" => Muxing
+    case _ => throw new Exception("Invalid redundancy architecture")
+  }
+}
+
 /** Redundancy muxes per module*/
 class RedundancyMux(
   modIdxA: AIB3DCoordinates[Int],

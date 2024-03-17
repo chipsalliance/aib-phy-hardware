@@ -74,8 +74,8 @@ trait BasePatch {
     (iocells zip coding.get.bumps.sigBumps zip coding.get.bumps.getElements) foreach {
       case ((i, sb), bd) =>
         // Get related clock (all modules should have a clock)
-        val relatedTxClk = coding.get.clksToTx(sb.modIdx.get.linearIdx)
-        val relatedRxClk = coding.get.clksToRx(sb.modIdx.get.linearIdx)
+        val relatedTxClk = coding.get.clksToTx(sb.modCoord.get.linearIdx)
+        val relatedRxClk = coding.get.clksToRx(sb.modCoord.get.linearIdx)
         if (DataMirror.directionOf(bd) == ActualDirection.Output)  // Tx
           i.connectInternal(bd, relatedTxClk, ioCtrlWire)
         else  // Rx
@@ -125,9 +125,10 @@ trait BasePatch {
   */
 
   // Documentation/collateral
-  ElaborationArtefacts.add(s"bumpmap.json", GenCollateral.toJSON(iocells))
-  ElaborationArtefacts.add(s"hammer.json", GenCollateral.toHammerJSON(iocells))
-  ElaborationArtefacts.add(s"bumpmap.csv", GenCollateral.toCSV)
+  ElaborationArtefacts.add("bumpmap.json", GenCollateral.toJSON(iocells))
+  ElaborationArtefacts.add("hammer.json", GenCollateral.toHammerJSON(iocells))
+  ElaborationArtefacts.add("sdc", GenCollateral.toSDC(iocells))
+  ElaborationArtefacts.add("bumpmap.csv", GenCollateral.toCSV)
   //GenCollateral.toImg
 }
 

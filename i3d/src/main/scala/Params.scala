@@ -10,6 +10,7 @@ import chisel3._
 import chisel3.experimental.DataMirror
 
 import aib3d.io._
+import aib3d.redundancy.RedundancyArch
 import chisel3.util.is
 
 /** Global AIB3D Parameters
@@ -31,10 +32,10 @@ import chisel3.util.is
   * in the vertical (height) dimension
   * Following are design parameters
   * @param redundArch is the active data redundancy architecture.
-  * 0 = none, 1 = coding, 2 = signal shift
+  * 0 = none, 1 = coding, 2 = muxing
   * @param redundRatio is the redundancy ratio (default: 4).
   * Denotes the number of signal bumps per redundant bump.
-  * Only used for signal shift redundancy.
+  * Only used for muxing redundancy.
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
   * @param modSize is the max number of data bits (Tx/Rx, each) in a module
@@ -204,14 +205,14 @@ case class AIB3DParams(
   val flatRxOrder = flatRx.map(_.fullName)
 
   /** Step 2: Calculate public constants */
-
+  val redArch = RedundancyArch.fromInt(gp.redundArch)
   // Determine number of modules (Tx/Rx individually) and signals per module
   val numMods = (flatTx.length / gp.modSize.toDouble).ceil.toInt
   require(flatTx.length % numMods == 0,
     s"Number of IOs (${flatTx.length}) not evenly divisible by derived number of modules (${numMods})")
   val sigsPerMod = flatTx.length / numMods
   // TODO: allow for more/less than 2 redundant modules, don't require even number
-  val redMods = if (gp.redundArch == 2) numMods / gp.redundRatio else 0
+  val redMods = if (redArch == RedundancyArch.Muxing) numMods / gp.redundRatio else 0
   if (redMods > 0) require(numMods % redMods == 0,
     s"Number of signal mods (${numMods}) must be evenly divisible by number of redundant mods (${redMods})")
   val numModsWR = numMods + redMods
@@ -228,7 +229,7 @@ case class AIB3DParams(
   // If no redundancy, want to find the most "square" arrangement from the factor pairs of numMods
   // Else, shorter dimension is determined by the number of redundant modules
   val (modRows, modCols) =
-    if (gp.redundArch == 2)  // signal shift
+    if (redArch == RedundancyArch.Muxing)
       if (isWide) (redMods, numMods / redMods)
       else (numMods / redMods, redMods)
     else {
@@ -239,14 +240,14 @@ case class AIB3DParams(
       else (numMods / bestFactor, bestFactor)  // tall
     }
   val (modRowsWR, modColsWR) =
-    if (gp.redundArch == 2)  // signal shift
+    if (redArch == RedundancyArch.Muxing)
       if (isWide) (redMods, modCols + 1) else (modRows + 1, redMods)
     else (modRows, modCols)
   println(s"\tPatch dimensions: ${modRowsWR} rows by ${modColsWR} columns of modules")
 
   // Calculate coding cluster properties
   val (clusterDiam, numClusters, clusterPattern, sigsPerCluster) =
-    if (gp.redundArch == 1) Utils.gridPacking(gp, sigsPerMod)
+    if (redArch == RedundancyArch.Coding) Utils.gridPacking(gp, sigsPerMod)
     else (0.0, 0, Seq.empty, 0)
 
   /** Step 3: Create the bump map.
@@ -254,7 +255,7 @@ case class AIB3DParams(
     */
 
   val (bumpMap: Array[Array[AIB3DBump]], flatBumpMap: Seq[AIB3DBump]) =
-    if (gp.redundArch == 1) {  // coding
+    if (redArch == RedundancyArch.Coding) {
       val (sCoords, cCoords, pCoords, gCoords) =
         Utils.calcCoding(gp = gp,
                          diam = clusterDiam,
@@ -277,7 +278,7 @@ case class AIB3DParams(
                        gCoords = gCoords,
                        eCoords = Seq.empty)
     }
-    else {  // none or signal shift
+    else {  // none or muxing
       // Rows/cols of signal/PG bumps and extras
       val (rowsSig, colsSig, extras) = Utils.calcRowsCols(sigsPerMod, isWide)
       val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1

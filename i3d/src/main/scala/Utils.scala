@@ -393,7 +393,7 @@ object Utils {
         rxBumpMap(m)(y)(x) = Gnd()
       }
       // Next, map clock bumps
-      // Redundant if m >= mods (redundant module in signal-shift redundancy)
+      // Redundant if m >= mods (redundant module in muxing redundancy)
       // or clkCnt > 0 (clock already mapped in coding redundancy)
       for ((x, y) <- cCoords) {
         txBumpMap(m)(y)(x) = TxClk(m, clkCnt > 0, m >= mods)
@@ -446,7 +446,7 @@ object Utils {
     modOrigins.zipWithIndex.foreach { case ((r, c), m) =>
       for (mr <- 0 until rows; mc <- 0 until cols) {
         finalMap(r + mr)(c + mc) = interleaved(m)(mr)(mc)
-        finalMap(r + mr)(c + mc).modIdx =
+        finalMap(r + mr)(c + mc).modCoord =
           Some(AIB3DCoordinates[Int](
             x = c / cols,
             y = r / rows))
