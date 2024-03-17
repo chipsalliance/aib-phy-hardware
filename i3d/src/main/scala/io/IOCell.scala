@@ -123,10 +123,10 @@ class RxSigIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConn
   io.rxData := withClock(io.rxClk)(RegNext(muxedRx))
 }
 
-class IOCellBB(val forBump: AIB3DBump)(implicit params: AIB3DInstParams)
+class IOCellBB(val forBump: AIB3DBump)(implicit p: AIB3DInstParams)
   extends BlackBox with IOCellConnects {
   override def desiredName =
-    if (params.ioCellName.isDefined) params.ioCellName.get
+    if (p.ioCellName.isDefined) p.ioCellName.get
     else "IOCellBB"
 
   def connectInternal(tx: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = ???  // TODO

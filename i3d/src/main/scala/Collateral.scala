@@ -12,7 +12,6 @@ import cats.effect.unsafe.implicits.global
 import chisel3._
 
 import chisel3.experimental.{BaseModule, DataMirror}
-import org.chipsalliance.cde.config.Parameters
 
 import aib3d.io._
 import aib3d.redundancy.RedundancyArch
@@ -23,8 +22,8 @@ object GenCollateral {
     * core pin name and location, and other physical design constraints.
     */
   def toJSON(iocells: Seq[BaseModule with IOCellConnects])
-    (implicit params: AIB3DParams): String = {
-    pretty(render(("bump map" -> params.flatBumpMap.map{ b =>
+    (implicit p: AIB3DParams): String = {
+    pretty(render(("bump map" -> p.flatBumpMap.map{ b =>
       val io = iocells.find(_.forBump == b)
       ("bump_name" -> b.bumpName) ~
       ("core_sig" -> (if (b.coreSig.isDefined) Some(b.coreSig.get.fullName) else None)) ~
@@ -43,31 +42,31 @@ object GenCollateral {
   def toHammerJSON(iocells: Seq[BaseModule with IOCellConnects])
     // TODO: support mismatched pitchH/pitchV (not yet supported by Hammer) - need gcd of them
     // TODO: TSV constraints
-    (implicit params: AIB3DParams): String = {
+    (implicit p: AIB3DParams): String = {
     // Floating point precision
     def roundToNm(x: Double): Double = (x * 1000).round / 1000.0
     // Redundancy
-    val codeRed = params.gp.redundArch == 1
-    val shiftRed = params.gp.redundArch == 2
+    val codeRed = p.gp.redundArch == 1
+    val shiftRed = p.gp.redundArch == 2
     val redModName = if (codeRed) "coding" else if (shiftRed) "shifting" else ""
 
     // Bumps
     val bumps =
       ("vlsi.inputs.bumps_mode" -> "manual") ~
       ("vlsi.inputs.bumps" ->
-        ("x" -> params.bumpMap(0).length) ~
-        ("y" -> params.bumpMap.length) ~
-        ("pitch" -> params.gp.pitch) ~
+        ("x" -> p.bumpMap(0).length) ~
+        ("y" -> p.bumpMap.length) ~
+        ("pitch" -> p.gp.pitch) ~
         ("global_x_offset" -> (
-          if (params.pinSide == "W") params.ip.bumpOffset else 0.0)) ~
+          if (p.pinSide == "W") p.ip.bumpOffset else 0.0)) ~
         ("global_y_offset" -> (
-          if (params.pinSide == "S") params.ip.bumpOffset else 0.0)) ~
-        ("cell" -> params.ip.bumpCellName) ~
-        ("assignments" -> params.flatBumpMap.map( b =>
+          if (p.pinSide == "S") p.ip.bumpOffset else 0.0)) ~
+        ("cell" -> p.ip.bumpCellName) ~
+        ("assignments" -> p.flatBumpMap.map( b =>
           ("name" -> b.bumpName) ~
           // location is integer multiple of pitch, 1-indexed
-          ("x" -> roundToNm(b.location.get.x / params.gp.pitch + 0.5).toInt) ~
-          ("y" -> roundToNm(b.location.get.y / params.gp.pitch + 0.5).toInt)
+          ("x" -> roundToNm(b.location.get.x / p.gp.pitch + 0.5).toInt) ~
+          ("y" -> roundToNm(b.location.get.y / p.gp.pitch + 0.5).toInt)
         ))
       )
 
@@ -80,23 +79,23 @@ object GenCollateral {
         ("generate_mode" -> "semi_auto") ~
         ("assignments" -> (coreSigs.map( c =>
           ("pins" -> ((if (c.name.contains("CKP")) "clocks_" else "") + c.fullName)) ~
-          ("side" -> sideMap(params.pinSide)) ~
+          ("side" -> sideMap(p.pinSide)) ~
           ("layers" -> Seq(c.pinLayer.get)) ~
           ("location" -> Seq(roundToNm(c.pinLocation.get.x),
                              roundToNm(c.pinLocation.get.y)))
         ) ++ Seq(  // TODO: constrain within the edge
           ("pins" -> "{clock reset auto* ioCtrl *Faulty}") ~
-          ("side" -> sideMap(params.pinSide)) ~
-          ("layers" -> params.ip.layerPitch.keys)
+          ("side" -> sideMap(p.pinSide)) ~
+          ("layers" -> p.ip.layerPitch.keys)
         )))
       )
 
     // Placements
-    val topWidth = params.bumpMap(0).length * params.gp.pitchH +
-      (if (!params.isWide) params.ip.bumpOffset else 0.0)
-    val topHeight = params.bumpMap.length * params.gp.pitchV +
-      (if (params.isWide) params.ip.bumpOffset else 0.0)
-    val placeKOZ = max(params.ip.bprKOZRatio.getOrElse(0.0), params.ip.tsvKOZRatio.getOrElse(0.0))
+    val topWidth = p.bumpMap(0).length * p.gp.pitchH +
+      (if (!p.isWide) p.ip.bumpOffset else 0.0)
+    val topHeight = p.bumpMap.length * p.gp.pitchV +
+      (if (p.isWide) p.ip.bumpOffset else 0.0)
+    val placeKOZ = max(p.ip.bprKOZRatio.getOrElse(0.0), p.ip.tsvKOZRatio.getOrElse(0.0))
     val places =
       ("vlsi.inputs.placement_constraints" -> (Seq(
         ("path" -> "Patch") ~
@@ -116,34 +115,34 @@ object GenCollateral {
         // Fields depend on whether we are using blackboxes or models
         // TODO: breaks if IO cell beneath top hierarchy
         ("path" -> i.pathName.replace(".","/")) ~
-        ("type" -> (if (params.ip.blackBoxModels) "hard_placement" else "hardmacro")) ~
+        ("type" -> (if (p.ip.blackBoxModels) "hard_placement" else "hardmacro")) ~
         ("x" -> roundToNm(i.forBump.location.get.x - (
-          if (params.ip.blackBoxModels) params.gp.pitchH / 2 else 0.0))) ~
+          if (p.ip.blackBoxModels) p.gp.pitchH / 2 else 0.0))) ~
         ("y" -> roundToNm(i.forBump.location.get.y - (
-          if (params.ip.blackBoxModels) params.gp.pitchV / 2 else 0.0))) ~
-        ("width" -> (if (params.ip.blackBoxModels) Some(params.gp.pitchH)
+          if (p.ip.blackBoxModels) p.gp.pitchV / 2 else 0.0))) ~
+        ("width" -> (if (p.ip.blackBoxModels) Some(p.gp.pitchH)
                      else None)) ~
-        ("height" -> (if (params.ip.blackBoxModels) Some(params.gp.pitchV)
+        ("height" -> (if (p.ip.blackBoxModels) Some(p.gp.pitchV)
                       else None)) ~
-        ("master" -> (if (params.ip.blackBoxModels) None
+        ("master" -> (if (p.ip.blackBoxModels) None
                       else Some(i.desiredName)))
         // TODO: top layer for halos
-      ) ++ params.flatBumpMap.map( b =>  // Routing KOZ
+      ) ++ p.flatBumpMap.map( b =>  // Routing KOZ
         ("path" -> s"Patch/${b.bumpName}_route_koz") ~
         ("type" -> "obstruction") ~
         ("obs_types" -> Seq("route", "power")) ~
-        ("x" -> roundToNm(b.location.get.x - params.ip.viaKOZRatio * params.gp.pitchH / 2)) ~
-        ("y" -> roundToNm(b.location.get.y - params.ip.viaKOZRatio * params.gp.pitchV / 2)) ~
-        ("width" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchH)) ~
-        ("height" -> roundToNm(params.ip.viaKOZRatio * params.gp.pitchV))
-      ) ++ (if (placeKOZ > 0) params.flatBumpMap.map( b =>  // Place KOZ
+        ("x" -> roundToNm(b.location.get.x - p.ip.viaKOZRatio * p.gp.pitchH / 2)) ~
+        ("y" -> roundToNm(b.location.get.y - p.ip.viaKOZRatio * p.gp.pitchV / 2)) ~
+        ("width" -> roundToNm(p.ip.viaKOZRatio * p.gp.pitchH)) ~
+        ("height" -> roundToNm(p.ip.viaKOZRatio * p.gp.pitchV))
+      ) ++ (if (placeKOZ > 0) p.flatBumpMap.map( b =>  // Place KOZ
         ("path" -> s"Patch/${b.bumpName}_place_koz") ~
         ("type" -> "obstruction") ~
         ("obs_types" -> Seq("place")) ~
-        ("x" -> roundToNm(b.location.get.x - placeKOZ * params.gp.pitchH / 2)) ~
-        ("y" -> roundToNm(b.location.get.y - placeKOZ * params.gp.pitchV / 2)) ~
-        ("width" -> roundToNm(placeKOZ * params.gp.pitchH)) ~
-        ("height" -> roundToNm(placeKOZ * params.gp.pitchV))
+        ("x" -> roundToNm(b.location.get.x - placeKOZ * p.gp.pitchH / 2)) ~
+        ("y" -> roundToNm(b.location.get.y - placeKOZ * p.gp.pitchV / 2)) ~
+        ("width" -> roundToNm(placeKOZ * p.gp.pitchH)) ~
+        ("height" -> roundToNm(placeKOZ * p.gp.pitchV))
       ) else Seq.empty))) ~
       ("vlsi.inputs.placement_constraints_meta" -> "append")
 
@@ -162,7 +161,7 @@ object GenCollateral {
     pretty(render(bumps merge pins merge places merge sdc merge power))
   }
 
-  def toSDC(iocells: Seq[BaseModule with IOCellConnects])(implicit params: AIB3DParams): String = {
+  def toSDC(iocells: Seq[BaseModule with IOCellConnects])(implicit p: AIB3DParams): String = {
     // Extract bump objects
     val bumps = iocells.map(_.forBump)
 
@@ -174,7 +173,7 @@ object GenCollateral {
       |set_load 0.005 [all_outputs]
       |set_max_transition 0.05 [current_design]
       |# Power. Not supported by all tools.
-      |set_max_dynamic_power ${0.05 * params.numMods * params.sigsPerMod / params.tPeriod}%.1f mW [current_design]
+      |set_max_dynamic_power ${0.05 * p.numMods * p.sigsPerMod / p.tPeriod}%.1f mW [current_design]
       |# False paths from config pins
       |set_false_path -from *ioCtrl*
       |set_false_path -from *faulty*
@@ -189,8 +188,8 @@ object GenCollateral {
     val rxClkIOCellPaths = iocells.collect{
       case c if c.forBump.isInstanceOf[RxClk] => c.instanceName
     }
-    val rxClkSDC = (rxClks zip rxClkIOCellPaths).map{ case (b, p) =>
-      b.sdcConstraints(p)
+    val rxClkSDC = (rxClks zip rxClkIOCellPaths).map{ case (bump, path) =>
+      bump.sdcConstraints(path)
     }.mkString("\n")
 
     // Global clock constraints
@@ -207,7 +206,7 @@ object GenCollateral {
           val txr = txn.replace("TXCKP", "TXCKR")
           val rxn = rx.bumpName
           val rxr = rxn.replace("RXCKP", "RXCKR")
-          if (params.redArch == RedundancyArch.Muxing) {
+          if (p.redArch == RedundancyArch.Muxing) {
             (if (tx.coreSig.isDefined)
               s"-group { ${txn} io_${txn} out_${txn} } "
             else  // redundant
@@ -218,7 +217,7 @@ object GenCollateral {
             else  // redundant
               s"-group { invert_${rxn} ${rxn} io_${rxn} }"
             )
-          } else if (params.redArch == RedundancyArch.Coding) {
+          } else if (p.redArch == RedundancyArch.Coding) {
             (if (tx.coreSig.isDefined)
               s"-group { $txn io_$txn out_$txn out_$txr } "
             else "") +
@@ -259,10 +258,10 @@ object GenCollateral {
     * Each cell corresponds to a bump. If the bump has a corresponding core signal,
     * it is printed in the cell as well.
     */
-  def toCSV(implicit params: AIB3DParams): String = {
+  def toCSV(implicit p: AIB3DParams): String = {
     "Signal <-> Bump\n"+
     // Reverse rows to account for spreadsheet vs. layout
-    params.bumpMap.reverse.map{ case r => r.map{ case b =>
+    p.bumpMap.reverse.map{ case r => r.map{ case b =>
       val coreSig = if (b.coreSig.isDefined) b.coreSig.get.fullName + " <-> " else ""
       s"${coreSig}${b.bumpName}"
     }.mkString(", ")}.mkString("\n")
@@ -271,8 +270,8 @@ object GenCollateral {
   /** Generates a PNG + PDF file that can be used to visualize the bump map.
     * This uses the scala doodle package and also opens a window for live visualization.
     */
-  def toImg(implicit params: AIB3DParams): Unit = {
-    require(params.gp.pattern == "square",
+  def toImg(implicit p: AIB3DParams): Unit = {
+    require(p.gp.pattern == "square",
       "Only square bump patterns are supported for visualization")
     // Floating point precision
     def roundToNm(x: Double): String = ((x * 1000).round / 1000.0).toString
@@ -280,10 +279,10 @@ object GenCollateral {
     // Iterate row-wise (not in reverse order) and column-wise (in reverse order)
     // Scale by factor of 10 for legibility
     val scale = 10.0
-    val unitWidth = scale * params.gp.pitchH
-    val unitHeight = scale * params.gp.pitchV
+    val unitWidth = scale * p.gp.pitchH
+    val unitHeight = scale * p.gp.pitchV
     val bumps =  // 2D recursion
-      params.bumpMap.foldLeft(Picture.empty)((below, row) =>
+      p.bumpMap.foldLeft(Picture.empty)((below, row) =>
         row.reverse.foldLeft(Picture.empty){(right, b) =>
           val bumpText = Picture.text(b.bumpName).scale(scale / 16, scale / 16)
             .above(
@@ -292,7 +291,7 @@ object GenCollateral {
               else Picture.empty
             )
           // An invisible square with a circle inside
-          val bumpCircle = Picture.circle(scale * params.gp.pitch / 2)
+          val bumpCircle = Picture.circle(scale * p.gp.pitch / 2)
           val bumpCell = bumpText.on(bumpCircle.fillColor(b match {
             case _: Pwr => Color.red
             case _: Gnd => Color.gray
@@ -309,69 +308,69 @@ object GenCollateral {
     // Fixed for 0.20.0 but that is only available for Scala 3
     // So we have to do it manually - get dimensions of bump map and draw grid
     // (Accounts for default strokeWidth = 1)
-    val (bumpsH, bumpsV) = (params.bumpMap(0).length, params.bumpMap.length)
+    val (bumpsH, bumpsV) = (p.bumpMap(0).length, p.bumpMap.length)
     val bumpsWidth = bumpsH * unitWidth
     val bumpsHeight = bumpsV * unitHeight
     val grid =  // 2D recursion
-      (0 until params.modRowsWR).foldLeft(Picture.empty)((below, y) =>
-        (0 until params.modColsWR).foldLeft(Picture.empty)((right, x) =>
-          Picture.rectangle(bumpsWidth / params.modColsWR - 1,
-                            bumpsHeight / params.modRowsWR - 1)
+      (0 until p.modRowsWR).foldLeft(Picture.empty)((below, y) =>
+        (0 until p.modColsWR).foldLeft(Picture.empty)((right, x) =>
+          Picture.rectangle(bumpsWidth / p.modColsWR - 1,
+                            bumpsHeight / p.modRowsWR - 1)
           .strokeColor(Color.gray).strokeDash(Array(scale / 2, scale / 5))
           .beside(right)
         ).above(below)
       )
     // Title
     val titleText = s"""Bump Map: ${bumpsH} x ${bumpsV} bumps at
-                        | ${params.gp.pitchH}um x ${params.gp.pitchV}um pitch"""
+                        | ${p.gp.pitchH}um x ${p.gp.pitchV}um pitch"""
                         .stripMargin
     val titleBlock = Picture.text(titleText).scale(scale / 5, scale / 5).on(
       Picture.rectangle(bumpsWidth, unitHeight / 2).noFill.noStroke)
     // Rulers
-    val leftRulerOffset = if (params.pinSide == "S") params.ip.bumpOffset else 0.0
+    val leftRulerOffset = if (p.pinSide == "S") p.ip.bumpOffset else 0.0
     val leftRuler =
       (0 until bumpsV).foldLeft(Picture.empty)((below, y) =>
-        Picture.text(roundToNm((y + 0.5) * params.gp.pitchV + leftRulerOffset))
+        Picture.text(roundToNm((y + 0.5) * p.gp.pitchV + leftRulerOffset))
         .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
         .above(below))
       Picture.rectangle(unitWidth / 2, bumpsHeight).noFill.noStroke
-    val bottomRulerOffset = if (params.pinSide == "W") params.ip.bumpOffset else 0.0
+    val bottomRulerOffset = if (p.pinSide == "W") p.ip.bumpOffset else 0.0
     val bottomRuler =
       Picture.text("Rulers (um)")
       .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
       .beside((0 until bumpsH).reverse.foldLeft(Picture.empty)((right, x) =>
-        Picture.text(roundToNm((x + 0.5) * params.gp.pitchH + bottomRulerOffset))
+        Picture.text(roundToNm((x + 0.5) * p.gp.pitchH + bottomRulerOffset))
         .on(Picture.rectangle(unitWidth, unitHeight).noFill.noStroke)
         .beside(right))
       )
     // Pin placement
     // location is relative to center of bump array
-    val pinOffsetX = (params.pinSide match {
-      case "W" => -params.ip.bumpOffset * scale
-      case "E" => params.ip.bumpOffset * scale
+    val pinOffsetX = (p.pinSide match {
+      case "W" => -p.ip.bumpOffset * scale
+      case "E" => p.ip.bumpOffset * scale
       case _ => 0.0
     }) + unitWidth / 2 - bumpsWidth / 2
-    val pinOffsetY = (params.pinSide match {
-      case "S" => -params.ip.bumpOffset * scale
-      case "N" => params.ip.bumpOffset * scale
+    val pinOffsetY = (p.pinSide match {
+      case "S" => -p.ip.bumpOffset * scale
+      case "N" => p.ip.bumpOffset * scale
       case _ => 0.0
     }) + unitHeight / 2 - bumpsHeight / 2
     val textOffset = scale
-    val rotation = params.pinSide match {
+    val rotation = p.pinSide match {
       case "N" | "S" => 90.degrees
       case _ => 0.degrees
     }
-    val pins = params.flatBumpMap.filter(_.coreSig.isDefined)
+    val pins = p.flatBumpMap.filter(_.coreSig.isDefined)
       .foldLeft(Picture.empty){ case (on, b) =>
         val coreSig = b.coreSig.get
-        val pinSize = params.ip.layerPitch(coreSig.pinLayer.get) / 1000 * scale
+        val pinSize = p.ip.layerPitch(coreSig.pinLayer.get) / 1000 * scale
         val locX = coreSig.pinLocation.get.x * scale + pinOffsetX
         val locY = coreSig.pinLocation.get.y * scale + pinOffsetY
         val pinText = Picture.text(s"${coreSig.fullName} (${coreSig.pinLayer.get})")
           .scale(scale / 100, scale / 100).rotate(rotation)
         val pinRect = Picture.rectangle(pinSize, pinSize).at(locX, locY)
           .strokeColor(Color.black).strokeWidth(scale / 200)
-        (params.pinSide match {
+        (p.pinSide match {
           case "N" => pinText.at(locX, locY + textOffset)
           case "S" => pinText.at(locX, locY - textOffset)
           case "E" => pinText.at(locX + textOffset, locY)

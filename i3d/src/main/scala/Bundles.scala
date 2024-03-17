@@ -11,9 +11,9 @@ import aib3d.io._
 
 /** Top-level and adapter bundles */
 class BumpsBundle
-  (implicit params: AIB3DParams) extends Record with AutoCloneType {
+  (implicit p: AIB3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps
-  val sigBumps: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
+  val sigBumps: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => true
   })
@@ -59,9 +59,9 @@ class BumpsBundle
   }
 }
 
-class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType {
+class CoreBundle(implicit p: AIB3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps, and coreSig must be defined
-  val coreSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
+  val coreSigs: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => b.coreSig.isDefined
   })
@@ -104,7 +104,7 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
     val dbIn = dataBundle.getElements.withFilter(
       DataMirror.directionOf(_) == ActualDirection.Input
     ).flatMap(_.asUInt.asBools)
-    val eltIn = params.flatTxOrder.flatMap(elements.get(_))
+    val eltIn = p.flatTxOrder.flatMap(elements.get(_))
     (eltIn zip dbIn).foreach{ case (c, p) => c := p }
 
     // Connection outwards is more complicated
@@ -113,7 +113,7 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
     val dbOut = dataBundle.getElements.filter(
       DataMirror.directionOf(_) == ActualDirection.Output
     )
-    val eltOut = params.flatRxOrder.flatMap(elements.get(_))
+    val eltOut = p.flatRxOrder.flatMap(elements.get(_))
     var i = 0
     dbOut.foreach{ c =>
       val w = c.getWidth
@@ -126,10 +126,10 @@ class CoreBundle(implicit params: AIB3DParams) extends Record with AutoCloneType
 /** Module-specific bundle, used for redundancy */
 class ModuleBundle(
   val modCoord: AIB3DCoordinates[Int], coreFacing: Boolean)
-  (implicit params: AIB3DParams) extends Record with AutoCloneType {
+  (implicit p: AIB3DParams) extends Record with AutoCloneType {
 
   // First, extract the bumps corresponding to this module index
-  val modSigs: Seq[AIB3DBump] = params.flatBumpMap.filter(b => b match {
+  val modSigs: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => b.modCoord.get == modCoord  // defined for all non-power/ground bumps
   })

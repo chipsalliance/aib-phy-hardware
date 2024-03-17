@@ -19,14 +19,14 @@ case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
   // Following methods are to be used for module indices only
   // Get the linear index of the module (Tx/Rx are separate)
   // Divide by 2 since modules are created in pairs
-  def linearIdx(implicit params: AIB3DParams): Int = {
-    if (params.isWide) x.toInt / 2 * params.modRowsWR + y.toInt
-    else y.toInt / 2 * params.modColsWR + x.toInt
+  def linearIdx(implicit p: AIB3DParams): Int = {
+    if (p.isWide) x.toInt / 2 * p.modRowsWR + y.toInt
+    else y.toInt / 2 * p.modColsWR + x.toInt
   }
   // Determine if the module is redundant
-  def isRedundant(implicit params: AIB3DParams): Boolean = {
-    if (params.isWide) x.toInt >= 2 * params.modCols
-    else y.toInt >= 2 * params.modRows
+  def isRedundant(implicit p: AIB3DParams): Boolean = {
+    if (p.isWide) x.toInt >= 2 * p.modCols
+    else y.toInt >= 2 * p.modRows
   }
 }
 
@@ -81,7 +81,6 @@ case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     // Core input delay. Calculated from clock latency.
     // 1st quarter to half period budget.
     // TODO: calculate based on redundancy scheme.
-    //if (coreSig.isDefined) {
     val lat = p.pinSide match {
       case "N" => (p.modRowsWR - modCoord.get.y + 0.5) * p.modDelay
       case "S" => (modCoord.get.y + 1.5) * p.modDelay
@@ -94,24 +93,22 @@ case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     sdc += f"set_input_delay ${lat * 0.9 + p.tPeriod / 4}%.4f " +
       s"-clock [get_clocks ${relatedClk.get}] " +
       s"-min [get_ports $$core] -add_delay"  // hold
-    //}
     // Constrain output delay using data checks so that the clock path can be adjusted instead.
     // Due to duty cycle distortion, need to constrain against falling edge of forwarded clock.
     // Data check is same cycle constraint. Add period fractions instead of set_multicycle_path.
-    //sdc += f"set_data_check ${-p.dtxMax - p.tj - p.tPeriod / 2}%.4f " +
-    //  s"-fall_from [get_ports ${relatedClk.get}] -to [get_ports $$bumps] -setup"
-    //sdc += f"set_data_check ${p.dtxMin - p.tj + p.tPeriod * 1.5}%.4f " +
-    //  s"-fall_from [get_ports ${relatedClk.get}] -to [get_ports $$bumps] -hold"
-    sdc += f"""foreach b $$bumps {
-      |  set_data_check ${-p.dtxMax - p.tj - p.tPeriod / 2}%.4f -fall_from [get_ports ${relatedClk.get}] -to [get_ports $$b] -setup
-      |  set_data_check ${p.dtxMin - p.tj + p.tPeriod * 1.5}%.4f -fall_from [get_ports ${relatedClk.get}] -to [get_ports $$b] -hold
-      |}""".stripMargin
+    // TODO: Can't use [get_ports {list}] in -to of set_data_check (Cadence bug?)
+    sdc += "foreach b $bumps {"
+    sdc += f"  set_data_check ${-p.dtxMax - p.tj - p.tPeriod / 2}%.4f " +
+      s"-fall_from [get_ports ${relatedClk.get}] -to [get_ports $$b] -setup"
+    sdc += f"  set_data_check ${p.dtxMin - p.tj + p.tPeriod * 1.5}%.4f " +
+      s"-fall_from [get_ports ${relatedClk.get}] -to [get_ports $$b] -hold"
     if (p.redArch == RedundancyArch.Coding) {
-      sdc += f"""foreach b $$bumps {
-        |  set_data_check ${-p.dtxMax - p.tj - p.tPeriod / 2}%.4f -fall_from [get_ports TXCKR${clkIdx}] -to [get_ports $$b] -setup
-        |  set_data_check ${p.dtxMin - p.tj + p.tPeriod * 1.5}%.4f -fall_from [get_ports TXCKR${clkIdx}] -to [get_ports $$b] -hold
-        |}""".stripMargin
+      sdc += f"  set_data_check ${-p.dtxMax - p.tj - p.tPeriod / 2}%.4f " +
+        s"-fall_from [get_ports TXCKR${clkIdx}] -to [get_ports $$b] -setup"
+      sdc += f"  set_data_check ${p.dtxMin - p.tj + p.tPeriod * 1.5}%.4f " +
+        s"-fall_from [get_ports TXCKR${clkIdx}] -to [get_ports $$b] -hold"
     }
+    sdc += "}"
     // Constrain rise vs. fall delay using pulse width check
     sdc += f"set_min_pulse_width ${p.tPeriod + p.tj - p.jpw / 2}%.4f [get_ports $$bumps]"
     // Set output load.
@@ -160,7 +157,6 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     // Input transition. Matches Tx output transition.
     sdc += f"set_input_transition -min ${p.tPeriod/10}%.4f [get_ports $$bumps]"
     sdc += f"set_input_transition -max ${p.tPeriod/6}%.4f [get_ports $$bumps]"
-    //if (coreSig.isDefined) {
     // Core output delay
     sdc += f"set_output_delay ${p.tPeriod/2}%.4f " +
       s"-clock [get_clocks out_${relatedClk.get}] " +
@@ -170,7 +166,6 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     // Core max capacitance
     // TODO: tech dependent
     sdc += f"set_max_capacitance 0.01 [get_ports $$core]"
-    //}
     // Set lane-to-lane skew
     sdc += f"""# Rx lane-to-lane skew for clock domain ${relatedClk.get}
       |foreach p1 $$core {

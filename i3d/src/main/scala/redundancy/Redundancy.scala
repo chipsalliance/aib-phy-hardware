@@ -33,7 +33,7 @@ object RedundancyArch extends Enumeration {
 class RedundancyMux(
   modIdxA: AIB3DCoordinates[Int],
   modIdxB: AIB3DCoordinates[Int],
-  isTx: Boolean = true)(implicit params: AIB3DParams) extends RawModule {
+  isTx: Boolean = true)(implicit p: AIB3DParams) extends RawModule {
 
   // Note difference in module indices for Tx vs. Rx
   val (a, b, o) = (
@@ -63,20 +63,20 @@ class RedundancyMux(
 }
 
 /** Top-level shift redundancy add-on module */
-class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
+class RedundancyMuxTop(implicit p: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
   val bumps = IO(new BumpsBundle)  // internal
 
   // One hot encoding
-  val faultyTx, faultyRx = IO(Input(UInt(params.numMods.W)))
+  val faultyTx, faultyRx = IO(Input(UInt(p.numMods.W)))
 
   // Shift in the longer dimension
   // Order is (tx.a, tx.b, rx.a, rx.b)
-  val modIdxs = if (params.isWide) {
-    for (j <- 0 until params.modRows; i <- 0 until params.modCols)
+  val modIdxs = if (p.isWide) {
+    for (j <- 0 until p.modRows; i <- 0 until p.modCols)
       yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](2*i+k, j))
   } else {
-    for (i <- 0 until params.modCols; j <- 0 until params.modRows)
+    for (i <- 0 until p.modCols; j <- 0 until p.modRows)
       yield Seq(0, 2, 1, 3).map(k => AIB3DCoordinates[Int](i, 2*j+k))
   }
 
@@ -111,9 +111,9 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
   // First set of Tx bumps must have inputs directly from core
   // 0's as primary input to Tx mux for redundant modules are handled in connectToModuleBundle function
   val noMuxTxMods =
-    if (params.isWide) (0 until params.modRowsWR).map(i =>
+    if (p.isWide) (0 until p.modRowsWR).map(i =>
       AIB3DCoordinates[Int](0, i))
-    else (0 until params.modColsWR).map(i =>
+    else (0 until p.modColsWR).map(i =>
       AIB3DCoordinates[Int](i, 0))
   noMuxTxMods.foreach { idx =>
     // TODO: make a pass-thru connector instead going through a set of wires
@@ -128,11 +128,11 @@ class RedundancyMuxTop(implicit params: AIB3DParams) extends RawModule {
 }
 
 /** Module-level encoder */
-class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
+class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit p: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
   val clkOut = IO(Output(Clock()))
-  val faulty = IO(Input(Vec(params.sigsPerCluster, UInt(log2Ceil(params.numClusters - 1).W))))
+  val faulty = IO(Input(Vec(p.sigsPerCluster, UInt(log2Ceil(p.numClusters - 1).W))))
   val faultyClk = IO(Input(Bool()))
   val dbi = IO(Input(Bool()))
 
@@ -141,26 +141,26 @@ class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
   val cBits = core.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
                 .map(d => Some(d.asUInt))  // convert to Option
-                .padTo(params.numClusters * params.sigsPerCluster, None)  // deal w/ last cluster
-                .grouped(params.sigsPerCluster).toSeq  // group by cluster
+                .padTo(p.numClusters * p.sigsPerCluster, None)  // deal w/ last cluster
+                .grouped(p.sigsPerCluster).toSeq  // group by cluster
                 .transpose  // to get bits for each encoder
   val bsBits = bumps.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
-                .dropRight(params.sigsPerCluster)  // drop redundant bits
+                .dropRight(p.sigsPerCluster)  // drop redundant bits
                 .map(d => Some(d.asUInt))
-                .padTo(params.numClusters * params.sigsPerCluster, None)
-                .grouped(params.sigsPerCluster).toSeq
+                .padTo(p.numClusters * p.sigsPerCluster, None)
+                .grouped(p.sigsPerCluster).toSeq
                 .transpose
   val brBits = bumps.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
-                .takeRight(params.sigsPerCluster)
+                .takeRight(p.sigsPerCluster)
 
   // Signals
   (cBits zip bsBits).zipWithIndex.foreach { case ((cGrp, bGrp), i) =>
     // Invert is a n-input mux controlled by faulty
     // TODO: implement DBI
     val inv = MuxLookup(faulty(i), 0.U,
-      (0 until params.numClusters - 1).map(j =>
+      (0 until p.numClusters - 1).map(j =>
         j.U -> cGrp(j).getOrElse(0.U(1.W))
     ))
     // XOR bits with inv
@@ -200,7 +200,7 @@ class Encoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
 }
 
 /** Module-level decoder */
-class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) extends RawModule {
+class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit p: AIB3DParams) extends RawModule {
   val core = IO(new ModuleBundle(modIdx, coreFacing = true))
   val bumps = IO(new ModuleBundle(modIdx, coreFacing = false))
   val clkOut = IO(Output(Clock()))
@@ -210,19 +210,19 @@ class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
   val cBits = core.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
                 .map(d => Some(d.asUInt))  // convert to Option
-                .padTo(params.numClusters * params.sigsPerCluster, None)  // deal w/ last cluster
-                .grouped(params.sigsPerCluster).toSeq  // group by cluster
+                .padTo(p.numClusters * p.sigsPerCluster, None)  // deal w/ last cluster
+                .grouped(p.sigsPerCluster).toSeq  // group by cluster
                 .transpose  // to get bits for each encoder
   val bsBits = bumps.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
                 .map(d => Some(d.asUInt))  // convert to Option
-                .dropRight(params.sigsPerCluster)  // drop redundant bits
-                .padTo(params.numClusters * params.sigsPerCluster, None)
-                .grouped(params.sigsPerCluster).toSeq
+                .dropRight(p.sigsPerCluster)  // drop redundant bits
+                .padTo(p.numClusters * p.sigsPerCluster, None)
+                .grouped(p.sigsPerCluster).toSeq
                 .transpose
   val brBits = bumps.getElements
                 .filterNot(DataMirror.checkTypeEquivalence(_, Clock()))  // drop clocks
-                .takeRight(params.sigsPerCluster)
+                .takeRight(p.sigsPerCluster)
 
   // Signals
   (cBits zip bsBits).zipWithIndex.foreach { case ((cGrp, bGrp), i) =>
@@ -267,23 +267,23 @@ class Decoder(val modIdx: AIB3DCoordinates[Int])(implicit params: AIB3DParams) e
 }
 
 /** Top-level coding redundancy add-on module */
-class CodingRedundancyTop(implicit params: AIB3DParams) extends RawModule {
+class CodingRedundancyTop(implicit p: AIB3DParams) extends RawModule {
   val core = IO(new CoreBundle)
   val bumps = IO(new BumpsBundle)  // internal
-  val clksToTx = IO(Output(Vec(params.numMods, Clock())))
-  val clksToRx = IO(Output(Vec(params.numMods, Clock())))
-  val faulty = IO(Input(Vec(params.numMods,  // Tx only
-    Vec(params.sigsPerCluster, UInt(log2Ceil(params.numClusters - 1).W)))))  // binary-coded
-  val faultyClk = IO(Input(UInt(params.numMods.W)))  // Tx only, one-hot
+  val clksToTx = IO(Output(Vec(p.numMods, Clock())))
+  val clksToRx = IO(Output(Vec(p.numMods, Clock())))
+  val faulty = IO(Input(Vec(p.numMods,  // Tx only
+    Vec(p.sigsPerCluster, UInt(log2Ceil(p.numClusters - 1).W)))))  // binary-coded
+  val faultyClk = IO(Input(UInt(p.numMods.W)))  // Tx only, one-hot
   val dbi = IO(Input(Bool()))
 
   // Instantiate encoders and decoders
   // Assumes Tx/Rx interleaved
-  val modCoords = if (params.isWide)  // col-by-col
-    for (c <- 0 until params.modCols; r <- 0 until params.modRows)
+  val modCoords = if (p.isWide)  // col-by-col
+    for (c <- 0 until p.modCols; r <- 0 until p.modRows)
       yield (AIB3DCoordinates[Int](2*c, r), AIB3DCoordinates[Int](2*c+1, r))
   else  // row-by-row
-    for (r <- 0 until params.modRows; c <- 0 until params.modCols)
+    for (r <- 0 until p.modRows; c <- 0 until p.modCols)
       yield (AIB3DCoordinates[Int](c, 2*r), AIB3DCoordinates[Int](c, 2*r+1))
   val encoders = modCoords.map(c => Module(new Encoder(c._1)))
   val decoders = modCoords.map(c => Module(new Decoder(c._2)))
