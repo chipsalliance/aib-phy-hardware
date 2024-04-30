@@ -8,7 +8,7 @@
 
 // lazy val root = (project in file("."))
 //   .settings(
-//     name := "aib3d",
+//     name := "i3d",
 //     libraryDependencies ++= Seq(
 //       "edu.berkeley.cs" %% "chisel3" % chiselVersion,
 //       "edu.berkeley.cs" %% "chiseltest" % "0.5.1" % "test"
@@ -25,7 +25,7 @@
 
 organization := "edu.berkeley.cs"
 version := "0.1"
-name := "aib3d"
+name := "i3d"
 scalaVersion := "2.13.10"
 
 libraryDependencies += "org.creativescala" %% "doodle" % "0.19.0"

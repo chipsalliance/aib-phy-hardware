@@ -1,16 +1,16 @@
-package aib3d
+package i3d
 
 import util.control.Breaks._
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.SeqMap
-import scala.math.{pow, sqrt, min, max}
+import scala.math.{pow, sqrt, min, max, tan, toRadians}
 
 import chisel3._
 
 import chisel3.experimental.DataMirror
 import chisel3.util.HasBlackBoxResource
 
-import aib3d.io._
+import i3d.io._
 
 // Assorted methods needed for bump map generation
 object Utils {
@@ -18,15 +18,15 @@ object Utils {
    * IO flattening
    * @param bundle is a data bundle
    * @param dir is the desired data direction
-   * @return a sequence of AIB3DCore objects
+   * @return a sequence of I3DCore objects
    */
-  def flattenIOs(bundle: Bundle, dir: SpecifiedDirection) : Seq[AIB3DCore] = {
+  def flattenIOs(bundle: Bundle, dir: SpecifiedDirection) : Seq[I3DCore] = {
     def cloneDirection(d: Data) = DataMirror.specifiedDirectionOf(d) match {
       case SpecifiedDirection.Input => Input(UInt(1.W))
       case SpecifiedDirection.Output => Output(UInt(1.W))
       case _ => throw new Exception("Only Input/Output supported")
     }
-    val flat = ArrayBuffer.empty[AIB3DCore]
+    val flat = ArrayBuffer.empty[I3DCore]
     val orig = bundle.elements.filter(elt => DataMirror.specifiedDirectionOf(elt._2) == dir)
     for ((oname, odata) <- orig) {
       // Add single bit IOs as-is, otherwise break into individual bits
@@ -47,10 +47,10 @@ object Utils {
             // TODO: support scrambling of bus bits for switching activity distribution
             // Bit indexing can't be done unless it is actually hardware.
             // Thus, we need to copy the direction and make it a 1-bit Data.
-            flat += AIB3DCore(name, Some(i), cloneDirection(odata), None)
+            flat += I3DCore(name, Some(i), cloneDirection(odata), None)
           }
         else
-          flat += AIB3DCore(name, None, cloneDirection(odata), None)
+          flat += I3DCore(name, None, cloneDirection(odata), None)
       }
     }
     flat.toSeq
@@ -61,11 +61,11 @@ object Utils {
     * Valid only for gridded (square) bump arrangement
     * Given particle size, signals per module, and any additional
     * required bumps within a circle given sig/PG rules:
-    * @param gp: global params (AIB3DGlblParams)
+    * @param gp: global params (I3DGlblParams)
     * @param sigs: number of signal bumps per module
     * @return A Tuple of (diameter, number of circles, pattern, number of signals)
     */
-  def gridPacking(gp: AIB3DGlblParams, sigs: Int): (Double, Int, Seq[Int], Int) = {
+  def gridPacking(gp: I3DGlblParams, sigs: Int): (Double, Int, Seq[Int], Int) = {
     // This is a look-up table corresponding to the options for the maximal
     // signal pattern (row-by-row) inside of a circle
     val patternInCircle = Seq(
@@ -119,7 +119,7 @@ object Utils {
     * Given parameters from gridPacking:
     * Calculate coordinates of clock, signal, power, and ground bumps contained within each module
     * The coords are Seq[(Int, Int)] with (x, y) coordinates of bumps
-    * @param gp: global params (AIB3DGlblParams)
+    * @param gp: global params (I3DGlblParams)
     * @param diam: diameter of circle
     * @param circles: number of circles
     * @param pattern: pattern of signal bumps in circle (row-by-row)
@@ -128,7 +128,7 @@ object Utils {
     * @param isWide: true if circles should be arranged more horizontally
     * @return A Tuple of (signal coords, clock coords, power coords, ground coords)
     */
-  def calcCoding(gp: AIB3DGlblParams, diam: Double, circles: Int, pattern: Seq[Int],
+  def calcCoding(gp: I3DGlblParams, diam: Double, circles: Int, pattern: Seq[Int],
     sigsPerCircle: Int, sigsPerMod: Int, isWide: Boolean):
     (Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)], Seq[(Int, Int)]) = {
     // Generate the coordinate order in the pattern
@@ -170,9 +170,22 @@ object Utils {
 
     // Determine offsets of circles (iterate clockwise)
     val offsets = circles match {
+      case 4 =>  // 3 + 1 in corner
+        val os = diam.ceil.toInt
+        Seq((0, 0), (0, os), (os, os), (os, 0))
       case 5 =>  // 4 surrounding 1
         val mid = (diam / sqrt(2)).ceil.toInt
         Seq((0, 0), (0, 2*mid), (2*mid, 2*mid), (2*mid, 0), (mid, mid))
+      case 6 =>  // 2 rows/3 cols, middle col staggered up. redundant is top-most.
+        val hos = (3 / sqrt(13) * diam).ceil.toInt
+        val vos1 = (sqrt(1 - 9 / 13) * diam).ceil.toInt // same row
+        val vos2 = (6 / sqrt(13) - sqrt(1 - 9 / 13) * diam).ceil.toInt // row-to-row
+        Seq((0, 0), (0, vos2), (hos, vos1+vos2), (2*hos, vos2), (2*hos, 0), (hos, vos1))
+      case 8 =>  // everything offset by 15 degrees
+        val os1 = ((sqrt(2) + sqrt(6)) / 2 * diam).ceil.toInt  // larger
+        val os2 = ((sqrt(2) + sqrt(6)) / 2 * tan(toRadians(15)) * diam).ceil.toInt  // smaller
+        Seq((0, 0), (os2, os1), (0, 2*os1), (os1, 2*os1-os2),
+            (2*os1, 2*os1), (2*os1-os2, os1), (2*os1, 0), (os1, os2))
       case 9 =>  // 3 x 3
         val step = diam.ceil.toInt
         Seq((0, 0), (0, step), (0, 2*step),
@@ -199,6 +212,7 @@ object Utils {
     // Rule: Immediately adjacent to a signal bump, use ground. Otherwise, use power.
     // In the unassigned (to signal) in each circle, use power
     // (Note in bumpMapGen that power/ground bumps are assigned first so this is OK)
+    // TODO: check that sig to P/G distance is satisfied
     val pInCircles = for ((x_os, y_os) <- offsets; (x, y) <- coordsInCirle)
       yield (x + x_os, y + y_os)
     val gCoords = (for ((x_os, y_os) <- offsets; (x, y) <- outerRing)
@@ -298,6 +312,7 @@ object Utils {
       else
         diffuse(splitQuotient._2, splitQuotient._1.map(_ + 1))
     }
+    // TODO: print pattern debug info
     pattern.scanLeft(0)(_ + _ + 1)
            .map(_ - 1 - sigsPerPG/2)
            .drop(1).dropRight(1)
@@ -361,12 +376,12 @@ object Utils {
     * @param eCoords: coordinates of extra signal bumps
     * @return Tuple of (the final 2D bump map, final 1D bump map)
     */
-  def bumpMapGen(tx: Seq[AIB3DCore], rx: Seq[AIB3DCore],
+  def bumpMapGen(tx: Seq[I3DCore], rx: Seq[I3DCore],
                  numSigs: Int, modDims: (Int, Int), isWide: Boolean,
                  sCoords: Seq[(Int, Int)], cCoords: Seq[(Int, Int)],
                  pCoords: Seq[(Int, Int)], gCoords: Seq[(Int, Int)],
                  eCoords: Seq[(Int, Int)]):
-                  (Array[Array[AIB3DBump]], Seq[AIB3DBump]) = {
+                  (Array[Array[I3DBump]], Seq[I3DBump]) = {
     // Determine number of (non-)redundant modules
     val mods = tx.length / numSigs
     val redMods = modDims._1 * modDims._2 - mods
@@ -375,7 +390,7 @@ object Utils {
     val rows = allCoords.map(_._2).max + 1
     val cols = allCoords.map(_._1).max + 1
     // Initialize bump maps
-    val txBumpMap, rxBumpMap = Array.ofDim[AIB3DBump](mods + redMods, rows, cols)
+    val txBumpMap, rxBumpMap = Array.ofDim[I3DBump](mods + redMods, rows, cols)
     // Counters
     var clkCnt = 0  // clock in module
     var bitCnt = 0  // signal bit in module
@@ -442,14 +457,14 @@ object Utils {
 
     // Flatten modules into final map
     // Module index tag is added to each bump for module redundancy mapping
-    val finalMap = Array.ofDim[AIB3DBump](totModRows * rows, totModCols * cols)
+    val finalMap = Array.ofDim[I3DBump](totModRows * rows, totModCols * cols)
     modOrigins.zipWithIndex.foreach { case ((r, c), m) =>
       for (mr <- 0 until rows; mc <- 0 until cols) {
         finalMap(r + mr)(c + mc) = interleaved(m)(mr)(mc)
         finalMap(r + mr)(c + mc).modCoord =
-          Some(AIB3DCoordinates[Int](
+          I3DCoordinates[Int](
             x = c / cols,
-            y = r / rows))
+            y = r / rows)
       }
     }
 
@@ -457,7 +472,7 @@ object Utils {
     // to aid in the coding redundancy module IO assignment.
     // Use the coordinates derived above for signal bumps
     // Get signal bumps first, then clock, power, ground, extras
-    val flatMap: ArrayBuffer[AIB3DBump] = ArrayBuffer.empty
+    val flatMap: ArrayBuffer[I3DBump] = ArrayBuffer.empty
     val order = Seq(sCoords, cCoords, pCoords, gCoords, eCoords).flatten.distinct
     for ((r, c) <- modOrigins; (x, y) <- order)
       flatMap += finalMap(r + y)(c + x)
@@ -473,8 +488,8 @@ object Utils {
    * @param gp: global params
    * @param ip: instance params
    */
-  def calcLocations(bumpMap: Array[Array[AIB3DBump]], pinSide: String,
-                    gp: AIB3DGlblParams, ip: AIB3DInstParams) : Unit = {
+  def calcLocations(bumpMap: Array[Array[I3DBump]], pinSide: String,
+                    gp: I3DGlblParams, ip: I3DInstParams) : Unit = {
     val rows = bumpMap.length
     val cols = bumpMap(0).length
     val isWide = Set("N", "S").contains(pinSide)
@@ -483,9 +498,9 @@ object Utils {
     // TODO: ignore tech grids and let the tools snap or use BigDecimal?
     for (r <- 0 until rows; c <- 0 until cols)
       // Update coordinates using calculated pitch and bumpOffset.
-      bumpMap(r)(c).location = Some(AIB3DCoordinates[Double](
+      bumpMap(r)(c).location = I3DCoordinates[Double](
         x = (c + 0.5) * gp.pitchH + (if (pinSide == "W") ip.bumpOffset else 0.0),
-        y = (r + 0.5) * gp.pitchV + (if (pinSide == "S") ip.bumpOffset else 0.0))
+        y = (r + 0.5) * gp.pitchV + (if (pinSide == "S") ip.bumpOffset else 0.0)
       )
 
     // Calculate pin locations
@@ -524,20 +539,20 @@ object Utils {
     }
     coreSigs.zipWithIndex.foreach{ case (grp, i) =>
       (grp zip pinOffsets.take(grp.length)).foreach{ case (sig, (os, lay)) =>
-        sig.pinLayer = Some(lay)
+        sig.pinLayer = lay
         sig.pinLocation = pinSide match {
-          case "W" => Some(AIB3DCoordinates[Double](
+          case "W" => I3DCoordinates[Double](
                         x = 0,
-                        y = (i + 0.5) * gp.pitchV + os))
-          case "E" => Some(AIB3DCoordinates[Double](
+                        y = (i + 0.5) * gp.pitchV + os)
+          case "E" => I3DCoordinates[Double](
                         x = cols * gp.pitchH + ip.bumpOffset,
-                        y = (i + 0.5) * gp.pitchV + os))
-          case "S" => Some(AIB3DCoordinates[Double](
+                        y = (i + 0.5) * gp.pitchV + os)
+          case "S" => I3DCoordinates[Double](
                         x = (i + 0.5) * gp.pitchH + os,
-                        y = 0))
-          case "N" => Some(AIB3DCoordinates[Double](
+                        y = 0)
+          case "N" => I3DCoordinates[Double](
                         x = (i + 0.5) * gp.pitchH + os,
-                        y = rows * gp.pitchV + ip.bumpOffset))
+                        y = rows * gp.pitchV + ip.bumpOffset)
         }
       }
     }

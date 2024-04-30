@@ -1,4 +1,4 @@
-package aib3d.stage
+package i3d.stage
 
 import firrtl.AnnotationSeq
 import firrtl.options.{Phase, Dependency}

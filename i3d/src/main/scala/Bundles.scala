@@ -1,4 +1,4 @@
-package aib3d
+package i3d
 
 import scala.collection.immutable.SeqMap
 
@@ -7,13 +7,13 @@ import chisel3._
 import chisel3.experimental.{Analog, DataMirror, AutoCloneType}
 import chisel3.util.{log2Ceil, Cat}
 
-import aib3d.io._
+import i3d.io._
 
 /** Top-level and adapter bundles */
 class BumpsBundle
-  (implicit p: AIB3DParams) extends Record with AutoCloneType {
+  (implicit p: I3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps
-  val sigBumps: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
+  val sigBumps: Seq[I3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => true
   })
@@ -48,7 +48,7 @@ class BumpsBundle
         if (bump.coreSig.isDefined) {
           elements(bump.coreSig.get.relatedClk.get).asUInt(0).asClock
         } else {  // muxed redundant signal
-          val modNum = bump.modCoord.get.linearIdx
+          val modNum = bump.modCoord.linearIdx
           bump match {
             case _:TxSig => elements(s"TXCKP${modNum}").asUInt(0).asClock
             case _:RxSig => elements(s"RXCKP${modNum}").asUInt(0).asClock
@@ -59,9 +59,9 @@ class BumpsBundle
   }
 }
 
-class CoreBundle(implicit p: AIB3DParams) extends Record with AutoCloneType {
+class CoreBundle(implicit p: I3DParams) extends Record with AutoCloneType {
   // Filter out power and ground bumps, and coreSig must be defined
-  val coreSigs: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
+  val coreSigs: Seq[I3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
     case _ => b.coreSig.isDefined
   })
@@ -125,13 +125,13 @@ class CoreBundle(implicit p: AIB3DParams) extends Record with AutoCloneType {
 
 /** Module-specific bundle, used for redundancy */
 class ModuleBundle(
-  val modCoord: AIB3DCoordinates[Int], coreFacing: Boolean)
-  (implicit p: AIB3DParams) extends Record with AutoCloneType {
+  val modCoord: I3DCoordinates[Int], val coreFacing: Boolean)
+  (implicit p: I3DParams) extends Record with AutoCloneType {
 
   // First, extract the bumps corresponding to this module index
-  val modSigs: Seq[AIB3DBump] = p.flatBumpMap.filter(b => b match {
+  val modSigs: Seq[I3DBump] = p.flatBumpMap.filter(b => b match {
     case _:Pwr | _:Gnd => false
-    case _ => b.modCoord.get == modCoord  // defined for all non-power/ground bumps
+    case _ => b.modCoord == modCoord  // defined for all non-power/ground bumps
   })
   // Filter out redundant bumps in coding redundancy for core-facing bundle
   .filterNot(_.coreSig.isEmpty && coreFacing && !modCoord.isRedundant)
@@ -153,6 +153,13 @@ class ModuleBundle(
       b.bumpName -> b.coreSig.get.cloneIoType
   }):_*)
   def apply(elt: String): Data = elements(elt)
+
+  // Pass-thru connect for Tx module
+  def thruConnectTx(that: ModuleBundle): Unit = {
+    require(this.coreFacing != that.coreFacing,
+      "Cannot connect two core-facing or two bump-facing bundles")
+    (this.getElements zip that.getElements).foreach{ case (a, b) => b := a }
+  }
 }
 
 class DefaultDataBundle(width: Int) extends Bundle {

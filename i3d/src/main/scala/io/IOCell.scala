@@ -1,11 +1,11 @@
-package aib3d.io
+package i3d.io
 
 import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror}
 import testchipip.{ClockMux2, ClockInverter}
 
-import aib3d._
+import i3d._
 
 class IOControlBundle extends Bundle {
   val loopback, txWkpu, txWkpd, rxWkpu, rxWkpd = Bool()
@@ -46,14 +46,14 @@ class RxSigIOCellBundle extends Bundle {
 }
 
 trait IOCellConnects {
-  val forBump: AIB3DBump
+  val forBump: I3DBump
 
   def connectInternal(d: Data, clk: Clock, ioCtrl: IOControlBundle): Unit
 
   def connectExternal(d: Data): Unit
 }
 
-class TxClkIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
+class TxClkIOCellModel(val forBump: I3DBump) extends RawModule with IOCellConnects {
   val io = IO(new TxClkIOCellBundle)
 
   def connectInternal(tx: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
@@ -69,7 +69,7 @@ class TxClkIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConn
   io.pad := io.txClk
 }
 
-class TxSigIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
+class TxSigIOCellModel(val forBump: I3DBump) extends RawModule with IOCellConnects {
   val io = IO(new TxSigIOCellBundle)
 
   def connectInternal(tx: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
@@ -90,7 +90,7 @@ class TxSigIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConn
   io.lpbkData := withClock(io.txClk)(RegNext(io.pad))
 }
 
-class RxClkIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
+class RxClkIOCellModel(val forBump: I3DBump) extends RawModule with IOCellConnects {
   val io = IO(new RxClkIOCellBundle)
 
   def connectInternal(rx: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
@@ -104,7 +104,7 @@ class RxClkIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConn
   io.rxClk := ClockInverter(io.pad)
 }
 
-class RxSigIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConnects {
+class RxSigIOCellModel(val forBump: I3DBump) extends RawModule with IOCellConnects {
   val io = IO(new RxSigIOCellBundle)
 
   def connectInternal(rx: Data, clk: Clock, ioCtrl: IOControlBundle): Unit = {
@@ -123,7 +123,7 @@ class RxSigIOCellModel(val forBump: AIB3DBump) extends RawModule with IOCellConn
   io.rxData := withClock(io.rxClk)(RegNext(muxedRx))
 }
 
-class IOCellBB(val forBump: AIB3DBump)(implicit p: AIB3DInstParams)
+class IOCellBB(val forBump: I3DBump)(implicit p: I3DInstParams)
   extends BlackBox with IOCellConnects {
   override def desiredName =
     if (p.ioCellName.isDefined) p.ioCellName.get

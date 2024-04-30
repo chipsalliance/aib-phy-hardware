@@ -1,8 +1,8 @@
-package aib3d.deskew
+package i3d.deskew
 
 import chisel3._
 
-import aib3d._
+import i3d._
 
 /**
   * This fully-synthesizable DLL uses a folded delay line topology, originally designed by Uneeb Rathore.

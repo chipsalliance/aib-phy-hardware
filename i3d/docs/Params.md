@@ -1,16 +1,16 @@
-AIB-3D Parameters
+I3D Parameters
 =================
 
-This document explains the user-defined parameter structure of AIB 3D and explains what they are used for.
+This document explains the user-defined parameter structure of I 3D and explains what they are used for.
 
-The AIB-3D architecture depends on a large set of global/instance technology/design parameters that will be used to construct it.
+The I-3D architecture depends on a large set of global/instance technology/design parameters that will be used to construct it.
 They dictate how the bump map is created based on the spec discretization.
 
-Both AIB3DGlblParams and AIB3DInstParams are combined into AIB3DParams for post-processing.
+Both I3DGlblParams and I3DInstParams are combined into I3DParams for post-processing.
 
 All parameter types are given and are required unless denoted as "Optional".
 
-## Global Parameters (AIB3DGlblParams):
+## Global Parameters (I3DGlblParams):
 
 Technology parameters:
 
@@ -54,7 +54,7 @@ Design parameters:
   * Each element must have a Direction (Input, Output) specified.
   * IMPORTANT: The ordering of the elements in the Bundle are used for bump assignment.
 
-## Instance Parameters (AIB3DInstParams):
+## Instance Parameters (I3DInstParams):
 
 Technology parameters:
 

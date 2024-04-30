@@ -1,11 +1,11 @@
-package aib3d.stage
+package i3d.stage
 
 import chisel3.stage.ChiselStage
 import firrtl.options.Dependency
 import firrtl.options.PhaseManager.PhaseDependency
 
 /** Custom Stage with extra Phases */
-class AIB3DStage extends ChiselStage {
+class I3DStage extends ChiselStage {
   override val targets: Seq[PhaseDependency] = Seq(
     Dependency[chisel3.stage.phases.Checks],
     Dependency[chisel3.stage.phases.Elaborate],

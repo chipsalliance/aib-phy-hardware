@@ -1,7 +1,7 @@
-aib3d-phy-hardware
+i3d-phy-hardware
 ==================
 
-This is the Chisel generator for the AIB-3D PHY RTL. Technology-specific cells are not included in this generator; they must be added as a mixin.
+This is the Chisel generator for the I3D PHY RTL. Technology-specific cells are not included in this generator; they must be added as a mixin.
 
 ## Usage
 
@@ -10,7 +10,7 @@ This is the Chisel generator for the AIB-3D PHY RTL. Technology-specific cells a
 This repository relies on Chipyard. Refer to the Chipyard documentation for how to add this project as a generator submodule. In the Chipyard `build.sbt`, add the following:
 
 ```
-lazy val aib3d = (project in file("generators/aib3d-phy-hardware"))
+lazy val i3d = (project in file("generators/i3d-phy-hardware"))
   .dependsOn(rocketchip, tapeout, iocell, testchipip)
   .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(libraryDependencies ++= Seq("edu.berkeley.cs" %% "chiseltest" % "0.6.0"))
@@ -23,11 +23,11 @@ When setting up Chipyard, you do not need to do any of the steps to build the to
 
 ### Generator
 
-After starting the sbt server, run the following command to generate the AIB-3D PHY RTL and all collateral:
+After starting the sbt server, run the following command to generate the I3D PHY RTL and all collateral:
 
 ```
-project aib3d
-runMain aib3d.AIB3DGenerator
+project i3d
+runMain i3d.I3DGenerator
 ```
 
 ### Unit Tests

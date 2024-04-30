@@ -1,4 +1,4 @@
-package aib3d
+package i3d
 
 import util.control.Breaks._
 import scala.collection.mutable.ArrayBuffer
@@ -9,11 +9,11 @@ import chisel3._
 
 import chisel3.experimental.DataMirror
 
-import aib3d.io._
-import aib3d.redundancy.RedundancyArch
+import i3d.io._
+import i3d.redundancy.RedundancyArch
 import chisel3.util.is
 
-/** Global AIB3D Parameters
+/** Global I3D Parameters
   * These dictate the bump map and spec discretization
   * Following are technology parameters
   * @param rate is the data rate in GT/s
@@ -30,6 +30,7 @@ import chisel3.util.is
   * in the horizontal (width) dimension
   * @param sigsPerPGOvrdV overrides the max number of signals between P/G bumps
   * in the vertical (height) dimension
+  * @param modSize is the max number of data bits (Tx/Rx, each) in a module
   * Following are design parameters
   * @param redundArch is the active data redundancy architecture.
   * 0 = none, 1 = coding, 2 = muxing
@@ -38,7 +39,6 @@ import chisel3.util.is
   * Only used for muxing redundancy.
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
-  * @param modSize is the max number of data bits (Tx/Rx, each) in a module
   * @param pinSide is the side where pins are to be assigned, pre-mirroring/rotation.
   * One of "N", "S", "E", "W".
   * @param dataBundle is the data bundle of the leader die
@@ -46,8 +46,9 @@ import chisel3.util.is
   * One of "random", "correlated", "one-hot", or "normal".
   * Used for pin-to-bump assignment in all redundancy modes and low-power coding in coding redundancy mode.
   */
-case class AIB3DGlblParams(
+case class I3DGlblParams(
   rate: Int = 4,
+  // TODO: add timingFile
   pitch: Double = 10.0,
   pitchOvrdH: Option[Double] = None,
   pitchOvrdV: Option[Double] = None,
@@ -56,11 +57,11 @@ case class AIB3DGlblParams(
   patternOvrd: Option[String] = None,
   sigsPerPGOvrdH: Option[Int] = None,
   sigsPerPGOvrdV: Option[Int] = None,
+  modSize: Int = 64,
   redundArch: Int = 2,
   redundRatio: Int = 4,
   hasDBI: Boolean = false,
   deskewArch: Int = 0,
-  modSize: Int = 64,
   pinSide: String = "N",
   dataBundle: Bundle,
   dataStatistic: String = "random") {
@@ -113,7 +114,7 @@ case class AIB3DGlblParams(
   //   "modSize too small, must be at least maxParticleSize^2")
 }
 
-/** Instance AIB3D Parameters
+/** Instance I3D Parameters
   * Following are technology parameters
   * @param node is the tech node (in nm) of the instance
   * @param layerPitch is the layer name to pitch (in nm) mapping corresponding
@@ -142,8 +143,10 @@ case class AIB3DGlblParams(
   * May be required by the collateral generator.
   * @param ioCellName is the name of the IO cell macro used by the technology.
   * May be required by the collateral generator.
+  * @param bumpLoadFunc is a user-specified function for calculating the load
+  * capacitance on bumps, and overrides the default internal calculation if specified.
   */
-case class AIB3DInstParams (
+case class I3DInstParams (
   node: Double = 10.0,
   layerPitch: Map[String, Double] = Map("M3" -> 100.0, "M5" -> 200.0),
   viaKOZRatio: Double = 0.15,
@@ -162,7 +165,8 @@ case class AIB3DInstParams (
   testProtocol: String = "IEEE1838",
   blackBoxModels: Boolean = false,
   bumpCellName: Option[String] = None,
-  ioCellName: Option[String] = None) {
+  ioCellName: Option[String] = None,
+  bumpLoadFunc: Option[(Double) => Double] = None) {
 
   // Checks
   require(node <= 28.0, "Max supported tech node is 28nm")
@@ -189,9 +193,9 @@ case class AIB3DInstParams (
   // TODO: check testProtocol
 }
 
-case class AIB3DParams(
-  gp: AIB3DGlblParams,
-  ip: AIB3DInstParams) {
+case class I3DParams(
+  gp: I3DGlblParams,
+  ip: I3DInstParams) {
   println("Calculating Patch parameters...")
 
   /** Step 1: Extract and flatten the Tx and Rx IOs */
@@ -254,7 +258,7 @@ case class AIB3DParams(
     * It is different depending on the redundancy scheme.
     */
 
-  val (bumpMap: Array[Array[AIB3DBump]], flatBumpMap: Seq[AIB3DBump]) =
+  val (bumpMap: Array[Array[I3DBump]], flatBumpMap: Seq[I3DBump]) =
     if (redArch == RedundancyArch.Coding) {
       val (sCoords, cCoords, pCoords, gCoords) =
         Utils.calcCoding(gp = gp,
@@ -333,6 +337,7 @@ case class AIB3DParams(
 
   // Timing parameters
   // Values derived from spec. Assumes lib units in ns.
+  // TODO: read this from a header file
   val tPeriod = 1.0 / gp.rate
   val ch = 0.1 * tPeriod  // Eye closure due to channel
   val jpw = 0.08 * tPeriod  // Pulse width jitter
@@ -342,8 +347,8 @@ case class AIB3DParams(
   val tj = 0.05 * tPeriod  // Manifested data/clk differential jitter
   val ap = 0.02 * tPeriod  // Sampling aperture
   // Tx delay follows curve fit. Min is nominal - 0.08UI. Max is nominal + 0.12UI. Assumes slow/fast corners are +/- 10% supply voltage.
-  val dtxMin = (ip.vNom*1.1) / (0.0153*pow(ip.vNom*1.1, 2) + 0.0188*ip.vNom*1.1 - 0.0084) / 1000 - 0.08 * tPeriod // min for Dtx
-  val dtxMax = (ip.vNom*0.9) / (0.0153*pow(ip.vNom*0.9, 2) + 0.0188*ip.vNom*0.9 - 0.0084) / 1000 + 0.12 * tPeriod + skew // max for Dtx
+  val dtxMin = (ip.vNom*1.1) / (0.0153*pow(ip.vNom*1.1, 2) + 0.0188*ip.vNom*1.1 - 0.0084) / 1000 - 0.08 * tPeriod + skew/2 // min for Dtx
+  val dtxMax = (ip.vNom*0.9) / (0.0153*pow(ip.vNom*0.9, 2) + 0.0188*ip.vNom*0.9 - 0.0084) / 1000 + 0.12 * tPeriod + skew/2 // max for Dtx
   // Rx input delay must also factor in jitter/eye closure/noise effects.
   // Jitter budget split evenly b/w min/max, differential jitter already budgeted in clock uncertainty.
   val drxMin = dtxMin*(1-atrx*nvcc/2) - jpw/2 - ch/2 - sqrt(2*pow(tj, 2))/2

@@ -1,4 +1,4 @@
-package aib3d.io
+package i3d.io
 
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
@@ -8,36 +8,36 @@ import chisel3._
 
 import chisel3.experimental.{Analog, DataMirror}
 
-import aib3d._
-import aib3d.redundancy.RedundancyArch
+import i3d._
+import i3d.redundancy.RedundancyArch
 
 /** Useful case classes */
 
 /** Useful for any coordinates (module, pin, bump) */
-case class AIB3DCoordinates[T: Numeric](x: T, y: T) {
+case class I3DCoordinates[T: Numeric](x: T, y: T) {
   import Numeric.Implicits._
   // Following methods are to be used for module indices only
   // Get the linear index of the module (Tx/Rx are separate)
   // Divide by 2 since modules are created in pairs
-  def linearIdx(implicit p: AIB3DParams): Int = {
+  def linearIdx(implicit p: I3DParams): Int = {
     if (p.isWide) x.toInt / 2 * p.modRowsWR + y.toInt
     else y.toInt / 2 * p.modColsWR + x.toInt
   }
   // Determine if the module is redundant
-  def isRedundant(implicit p: AIB3DParams): Boolean = {
+  def isRedundant(implicit p: I3DParams): Boolean = {
     if (p.isWide) x.toInt >= 2 * p.modCols
     else y.toInt >= 2 * p.modRows
   }
 }
 
-/** AIB3D core facing signal container */
-case class AIB3DCore(
+/** I3D core facing signal container */
+case class I3DCore(
   name: String,  // Signal name (from data bundle)
   bitIdx: Option[Int],  // For buses
   ioType: Data,  // Input, Output, Analog
   relatedClk: Option[String]) {  // Name of clock domain
-    var pinLocation: Option[AIB3DCoordinates[Double]] = None
-    var pinLayer: Option[String] = None
+    var pinLocation: I3DCoordinates[Double] = I3DCoordinates(-1.0, -1.0)
+    var pinLayer: String = ""
     // TODO: this uses a DataMirror internal API, subject to change/removal
     def cloneIoType: Data = DataMirror.internal.chiselTypeClone(ioType)
     def fullName: String = {
@@ -52,40 +52,44 @@ case class AIB3DCore(
     }
   }
 
-/** AIB3D bump containers */
-sealed trait AIB3DBump {
+/** I3D bump containers */
+sealed trait I3DBump {
   val bumpName: String  // bump net name
   val relatedClk: Option[String] = None  // bump clock domain
-  val coreSig: Option[AIB3DCore] = None  // primary core signal
+  val coreSig: Option[I3DCore] = None  // primary core signal
   // These are set dynamically after bump map is created
-  var location: Option[AIB3DCoordinates[Double]] = None
-  var modCoord: Option[AIB3DCoordinates[Int]] = None
+  var location: I3DCoordinates[Double] = I3DCoordinates(-1.0, -1.0)
+  var modCoord: I3DCoordinates[Int] = I3DCoordinates(-1, -1)
   // Generates SDC constraints after construction
-  def sdcConstraints(ioCellPath: String = "")(implicit p: AIB3DParams): String = ""
+  def sdcConstraints(ioCellPath: String = "")(implicit p: I3DParams): String = ""
 }
 // Power/Ground
-case class Pwr() extends AIB3DBump {
-  val bumpName = "VDDAIB"
+case class Pwr() extends I3DBump {
+  val bumpName = "VDDI"
 }
-case class Gnd() extends AIB3DBump {
+case class Gnd() extends I3DBump {
   val bumpName = "VSS"
 }
-// Data
-case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
+/** Transmit data bump
+  * @param bumpNum is the signal bump number
+  * @param clkIdx is the related clock index
+  * @param sig is the core signal (required if not coded or muxed)
+  */
+case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[I3DCore]) extends I3DBump {
   val bumpName = if (sig.isDefined) s"TXDATA${bumpNum}" else s"TXRED${bumpNum}"
   override val relatedClk = Some(s"TXCKP${clkIdx}")
   override val coreSig = if (sig.isDefined) sig else None
-  override def sdcConstraints(ioCellPath: String = "")(implicit p: AIB3DParams): String = {
+  override def sdcConstraints(ioCellPath: String = "")(implicit p: I3DParams): String = {
     // This is called once per clock domain (get_ports supports a list)
     val sdc = ArrayBuffer(s"# Tx data constraints in clock domain ${relatedClk.get}")
     // Core input delay. Calculated from clock latency.
     // 1st quarter to half period budget.
     // TODO: calculate based on redundancy scheme.
     val lat = p.pinSide match {
-      case "N" => (p.modRowsWR - modCoord.get.y + 0.5) * p.modDelay
-      case "S" => (modCoord.get.y + 1.5) * p.modDelay
-      case "E" => (p.modColsWR - modCoord.get.x + 0.5) * p.modDelay
-      case "W" => (modCoord.get.x + 1.5) * p.modDelay
+      case "N" => (p.modRowsWR - modCoord.y + 0.5) * p.modDelay
+      case "S" => (modCoord.y + 1.5) * p.modDelay
+      case "E" => (p.modColsWR - modCoord.x + 0.5) * p.modDelay
+      case "W" => (modCoord.x + 1.5) * p.modDelay
     }
     sdc += f"set_input_delay ${lat * 1.1 + p.tPeriod / 2}%.4f " +
       s"-clock [get_clocks ${relatedClk.get}] " +
@@ -131,11 +135,16 @@ case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     sdc.mkString("\n")
   }
 }
-case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3DBump {
+/** Receive data bump
+  * @param bumpNum is the signal bump number
+  * @param clkIdx is the related clock index
+  * @param sig is the core signal (required if not coded or muxed)
+  */
+case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[I3DCore]) extends I3DBump {
   val bumpName = if (sig.isDefined) s"RXDATA${bumpNum}" else s"RXRED${bumpNum}"
   override val relatedClk = Some(s"RXCKP${clkIdx}")
   override val coreSig = if (sig.isDefined) sig else None
-  override def sdcConstraints(ioCellPath: String = "")(implicit p: AIB3DParams): String = {
+  override def sdcConstraints(ioCellPath: String = "")(implicit p: I3DParams): String = {
     // This is called once per clock domain (get_ports supports a list)
     val sdc = ArrayBuffer(s"# Rx data constraints in clock domain ${relatedClk.get}")
     // Bump input delay
@@ -179,13 +188,17 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[AIB3DCore]) extends AIB3
     sdc.mkString("\n")
   }
 }
-// Clock
-case class TxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump {
+/** Transmit clock bump
+  * @param modNum is the linear module index
+  * @param coded is true if this clock bump is coded
+  * @param muxed is true if this clock bump is muxed
+  */
+case class TxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends I3DBump {
   val bumpName = if (coded) s"TXCKR${modNum}" else s"TXCKP${modNum}"
   override val coreSig =
     if (coded || muxed) None
-    else Some(AIB3DCore(s"TXCKP${modNum}", Some(modNum), Output(Clock()), None))
-  override def sdcConstraints(ioCellPath: String = "")(implicit p: AIB3DParams): String = {
+    else Some(I3DCore(s"TXCKP${modNum}", Some(modNum), Output(Clock()), None))
+  override def sdcConstraints(ioCellPath: String = "")(implicit p: I3DParams): String = {
     // This is called for each clock
     val sdc = ArrayBuffer(s"# Constraints for clock $bumpName")
     // Create clocks (order matters!)
@@ -217,10 +230,10 @@ case class TxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump 
     // Set clock latency for synthesis
     // TODO: muxed
     val lat = p.pinSide match {
-      case "N" => (p.modRowsWR - modCoord.get.y + 0.5) * p.modDelay
-      case "S" => (modCoord.get.y + 1.5) * p.modDelay
-      case "E" => (p.modColsWR - modCoord.get.x + 0.5) * p.modDelay
-      case "W" => (modCoord.get.x + 1.5) * p.modDelay
+      case "N" => (p.modRowsWR - modCoord.y + 0.5) * p.modDelay
+      case "S" => (modCoord.y + 1.5) * p.modDelay
+      case "E" => (p.modColsWR - modCoord.x + 0.5) * p.modDelay
+      case "W" => (modCoord.x + 1.5) * p.modDelay
     }
     if (!coded) {
       sdc += f"set_clock_latency -min ${lat * 0.9}%.4f [get_clocks io_$bumpName]"
@@ -244,12 +257,17 @@ case class TxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump 
     sdc.mkString("\n")
   }
 }
-case class RxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump {
+/** Receive clock bump
+  * @param modNum is the linear module index
+  * @param coded is true if this clock bump is coded
+  * @param muxed is true if this clock bump is muxed
+  */
+case class RxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends I3DBump {
   val bumpName = if (coded) s"RXCKR${modNum}" else s"RXCKP${modNum}"
   override val coreSig =
     if (coded || muxed) None
-    else Some(AIB3DCore(s"RXCKP${modNum}", Some(modNum), Input(Clock()), None))
-  override def sdcConstraints(ioCellPath: String)(implicit p: AIB3DParams): String = {
+    else Some(I3DCore(s"RXCKP${modNum}", Some(modNum), Input(Clock()), None))
+  override def sdcConstraints(ioCellPath: String)(implicit p: I3DParams): String = {
     // This is called for each clock
     val sdc = ArrayBuffer(s"# Constraints for clock $bumpName")
     // Create clocks (order matters!)
@@ -275,14 +293,14 @@ case class RxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump 
     // Set clock latency for synthesis
     // TODO: muxed
     val lat = p.pinSide match {
-      case "N" => (p.modRowsWR - modCoord.get.y - 0.5) * p.modDelay
-      case "S" => (modCoord.get.y + 0.5) * p.modDelay
-      case "E" => (p.modColsWR - modCoord.get.x - 0.5) * p.modDelay
-      case "W" => (modCoord.get.x + 0.5) * p.modDelay
+      case "N" => (p.modRowsWR - modCoord.y - 0.5) * p.modDelay
+      case "S" => (modCoord.y + 0.5) * p.modDelay
+      case "E" => (p.modColsWR - modCoord.x - 0.5) * p.modDelay
+      case "W" => (modCoord.x + 0.5) * p.modDelay
     }
     if (!coded) { sdc ++= Seq(
-      f"set_clock_latency -min ${lat * 0.9}%.4f [get_clocks io_$bumpName]",
-      f"set_clock_latency -max ${lat * 1.1}%.4f [get_clocks io_$bumpName]",
+      f"set_clock_latency -min ${p.modDelay * 0.9}%.4f [get_clocks io_$bumpName]",
+      f"set_clock_latency -max ${p.modDelay * 1.1}%.4f [get_clocks io_$bumpName]",
       f"set_clock_latency -min ${lat * 0.9}%.4f [get_clocks out_$bumpName]",
       f"set_clock_latency -max ${lat * 1.1}%.4f [get_clocks out_$bumpName]"
     )}
@@ -294,7 +312,7 @@ case class RxClk(modNum: Int, coded: Boolean, muxed: Boolean) extends AIB3DBump 
       // Set clock skew. May not be supported by all tools.
       sdc += f"set_clock_skew ${p.skew/2}%.4f [get_clocks io_$bumpName]"
       // Constrain output duty cycle distortion with pulse width constraint
-      sdc += f"set_min_pulse_width ${p.tPeriod * 0.48 + p.tj}%.4f [get_ports clocks_$bumpName]"
+      sdc += f"set_min_pulse_width ${p.tPeriod * 0.48 + p.tj}%.4f [get_ports out_$bumpName]"
       // Max capacitance
       // TODO: tech dependent
       sdc += f"set_max_capacitance 0.01 [get_ports clocks_$bumpName]"

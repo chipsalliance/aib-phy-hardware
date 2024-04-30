@@ -1,4 +1,4 @@
-package aib3d
+package i3d
 
 import chisel3._
 
@@ -11,17 +11,17 @@ import freechips.rocketchip.tilelink.HasTLControlRegMap
 import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
 import freechips.rocketchip.util.{ResetCatchAndSync, ElaborationArtefacts}
 
-// import aib3d.deskew._
-import aib3d.io._
-import aib3d.redundancy._
+// import i3d.deskew._
+import i3d.io._
+import i3d.redundancy._
 import chisel3.util.log2Ceil
 
 trait BasePatch {
   implicit val p: Parameters
   // Calculate these params only once for speed, pass around implicitly
-  implicit val params: AIB3DParams = p(AIB3DKey)
-  implicit val glblParams: AIB3DGlblParams = p(AIB3DGlblKey)
-  implicit val instParams: AIB3DInstParams = p(AIB3DInstKey)
+  implicit val params: I3DParams = p(I3DKey)
+  implicit val glblParams: I3DGlblParams = p(I3DGlblKey)
+  implicit val instParams: I3DInstParams = p(I3DInstKey)
 
   // IO
   val coreio = Wire(new CoreBundle)
@@ -36,7 +36,7 @@ trait BasePatch {
 
   // Generate IO cells and connect to bumps
   val iocells =
-    (bumpio.sigBumps lazyZip bumpio.getElements).map{ (b: AIB3DBump, d: Data) =>
+    (bumpio.sigBumps lazyZip bumpio.getElements).map{ (b: I3DBump, d: Data) =>
       val iocell = Module(
         if (instParams.blackBoxModels) { b match {
           case _:TxClk => new TxClkIOCellModel(b)
@@ -74,8 +74,8 @@ trait BasePatch {
     (iocells zip coding.get.bumps.sigBumps zip coding.get.bumps.getElements) foreach {
       case ((i, sb), bd) =>
         // Get related clock (all modules should have a clock)
-        val relatedTxClk = coding.get.clksToTx(sb.modCoord.get.linearIdx)
-        val relatedRxClk = coding.get.clksToRx(sb.modCoord.get.linearIdx)
+        val relatedTxClk = coding.get.clksToTx(sb.modCoord.linearIdx)
+        val relatedRxClk = coding.get.clksToRx(sb.modCoord.linearIdx)
         if (DataMirror.directionOf(bd) == ActualDirection.Output)  // Tx
           i.connectInternal(bd, relatedTxClk, ioCtrlWire)
         else  // Rx
@@ -125,11 +125,8 @@ trait BasePatch {
   */
 
   // Documentation/collateral
-  ElaborationArtefacts.add("bumpmap.json", GenCollateral.toJSON(iocells))
-  ElaborationArtefacts.add("hammer.json", GenCollateral.toHammerJSON(iocells))
-  ElaborationArtefacts.add("sdc", GenCollateral.toSDC(iocells))
-  ElaborationArtefacts.add("bumpmap.csv", GenCollateral.toCSV)
-  //GenCollateral.toImg
+  val collat = new GenCollateral(iocells)
+  collat.genAll()
 }
 
 class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
@@ -158,9 +155,9 @@ class RawPatch(implicit val p: Parameters) extends RawModule with BasePatch {
 
 abstract class RegsPatch(implicit p: Parameters) extends RegisterRouter(
   RegisterRouterParams(
-    name = "aib3d-patch",
+    name = "i3d-patch",
     compat = Seq("ucbbar,rocketchip"),
-    base = p(AIB3DInstKey).baseAddress,
+    base = p(I3DInstKey).baseAddress,
     beatBytes = 8)  // TODO: AVMM is 32-bit
 ) with HasInterruptSources {
 

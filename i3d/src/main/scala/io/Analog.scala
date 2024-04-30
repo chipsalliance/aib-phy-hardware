@@ -1,4 +1,4 @@
-package aib3d.io
+package i3d.io
 
 import chisel3._
 

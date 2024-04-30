@@ -1,4 +1,4 @@
-package aib3d
+package i3d
 
 import chisel3._
 
@@ -10,11 +10,11 @@ import freechips.rocketchip.subsystem.WithoutTLMonitors
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.amba.axi4._
 
-import aib3d._
-import aib3d.stage._
+import i3d._
+import i3d.stage._
 
 /** Connect dummy ClientNode (SourceNode) for diplomacy */
-trait AIB3DDummyNode {
+trait I3DDummyNode {
   implicit val p: Parameters
   val dummyNode = TLClientNode(Seq(TLMasterPortParameters.v2(Seq(TLMasterParameters.v2(name = "dummy")))))
   def connectTL(node: TLInwardNode) =
@@ -27,10 +27,10 @@ trait AIB3DDummyNode {
     dummyNode
 }
 
-/** AIB3D Main - do "runMain aib3d.AIB3DGenerator" in sbt */
-object AIB3DGenerator extends App with AIB3DDummyNode {
+/** I3D Main - do "runMain i3d.I3DGenerator" in sbt */
+object I3DGenerator extends App with I3DDummyNode {
   // Select Config here
-  implicit val p = new Config(new AIB3DCoding5Config ++ new WithoutTLMonitors)
+  implicit val p = new Config(new I3DCoding5Config ++ new WithoutTLMonitors)
 
   // Uncomment for TL version
   val patch = LazyModule(new TLPatch)
@@ -41,12 +41,12 @@ object AIB3DGenerator extends App with AIB3DDummyNode {
   // connectAXI4(patch.node)
 
   // Emit FIRRTL, Verilog, and collateral
-  (new AIB3DStage).run(Seq(ChiselGeneratorAnnotation(() => patch.module)))
+  (new I3DStage).run(Seq(ChiselGeneratorAnnotation(() => patch.module)))
 }
 
-/** For generating raw AIB3D module */
-object AIB3DRawGenerator extends App {
-  implicit val p = new Config(new AIB3DBaseConfig)
+/** For generating raw I3D module */
+object I3DRawGenerator extends App {
+  implicit val p = new Config(new I3DBaseConfig)
 
-  (new AIB3DStage).run(Seq(ChiselGeneratorAnnotation(() => new RawPatch)))
+  (new I3DStage).run(Seq(ChiselGeneratorAnnotation(() => new RawPatch)))
 }
