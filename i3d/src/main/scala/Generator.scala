@@ -30,7 +30,7 @@ trait I3DDummyNode {
 /** I3D Main - do "runMain i3d.I3DGenerator" in sbt */
 object I3DGenerator extends App with I3DDummyNode {
   // Select Config here
-  implicit val p = new Config(new I3DCoding5Config ++ new WithoutTLMonitors)
+  implicit val p = new Config(new I3DWideConfig ++ new WithoutTLMonitors)
 
   // Uncomment for TL version
   val patch = LazyModule(new TLPatch)

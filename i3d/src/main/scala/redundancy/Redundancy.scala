@@ -12,19 +12,19 @@ import chisel3.util.MuxLookup
 
 object RedundancyArch extends Enumeration {
   type RedundancyArch = Value
-  val None, Coding, Muxing = Value
+  val None, Coding, Shifting = Value
 
   def fromInt(i: Int): RedundancyArch = i match {
     case 0 => None
     case 1 => Coding
-    case 2 => Muxing
+    case 2 => Shifting
     case _ => throw new Exception("Invalid redundancy architecture")
   }
 
   def fromString(s: String): RedundancyArch = s match {
     case "none" => None
     case "coding" => Coding
-    case "muxing" => Muxing
+    case "shifting" => Shifting
     case _ => throw new Exception("Invalid redundancy architecture")
   }
 }
@@ -63,9 +63,11 @@ class RedundancyMux(
 }
 
 /** Top-level shift redundancy add-on module */
-class RedundancyMuxTop(implicit p: I3DParams) extends RawModule {
+class ShiftingRedundancyTop(implicit p: I3DParams) extends RawModule {
   val core = IO(new CoreBundle)
   val bumps = IO(new BumpsBundle)  // internal
+  val clksToTx = IO(Output(Vec(p.numModsWR, Clock())))
+  val clksToRx = IO(Output(Vec(p.numModsWR, Clock())))
 
   // One hot encoding
   val faultyTx, faultyRx = IO(Input(UInt(p.numMods.W)))
@@ -73,10 +75,10 @@ class RedundancyMuxTop(implicit p: I3DParams) extends RawModule {
   // Shift in the longer dimension
   // Order is (tx.a, tx.b, rx.a, rx.b)
   val modIdxs = if (p.isWide) {
-    for (j <- 0 until p.modRows; i <- 0 until p.modCols)
+    for (i <- 0 until p.modCols; j <- 0 until p.modRows)
       yield Seq(0, 2, 1, 3).map(k => I3DCoordinates[Int](2*i+k, j))
   } else {
-    for (i <- 0 until p.modCols; j <- 0 until p.modRows)
+    for (j <- 0 until p.modRows; i <- 0 until p.modCols)
       yield Seq(0, 2, 1, 3).map(k => I3DCoordinates[Int](i, 2*j+k))
   }
 
@@ -116,13 +118,26 @@ class RedundancyMuxTop(implicit p: I3DParams) extends RawModule {
     else (0 until p.modColsWR).map(i =>
       I3DCoordinates[Int](i, 0))
   noMuxTxMods.foreach { idx =>
-    // TODO: make a pass-thru connector instead going through a set of wires
     val fromCore = Wire(new ModuleBundle(idx, coreFacing = true))
     val toBumps = Wire(new ModuleBundle(idx, coreFacing = false))
     core.connectToModuleBundle(fromCore)
     fromCore.thruConnectTx(toBumps)
     bumps.connectToModuleBundle(toBumps)
   }
+
+  // Clocks to IO cells
+  // Direct Tx clocks
+  val txDirectClks = core.inputClocks.take(p.redMods)
+  (clksToTx.take(p.redMods) zip txDirectClks).foreach { case (o, i) => o := i }
+  // Muxed Tx clocks
+  val txMuxedClks = txMuxes.flatMap(_.o.clocks)
+  (clksToTx.drop(p.redMods) zip txMuxedClks).foreach { case (o, i) => o := i }
+  // Direct Rx clocks
+  val rxDirectClks = bumps.inputClocks.takeRight(p.redMods)
+  (clksToRx.takeRight(p.redMods) zip rxDirectClks).foreach { case (o, i) => o := i }
+  // Muxed Rx clocks
+  val rxMuxedClks = rxMuxes.flatMap(_.o.clocks)
+  (clksToRx.dropRight(p.redMods) zip rxMuxedClks).foreach { case (o, i) => o := i }
 }
 
 /** Module-level encoder */

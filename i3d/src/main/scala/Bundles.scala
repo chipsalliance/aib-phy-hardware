@@ -47,7 +47,7 @@ class BumpsBundle
       case _ =>
         if (bump.coreSig.isDefined) {
           elements(bump.coreSig.get.relatedClk.get).asUInt(0).asClock
-        } else {  // muxed redundant signal
+        } else {  // shifted redundant signal
           val modNum = bump.modCoord.linearIdx
           bump match {
             case _:TxSig => elements(s"TXCKP${modNum}").asUInt(0).asClock
@@ -57,6 +57,10 @@ class BumpsBundle
         }
     }
   }
+
+  // Return only the input clocks
+  def inputClocks: Seq[Clock] = getElements.collect{case c: Clock => c}
+    .filter(c => DataMirror.directionOf(c) == ActualDirection.Input)
 }
 
 class CoreBundle(implicit p: I3DParams) extends Record with AutoCloneType {
@@ -96,6 +100,10 @@ class CoreBundle(implicit p: I3DParams) extends Record with AutoCloneType {
       DataMirror.internal.chiselTypeClone(elements(c.coreSig.get.name))):_*)
     new Record with AutoCloneType { val elements = clks }
   }
+
+  // Return only the input clocks
+  def inputClocks: Seq[Clock] = getElements.collect{case c: Clock => c}
+    .filter(c => DataMirror.directionOf(c) == ActualDirection.Input)
 
   // Hook up to the data bundle at the top level
   def connectDataBundle(dataBundle: Bundle): Unit = {
@@ -160,6 +168,9 @@ class ModuleBundle(
       "Cannot connect two core-facing or two bump-facing bundles")
     (this.getElements zip that.getElements).foreach{ case (a, b) => b := a }
   }
+
+  // Get clocks
+  def clocks: Seq[Clock] = getElements.collect{case c: Clock => c}
 }
 
 class DefaultDataBundle(width: Int) extends Bundle {

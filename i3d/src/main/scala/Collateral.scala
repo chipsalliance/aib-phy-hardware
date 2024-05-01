@@ -25,9 +25,10 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
     ElaborationArtefacts.add("bumpmap.json", toJSON())
     ElaborationArtefacts.add("bumpmap.csv", toCSV())
     ElaborationArtefacts.add("hammer.json", toHammerJSON())
-    if (p.redArch == RedundancyArch.Muxing) {
+    if (p.redArch == RedundancyArch.Shifting) {
       // Produce 2 SDC files for each mode
-      ElaborationArtefacts.add("sdc", toSDC())
+      ElaborationArtefacts.add("default.sdc", toSDC())
+      ElaborationArtefacts.add("shifted.sdc", toSDC(shiftCase = true))
     } else {
       ElaborationArtefacts.add("sdc", toSDC())
     }
@@ -188,13 +189,12 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
     pretty(render(bumps merge pins merge places merge sdc merge power))
   }
 
-  def toSDC(): String = {
+  def toSDC(shiftCase: Boolean = false): String = {
     // Extract bump objects
     val bumps = iocells.map(_.forBump)
 
     // TODO: power is bump pitch related.
-    val globalSDC =
-      f"""# Global constraints
+    val globalSDC = f"""# Global constraints
       |# All timing units assumed in ns
       |# Loads/transitions (config pins, internal)
       |set_load 0.005 [all_outputs]
@@ -204,59 +204,91 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
       |# False paths from config pins
       |set_false_path -from *ioCtrl*
       |set_false_path -from *faulty*
-      |set_false_path -from *dbi*
-      """.stripMargin
+      |""".stripMargin +
+      (if (p.redArch == RedundancyArch.Coding) "set_false_path -from *dbi*" else "")
 
     // Module clocks
+    val caseAnalysis = if (p.redArch == RedundancyArch.Shifting)
+      "# Case analysis for shifting redundancy\n" +
+      s"set_case_analysis ${if (shiftCase) 1 else 0} [get_pins shifting/*Muxes*/shift]"
+      else ""
     val txClks = bumps.collect{case b: TxClk => b}
-    val txClkSDC = txClks.map(_.sdcConstraints()).mkString("\n")
-
-    val rxClks = bumps.collect{case b: RxClk => b}
+    val txClkSDC = txClks.map(_.sdcConstraints(shiftCase = shiftCase)).mkString("\n")
+    // Rx clocks must be reversed for shifting redundancy
+    val rxClks = bumps.collect{case b: RxClk => b}.reverse
     val rxClkIOCellPaths = iocells.collect{
       case c if c.forBump.isInstanceOf[RxClk] => c.instanceName
-    }
+    }.reverse
     val rxClkSDC = (rxClks zip rxClkIOCellPaths).map{ case (bump, path) =>
-      bump.sdcConstraints(path)
+      bump.sdcConstraints(shiftCase = shiftCase, ioCellPath = path)
     }.mkString("\n")
 
     // Global clock constraints
     // TODO config clock doesn't exist in RawPatch
-    val clkGroupSDC = Seq(
+    // Clock groups vary depending on redundancy architecture
+    val clkGrps = p.redArch match {
+      case RedundancyArch.Shifting =>
+        if (shiftCase) {
+          txClks.drop(p.redMods).map{ tx =>  // shifted
+            val tsrc = tx.bumpName.replace(tx.modCoord.linearIdx.toString,
+              (tx.modCoord.linearIdx - p.redMods).toString)
+            s"$tsrc io_${tx.bumpName} out_${tx.bumpName}"
+          } ++
+          txClks.take(p.redMods).map{ tx =>  // dangling
+            s"io_${tx.bumpName} out_${tx.bumpName}"
+          } ++
+          rxClks.drop(p.redMods).map{ rx =>  // shifted
+            val rsrc = rx.bumpName.replace(rx.modCoord.linearIdx.toString,
+              (rx.modCoord.linearIdx + p.redMods).toString)
+            s"invert_$rsrc $rsrc io_${rx.bumpName} out_${rx.bumpName}"
+          } ++
+          rxClks.take(p.redMods).map{ rx =>  // dangling redundant
+            s"io_${rx.bumpName}"
+          } ++
+          rxClks.takeRight(p.redMods).map{ rx =>  // dangling direct
+            s"invert_${rx.bumpName} ${rx.bumpName}"
+          }
+        } else {
+          txClks.dropRight(p.redMods).map{ tx =>  // direct
+            s"${tx.bumpName} io_${tx.bumpName} out_${tx.bumpName}"
+          } ++
+          txClks.takeRight(p.redMods).map{ tx =>  // redundant
+            s"io_${tx.bumpName} out_${tx.bumpName}"
+          } ++
+          rxClks.drop(p.redMods).map{ rx =>  // direct
+            s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
+          } ++
+          rxClks.take(p.redMods).map{ rx =>  // dangling redundant
+            s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName}"
+          }
+        }
+      case RedundancyArch.Coding =>
+        txClks.filter(_.coreSig.isDefined).map{ tx =>
+          val tp = tx.bumpName
+          val tr = tp.replace("TXCKP", "TXCKR")
+          s"$tp io_$tp out_$tp out_$tr"
+        } ++
+        rxClks.filter(_.coreSig.isDefined).map{ rx =>
+          val rp = rx.bumpName
+          val rr = rp.replace("RXCKP", "RXCKR")
+          s"invert_$rp $rp io_$rp out_$rp invert_$rr $rr io_$rr out_$rr"
+        }
+      case _ =>  // No redundancy
+        txClks.map{ tx =>
+          s"${tx.bumpName} io_${tx.bumpName} out_${tx.bumpName}"
+        } ++
+        rxClks.map{ rx =>
+          s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
+        }
+    }
+    val globalClkSDC = Seq(
       "# Config clock",
       "create_clock clock -name clock -period 1.0",
       "set_clock_uncertainty 0.02 [get_clocks clock]",
       "# Clock groups",
-      "set_clock_groups -asynchronous -group {clock} " + (
-        // TODO: zip requires full-duplex
-        (txClks zip rxClks).map{ case (tx, rx) =>
-          val txn = tx.bumpName
-          val txr = txn.replace("TXCKP", "TXCKR")
-          val rxn = rx.bumpName
-          val rxr = rxn.replace("RXCKP", "RXCKR")
-          if (p.redArch == RedundancyArch.Muxing) {
-            (if (tx.coreSig.isDefined)
-              s"-group { ${txn} io_${txn} out_${txn} } "
-            else  // redundant
-              s"-group { io_${txn} out_${txn} } "
-            ) +
-            (if (rx.coreSig.isDefined)
-              s"-group { invert_${rxn} ${rxn} io_${rxn} out_${rxn} }"
-            else  // redundant
-              s"-group { invert_${rxn} ${rxn} io_${rxn} }"
-            )
-          } else if (p.redArch == RedundancyArch.Coding) {
-            (if (tx.coreSig.isDefined)
-              s"-group { $txn io_$txn out_$txn out_$txr } "
-            else "") +
-            (if (tx.coreSig.isDefined)
-              s"-group { invert_$rxn $rxn invert_$rxr $rxr io_$rxn out_$rxn }"
-            else "")
-          } else {
-            s"-group { $txn io_$txn out_$txn } " +
-            s"-group { invert_$rxn $rxn io_$rxn out_$rxn }"
-          }
-        }.mkString(" ")
-      ),
+      "set_clock_groups -asynchronous -group {clock} -group { " + (
+        clkGrps.mkString(" } -group { ")
+      ) + " }",
       "# Propagate clocks in P&R",
       "set_propagated_clock [all_clocks]"
     ).mkString("\n")
@@ -265,18 +297,20 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
     val txSigGrouped = bumps.collect{case b: TxSig => b}.groupBy(_.relatedClk.get)
     val rxSigGrouped = bumps.collect{case b: RxSig => b}.groupBy(_.relatedClk.get)
     val sigSDC = (txSigGrouped ++ rxSigGrouped).map{ case(clk, ports) =>
-      s"""set bumps { ${ports.map(_.bumpName).mkString(" ")} }
+      s"""# Bumps and core signals in clock domain $clk
+        |set bumps { ${ports.map(_.bumpName).mkString(" ")} }
         |set core { ${ports.collect{case p if p.coreSig.isDefined => p.coreSig.get.fullName}.mkString(" ")} }
         |${ports(0).sdcConstraints()}
-      """.stripMargin
+        |""".stripMargin
     }.mkString("\n")
 
     // Return (order matters!)
     Seq(
       globalSDC,
+      caseAnalysis,
       txClkSDC,
       rxClkSDC,
-      clkGroupSDC,
+      globalClkSDC,
       sigSDC
     ).mkString("\n\n")
   }

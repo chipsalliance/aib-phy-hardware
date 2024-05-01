@@ -52,15 +52,15 @@ trait BasePatch {
   val ioCtrlWire = Wire(new IOControlBundle)
 
   // Coding redundancy option
-  val codeRed = glblParams.redundArch == 1
+  val codeRed = params.redArch == RedundancyArch.Coding
   val coding = if (codeRed) Some(Module(new CodingRedundancyTop)) else None
   val faultyWire = if (codeRed) Some(Wire(chiselTypeOf(coding.get.faulty))) else None
   val faultyClkWire = if (codeRed) Some(Wire(UInt(coding.get.faultyClk.getWidth.W))) else None
   val dbiWire = if (codeRed && glblParams.hasDBI) Some(Wire(Bool())) else None
 
   // Shift (mux) redundancy option
-  val shiftRed = glblParams.redundArch == 2
-  val shifting = if (shiftRed) Some(Module(new RedundancyMuxTop)) else None
+  val shiftRed = params.redArch == RedundancyArch.Shifting
+  val shifting = if (shiftRed) Some(Module(new ShiftingRedundancyTop)) else None
   val faultyTxWire =
     if (shiftRed) Some(Wire(UInt(shifting.get.faultyTx.getWidth.W))) else None
   val faultyRxWire =
@@ -93,12 +93,23 @@ trait BasePatch {
   } else if (shiftRed) {
     // Connect core side of muxes to coreio
     coreio <> shifting.get.core
-    // Connect bumps side of muxes to iocells
-    (iocells zip shifting.get.bumps.elements) foreach { case (i, (bs, bd)) =>
-      // Get related clock (all modules should have a clock)
-      val relatedClk = shifting.get.bumps.getRelatedClk(bs)
-      i.connectInternal(bd, relatedClk, ioCtrlWire)
+    // Connect iocells to shifting
+    (iocells zip shifting.get.bumps.sigBumps zip shifting.get.bumps.getElements) foreach {
+      case ((i, sb), bd) =>
+        // Get related clock (all modules should have a clock)
+        val relatedTxClk = shifting.get.clksToTx(sb.modCoord.linearIdx)
+        val relatedRxClk = shifting.get.clksToRx(sb.modCoord.linearIdx)
+        if (DataMirror.directionOf(bd) == ActualDirection.Output)  // Tx
+          i.connectInternal(bd, relatedTxClk, ioCtrlWire)
+        else  // Rx
+          i.connectInternal(bd, relatedRxClk, ioCtrlWire)
     }
+    // Connect bumps side of muxes to iocells
+    //(iocells zip shifting.get.bumps.elements) foreach { case (i, (bs, bd)) =>
+    //  // Get related clock (all modules should have a clock)
+    //  val relatedClk = shifting.get.bumps.getRelatedClk(bs)
+    //  i.connectInternal(bd, relatedClk, ioCtrlWire)
+    //}
     // Connect redundancy control signals
     shifting.get.faultyTx := faultyTxWire.get
     shifting.get.faultyRx := faultyRxWire.get

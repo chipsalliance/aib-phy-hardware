@@ -312,7 +312,6 @@ object Utils {
       else
         diffuse(splitQuotient._2, splitQuotient._1.map(_ + 1))
     }
-    // TODO: print pattern debug info
     pattern.scanLeft(0)(_ + _ + 1)
            .map(_ - 1 - sigsPerPG/2)
            .drop(1).dropRight(1)
@@ -391,8 +390,8 @@ object Utils {
     val cols = allCoords.map(_._1).max + 1
     // Initialize bump maps
     val txBumpMap, rxBumpMap = Array.ofDim[I3DBump](mods + redMods, rows, cols)
+    var codedClk = false  // coded clock check
     // Counters
-    var clkCnt = 0  // clock in module
     var bitCnt = 0  // signal bit in module
     var redBitCnt = 0  // redundant bit in module
     // Loop through modules
@@ -408,12 +407,10 @@ object Utils {
         rxBumpMap(m)(y)(x) = Gnd()
       }
       // Next, map clock bumps
-      // Redundant if m >= mods (redundant module in muxing redundancy)
-      // or clkCnt > 0 (clock already mapped in coding redundancy)
       for ((x, y) <- cCoords) {
-        txBumpMap(m)(y)(x) = TxClk(m, clkCnt > 0, m >= mods)
-        rxBumpMap(m)(y)(x) = RxClk(m, clkCnt > 0, m >= mods)
-        clkCnt += 1
+        txBumpMap(m)(y)(x) = TxClk(m, codedClk, m >= mods)
+        rxBumpMap(m)(y)(x) = RxClk(m, codedClk, m >= mods)
+        codedClk = true
       }
       // Finally, map signal bumps
       for (((x, y), i) <- sCoords.zipWithIndex) {
@@ -425,14 +422,14 @@ object Utils {
             txBumpMap(m)(y)(x) = TxSig(bitCnt, m, Some(tx(bitCnt).copy(relatedClk = Some(s"TXCKP$m"))))
             rxBumpMap(m)(y)(x) = RxSig(bitCnt, m, Some(rx(bitCnt).copy(relatedClk = Some(s"RXCKP$m"))))
           }
-        } else {  // redundant module - clock mapped to adjacent module
-          txBumpMap(m)(y)(x) = TxSig(bitCnt, m - redMods, None)
-          rxBumpMap(m)(y)(x) = RxSig(bitCnt, m - redMods, None)
+        } else {  // redundant module
+          txBumpMap(m)(y)(x) = TxSig(bitCnt, m, None)
+          rxBumpMap(m)(y)(x) = RxSig(bitCnt, m, None)
         }
         if (i >= numSigs) redBitCnt += 1  // increment redundant bit count
         else bitCnt += 1  // increment signal bit count
       }
-      clkCnt = 0  // reset clock counter for next module
+      codedClk = false  // reset coded clock check for next module
       redBitCnt = (m + 1) * numSigs  // set redundant bit counter for next module
       if (m == mods - 1) bitCnt = 0  // reset bit counter for redundant modules
     }

@@ -33,10 +33,10 @@ import chisel3.util.is
   * @param modSize is the max number of data bits (Tx/Rx, each) in a module
   * Following are design parameters
   * @param redundArch is the active data redundancy architecture.
-  * 0 = none, 1 = coding, 2 = muxing
+  * 0 = none, 1 = coding, 2 = shifting
   * @param redundRatio is the redundancy ratio (default: 4).
   * Denotes the number of signal bumps per redundant bump.
-  * Only used for muxing redundancy.
+  * Only used for shifting redundancy.
   * @param hasDBI denotes if data bus inversion is implemented with coding redundancy
   * @param deskewArch is the de-skew architecture
   * @param pinSide is the side where pins are to be assigned, pre-mirroring/rotation.
@@ -216,7 +216,7 @@ case class I3DParams(
     s"Number of IOs (${flatTx.length}) not evenly divisible by derived number of modules (${numMods})")
   val sigsPerMod = flatTx.length / numMods
   // TODO: allow for more/less than 2 redundant modules, don't require even number
-  val redMods = if (redArch == RedundancyArch.Muxing) numMods / gp.redundRatio else 0
+  val redMods = if (redArch == RedundancyArch.Shifting) numMods / gp.redundRatio else 0
   if (redMods > 0) require(numMods % redMods == 0,
     s"Number of signal mods (${numMods}) must be evenly divisible by number of redundant mods (${redMods})")
   val numModsWR = numMods + redMods
@@ -233,7 +233,7 @@ case class I3DParams(
   // If no redundancy, want to find the most "square" arrangement from the factor pairs of numMods
   // Else, shorter dimension is determined by the number of redundant modules
   val (modRows, modCols) =
-    if (redArch == RedundancyArch.Muxing)
+    if (redArch == RedundancyArch.Shifting)
       if (isWide) (redMods, numMods / redMods)
       else (numMods / redMods, redMods)
     else {
@@ -244,7 +244,7 @@ case class I3DParams(
       else (numMods / bestFactor, bestFactor)  // tall
     }
   val (modRowsWR, modColsWR) =
-    if (redArch == RedundancyArch.Muxing)
+    if (redArch == RedundancyArch.Shifting)
       if (isWide) (redMods, modCols + 1) else (modRows + 1, redMods)
     else (modRows, modCols)
   println(s"\tPatch dimensions: ${modRowsWR} rows by ${modColsWR} columns of modules")
@@ -282,7 +282,7 @@ case class I3DParams(
                        gCoords = gCoords,
                        eCoords = Seq.empty)
     }
-    else {  // none or muxing
+    else {  // none or shifting
       // Rows/cols of signal/PG bumps and extras
       val (rowsSig, colsSig, extras) = Utils.calcRowsCols(sigsPerMod, isWide)
       val rowsP = ((rowsSig.toDouble / gp.sigsPerPG._2) - 1).ceil.toInt + 1
@@ -293,7 +293,11 @@ case class I3DParams(
 
       // Row/column indices of the power/ground
       val pRows = Utils.pgIdxGen(rowsSig, rowsP, gp.sigsPerPG._2)
+      val rowPat = pRows.foldLeft(Seq.fill(rowsPerMod)("S")){case (r, i) => r.updated(i, "P")}
+      println(s"\tRow pattern (sig/pwr): ${rowPat.mkString(" ")}")
       val gCols = Utils.pgIdxGen(colsSig, colsG, gp.sigsPerPG._1)
+      val colPat = gCols.foldLeft(Seq.fill(colsPerMod)("S")){case (c, i) => c.updated(i, "G")}
+      println(s"\tColumn pattern (sig/gnd): ${colPat.mkString(" ")}")
       // Permute indices into coordinates based on row/cols per mod
       val pCoords = pRows.flatMap(r => (0 until colsPerMod).map(c => (c, r)))
       val gCoords = gCols.flatMap(c => (0 until rowsPerMod).map(r => (c, r)))
