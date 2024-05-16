@@ -137,7 +137,6 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
           ("right" -> 0) ~
           ("top" -> 0) ~
           ("bottom" -> 0))
-      //) ++ iocells.map( i =>  // IO cell placement
       ) ++ iocells.filterNot(_.forBump.bumpName.contains("CK")).map( i =>  // Constrain flip-flop placement
         // Replace Target delimiters with / for P&R
         // Fields depend on whether we are using blackboxes or models
@@ -213,16 +212,11 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
       s"set_case_analysis ${if (shiftCase) 1 else 0} [get_pins shifting/*Muxes*/shift]"
       else ""
     val txClks = bumps.collect{case b: TxClk => b}
-    val txClkSDC = txClks.map(_.sdcConstraints(shiftCase = shiftCase)).mkString("\n")
+    val txClkSDC = txClks.map(_.sdcConstraints(shiftCase)).mkString("\n")
     // Rx clocks must be reversed for shifted case
     val rxClks = if (shiftCase) bumps.collect{case b: RxClk => b}.reverse
                  else bumps.collect{case b: RxClk => b}
-    val rxClkIOCellPaths = iocells.collect{
-      case c if c.forBump.isInstanceOf[RxClk] => c.instanceName
-    }.reverse
-    val rxClkSDC = (rxClks zip rxClkIOCellPaths).map{ case (bump, path) =>
-      bump.sdcConstraints(shiftCase = shiftCase, ioCellPath = path)
-    }.mkString("\n")
+    val rxClkSDC = rxClks.map(_.sdcConstraints(shiftCase)).mkString("\n")
 
     // Global clock constraints
     // TODO config clock doesn't exist in RawPatch

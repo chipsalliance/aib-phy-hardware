@@ -66,7 +66,7 @@ sealed trait I3DBump {
   var location: I3DCoordinates[Double] = I3DCoordinates(-1.0, -1.0)
   var modCoord: I3DCoordinates[Int] = I3DCoordinates(-1, -1)
   // Generates SDC constraints after construction
-  def sdcConstraints(shiftCase: Boolean = false, ioCellPath: String = "")
+  def sdcConstraints(shiftCase: Boolean = false)
     (implicit p: I3DParams): String = ""
 }
 // Power/Ground
@@ -85,7 +85,7 @@ case class TxSig(bumpNum: Int, clkIdx: Int, sig: Option[I3DCore]) extends I3DBum
   val bumpName = if (sig.isDefined) s"TXDATA${bumpNum}" else s"TXRED${bumpNum}"
   override val relatedClk = Some(s"TXCKP${clkIdx}")
   override val coreSig = if (sig.isDefined) sig else None
-  override def sdcConstraints(shiftCase: Boolean = false, ioCellPath: String = "")
+  override def sdcConstraints(shiftCase: Boolean = false)
     (implicit p: I3DParams): String = {
     // This is called once per clock domain ($core and $bumps defined globally)
     val sdc = ArrayBuffer(s"# Tx data constraints in clock domain ${relatedClk.get}")
@@ -153,7 +153,7 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[I3DCore]) extends I3DBum
   val bumpName = if (sig.isDefined) s"RXDATA${bumpNum}" else s"RXRED${bumpNum}"
   override val relatedClk = Some(s"RXCKP${clkIdx}")
   override val coreSig = if (sig.isDefined) sig else None
-  override def sdcConstraints(shiftCase: Boolean = false, ioCellPath: String = "")
+  override def sdcConstraints(shiftCase: Boolean = false)
     (implicit p: I3DParams): String = {
     // This is called once per clock domain ($core and $bumps defined globally)
     val sdc = ArrayBuffer(s"# Rx data constraints in clock domain ${relatedClk.get}")
@@ -210,7 +210,7 @@ case class TxClk(modNum: Int, coded: Boolean, shifted: Boolean) extends I3DBump 
   override val coreSig =
     if (coded || shifted) None
     else Some(I3DCore(s"TXCKP${modNum}", Some(modNum), Output(Clock()), None))
-  override def sdcConstraints(shiftCase: Boolean, ioCellPath: String = "")
+  override def sdcConstraints(shiftCase: Boolean)
     (implicit p: I3DParams): String = {
     // This is called for each clock
     val sdc = ArrayBuffer(s"# Constraints for clock $bumpName")
@@ -284,7 +284,7 @@ case class RxClk(modNum: Int, coded: Boolean, shifted: Boolean) extends I3DBump 
   override val coreSig =
     if (coded || shifted) None
     else Some(I3DCore(s"RXCKP${modNum}", Some(modNum), Input(Clock()), None))
-  override def sdcConstraints(shiftCase: Boolean = false, ioCellPath: String)
+  override def sdcConstraints(shiftCase: Boolean = false)
     (implicit p: I3DParams): String = {
     // This is called for each clock
     val sdc = ArrayBuffer(s"# Constraints for clock $bumpName")
@@ -294,10 +294,6 @@ case class RxClk(modNum: Int, coded: Boolean, shifted: Boolean) extends I3DBump 
       // Bump clock
       f"create_clock [get_ports $bumpName] -name $bumpName -period ${p.tPeriod}%.4f",
       f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]",
-      // Inverted IO cell output clock
-      //s"create_generated_clock -name $bumpName -source [get_ports $bumpName] " +
-      //  s"-divide_by 1 -invert [get_pins *$ioCellPath/io_rxClk]",
-      //f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]"
     )
     if (!coded) {
       // Clock to data IO cells
