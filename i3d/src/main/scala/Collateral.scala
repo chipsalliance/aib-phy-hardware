@@ -32,7 +32,7 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
     } else {
       ElaborationArtefacts.add("sdc", toSDC())
     }
-    //GenCollateral.toImg
+    //toImg()
   }
 
   /** Generates a JSON file with the IO cell instance name and location,
@@ -214,8 +214,9 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
       else ""
     val txClks = bumps.collect{case b: TxClk => b}
     val txClkSDC = txClks.map(_.sdcConstraints(shiftCase = shiftCase)).mkString("\n")
-    // Rx clocks must be reversed for shifting redundancy
-    val rxClks = bumps.collect{case b: RxClk => b}.reverse
+    // Rx clocks must be reversed for shifted case
+    val rxClks = if (shiftCase) bumps.collect{case b: RxClk => b}.reverse
+                 else bumps.collect{case b: RxClk => b}
     val rxClkIOCellPaths = iocells.collect{
       case c if c.forBump.isInstanceOf[RxClk] => c.instanceName
     }.reverse
@@ -240,13 +241,13 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
           rxClks.drop(p.redMods).map{ rx =>  // shifted
             val rsrc = rx.bumpName.replace(rx.modCoord.linearIdx.toString,
               (rx.modCoord.linearIdx + p.redMods).toString)
-            s"invert_$rsrc $rsrc io_${rx.bumpName} out_${rx.bumpName}"
+            s"$rsrc io_${rx.bumpName} out_${rx.bumpName}"
           } ++
           rxClks.take(p.redMods).map{ rx =>  // dangling redundant
             s"io_${rx.bumpName}"
           } ++
           rxClks.takeRight(p.redMods).map{ rx =>  // dangling direct
-            s"invert_${rx.bumpName} ${rx.bumpName}"
+            s"${rx.bumpName}"
           }
         } else {
           txClks.dropRight(p.redMods).map{ tx =>  // direct
@@ -256,10 +257,10 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
             s"io_${tx.bumpName} out_${tx.bumpName}"
           } ++
           rxClks.drop(p.redMods).map{ rx =>  // direct
-            s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
+            s"${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
           } ++
           rxClks.take(p.redMods).map{ rx =>  // dangling redundant
-            s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName}"
+            s"${rx.bumpName} io_${rx.bumpName}"
           }
         }
       case RedundancyArch.Coding =>
@@ -271,14 +272,14 @@ class GenCollateral(iocells: Seq[BaseModule with IOCellConnects])(implicit p: I3
         rxClks.filter(_.coreSig.isDefined).map{ rx =>
           val rp = rx.bumpName
           val rr = rp.replace("RXCKP", "RXCKR")
-          s"invert_$rp $rp io_$rp out_$rp invert_$rr $rr io_$rr out_$rr"
+          s"$rp io_$rp out_$rp $rr"
         }
       case _ =>  // No redundancy
         txClks.map{ tx =>
           s"${tx.bumpName} io_${tx.bumpName} out_${tx.bumpName}"
         } ++
         rxClks.map{ rx =>
-          s"invert_${rx.bumpName} ${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
+          s"${rx.bumpName} io_${rx.bumpName} out_${rx.bumpName}"
         }
     }
     val globalClkSDC = Seq(

@@ -162,13 +162,6 @@ class ModuleBundle(
   }):_*)
   def apply(elt: String): Data = elements(elt)
 
-  // Pass-thru connect for Tx module
-  def thruConnectTx(that: ModuleBundle): Unit = {
-    require(this.coreFacing != that.coreFacing,
-      "Cannot connect two core-facing or two bump-facing bundles")
-    (this.getElements zip that.getElements).foreach{ case (a, b) => b := a }
-  }
-
   // Get clocks
   def clocks: Seq[Clock] = getElements.collect{case c: Clock => c}
 }

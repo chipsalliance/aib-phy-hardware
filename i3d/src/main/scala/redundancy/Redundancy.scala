@@ -110,7 +110,8 @@ class ShiftingRedundancyTop(implicit p: I3DParams) extends RawModule {
     (txMux, rxMux)
   }.unzip
 
-  // First set of Tx bumps must have inputs directly from core
+  // First set of Tx bumps must have gated inputs directly from core
+  // Note: clock gating is not glitchless since shift is considered static
   // 0's as primary input to Tx mux for redundant modules are handled in connectToModuleBundle function
   val noMuxTxMods =
     if (p.isWide) (0 until p.modRowsWR).map(i =>
@@ -121,7 +122,9 @@ class ShiftingRedundancyTop(implicit p: I3DParams) extends RawModule {
     val fromCore = Wire(new ModuleBundle(idx, coreFacing = true))
     val toBumps = Wire(new ModuleBundle(idx, coreFacing = false))
     core.connectToModuleBundle(fromCore)
-    fromCore.thruConnectTx(toBumps)
+    (fromCore.getElements zip toBumps.getElements).foreach{ case (a, b) =>
+      b := (a.asUInt().asBool & ~faultyTx(idx.linearIdx).asBool).asTypeOf(b)
+    }
     bumps.connectToModuleBundle(toBumps)
   }
 
@@ -132,12 +135,8 @@ class ShiftingRedundancyTop(implicit p: I3DParams) extends RawModule {
   // Muxed Tx clocks
   val txMuxedClks = txMuxes.flatMap(_.o.clocks)
   (clksToTx.drop(p.redMods) zip txMuxedClks).foreach { case (o, i) => o := i }
-  // Direct Rx clocks
-  val rxDirectClks = bumps.inputClocks.takeRight(p.redMods)
-  (clksToRx.takeRight(p.redMods) zip rxDirectClks).foreach { case (o, i) => o := i }
-  // Muxed Rx clocks
-  val rxMuxedClks = rxMuxes.flatMap(_.o.clocks)
-  (clksToRx.dropRight(p.redMods) zip rxMuxedClks).foreach { case (o, i) => o := i }
+  // Rx clocks are all direct from bumps
+  (clksToRx zip bumps.inputClocks).foreach { case (o, i) => o := i }
 }
 
 /** Module-level encoder */

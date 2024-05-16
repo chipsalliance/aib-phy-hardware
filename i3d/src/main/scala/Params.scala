@@ -351,8 +351,8 @@ case class I3DParams(
   val tj = 0.05 * tPeriod  // Manifested data/clk differential jitter
   val ap = 0.02 * tPeriod  // Sampling aperture
   // Tx delay follows curve fit. Min is nominal - 0.08UI. Max is nominal + 0.12UI. Assumes slow/fast corners are +/- 10% supply voltage.
-  val dtxMin = (ip.vNom*1.1) / (0.0153*pow(ip.vNom*1.1, 2) + 0.0188*ip.vNom*1.1 - 0.0084) / 1000 - 0.08 * tPeriod + skew/2 // min for Dtx
-  val dtxMax = (ip.vNom*0.9) / (0.0153*pow(ip.vNom*0.9, 2) + 0.0188*ip.vNom*0.9 - 0.0084) / 1000 + 0.12 * tPeriod + skew/2 // max for Dtx
+  val dtxMin = (ip.vNom*1.1) / (0.0153*pow(ip.vNom*1.1, 2) + 0.0188*ip.vNom*1.1 - 0.0084) / 1000 - 0.08 * tPeriod // min for Dtx
+  val dtxMax = (ip.vNom*0.9) / (0.0153*pow(ip.vNom*0.9, 2) + 0.0188*ip.vNom*0.9 - 0.0084) / 1000 + 0.12 * tPeriod + skew // max for Dtx
   // Rx input delay must also factor in jitter/eye closure/noise effects.
   // Jitter budget split evenly b/w min/max, differential jitter already budgeted in clock uncertainty.
   val drxMin = dtxMin*(1-atrx*nvcc/2) - jpw/2 - ch/2 - sqrt(2*pow(tj, 2))/2

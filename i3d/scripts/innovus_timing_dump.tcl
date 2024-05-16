@@ -4,8 +4,11 @@ namespace import ::tcl::mathop::*
 
 # Remember to set your view names and nominal voltage prior to sourcing this script
 # variable setup_view <your_setup_view>
+# variable setup_view_shifted <your_setup_view for shifted case analysis>
 # variable hold_view <your_hold_view>
+# variable hold_view_shifted <your_hold_view for shifted case analysis>
 # variable typ_view <your_typical_view>
+# variable typ_view_shifted <your_typical_view for shifted case analysis>
 # variable vnom 0.8
 
 # Calculate timing specs
@@ -64,11 +67,13 @@ proc coded_clocks {} {
     set f [open coded_clocks.csv w]
     set lines {{"From Port" "To Port" "Delay (S)" "Mean Delay (S)" "DCD % (S)" "Delay (H)" "Mean Delay (H)" "DCD % (H)" "Wirelength" "Wire Delay % (S)" "Wire Delay % (H)" "Path Cells"}}
 
-    set tx_in [get_db ports clocks_TXCK*]
-    set tx_out [get_db ports TXCK*]
+    # Tx ports are returned in the reverse order
+    set tx_in [lreverse [get_db ports clocks_TXCK*]]
+    set tx_out [lreverse [get_db ports TXCK*]]
     set num_tx [llength $tx_in]
     set start 0
     for {set i 0} {$i < $num_tx} {incr i} {
+        # 2 clocks per module
         foreach out [lrange $tx_out $start $start+1] {
             set in [lindex $tx_in $i]
             puts "$in -> $out"
@@ -102,41 +107,34 @@ proc coded_clocks {} {
         incr start 2
     }
 
-    # Rx path is split due to inversion
-    set rx_in [get_db ports RXCK*]
+    # Rx ports are returned in the reverse order
+    set rx_in [lreverse [get_db ports RXCK*]]
     foreach in $rx_in {
-        # Note clock inversion
-        # Reports to IO cell output
-        set setup_rpt_r_1 [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -late]
-        set setup_rpt_f_1 [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -late]
-        set hold_rpt_r_1 [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $::hold_view]
-        set hold_rpt_f_1 [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $::hold_view]
-        # Reports from IO cell output
-        set midpt [get_clocks [get_db $rx_in .name]]
-        set setup_rpt_r_2 [report_timing -from_rise $midpt -split_delay -retime path_slew_propagation -collection -late]
-        set setup_rpt_f_2 [report_timing -from_fall $midpt -split_delay -retime path_slew_propagation -collection -late]
-        set hold_rpt_r_2 [report_timing -from_rise $midpt -split_delay -retime path_slew_propagation -collection -early -view $::hold_view]
-        set hold_rpt_f_2 [report_timing -from_fall $midpt -split_delay -retime path_slew_propagation -collection -early -view $::hold_view]
-        set out [get_db $setup_rpt_r_2 .capturing_point]
+        # Reports
+        set setup_rpt_r [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -late -view $::setup_view]
+        set setup_rpt_f [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -late -view $::setup_view]
+        set hold_rpt_r [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $::hold_view]
+        set hold_rpt_f [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $::hold_view]
+        set out [get_db $setup_rpt_r .capturing_point]
         puts "$in -> $out"
         # Delay (rise/fall/OCV/mean)
-        set sdr [expr [get_db $setup_rpt_r_1 .path_delay] + [get_db $setup_rpt_r_2 .path_delay]]
-        set sdf [expr [get_db $setup_rpt_f_1 .path_delay] + [get_db $setup_rpt_f_2 .path_delay]]
-        set sdrm [expr [get_db $setup_rpt_r_1 .path_delay_mean] + [get_db $setup_rpt_r_2 .path_delay_mean]]
-        set sdfm [expr [get_db $setup_rpt_f_1 .path_delay_mean] + [get_db $setup_rpt_f_2 .path_delay_mean]]
-        set hdr [expr [get_db $hold_rpt_r_1 .path_delay] + [get_db $hold_rpt_r_2 .path_delay]]
-        set hdf [expr [get_db $hold_rpt_f_1 .path_delay] + [get_db $hold_rpt_f_2 .path_delay]]
-        set hdrm [expr [get_db $hold_rpt_r_1 .path_delay_mean] + [get_db $hold_rpt_r_2 .path_delay_mean]]
-        set hdfm [expr [get_db $hold_rpt_f_1 .path_delay_mean] + [get_db $hold_rpt_f_2 .path_delay_mean]]
+        set sdr [get_db $setup_rpt_r .path_delay]
+        set sdf [get_db $setup_rpt_f .path_delay]
+        set sdrm [get_db $setup_rpt_r .path_delay_mean]
+        set sdfm [get_db $setup_rpt_f .path_delay_mean]
+        set hdr [get_db $hold_rpt_r .path_delay]
+        set hdf [get_db $hold_rpt_f .path_delay]
+        set hdrm [get_db $hold_rpt_r .path_delay_mean]
+        set hdfm [get_db $hold_rpt_f .path_delay_mean]
         # Duty cycle distortion
         set sdcd [format "%.2f" [expr ($sdf - $sdr) / $::tper * 100]]
         set hdcd [format "%.2f" [expr ($hdf - $hdr) / $::tper * 100]]
         # Wirelength
-        set wl [expr [get_db $setup_rpt_r_1 .cumulative_manhattan_length] + [get_db $setup_rpt_r_2 .cumulative_manhattan_length]]
-        set wd_pct_s [format "%.2f" [expr ([get_db $setup_rpt_r_1 .path_net_delay] + [get_db $setup_rpt_r_1 .path_net_delay]) / $sdr * 100]]
-        set wd_pct_h [format "%.2f" [expr ([get_db $hold_rpt_r_1 .path_net_delay] + [get_db $hold_rpt_r_1 .path_net_delay]) / $hdr * 100]]
+        set wl [get_db $setup_rpt_r .cumulative_manhattan_length]
+        set wd_pct_s [format "%.2f" [expr [get_db $setup_rpt_r .path_net_delay] / $sdr * 100]]
+        set wd_pct_h [format "%.2f" [expr [get_db $hold_rpt_r .path_net_delay] / $hdr * 100]]
         # Cells
-        set cells [list [get_db $setup_rpt_r_1 .nets.driver_pins.inst.ref_lib_cell_name] [get_db $setup_rpt_r_2 .nets.driver_pins.inst.ref_lib_cell_name]]
+        set cells [get_db $setup_rpt_r .nets.driver_pins.inst.ref_lib_cell_name]
         # Line
         lappend lines [list $in $out $sdr $sdrm $sdcd $hdr $hdrm $hdcd $wl $wd_pct_s $wd_pct_h $cells]
     }
@@ -145,6 +143,100 @@ proc coded_clocks {} {
     puts -nonewline $f [csv::joinlist $lines]
     close $f
     puts "Clock timing written to coded_clocks.csv"
+}
+
+proc shifted_clocks {} {
+    # Open file
+    set f [open shifted_clocks.csv w]
+    set lines {{"From Port" "To Port" "Delay (S)" "Mean Delay (S)" "DCD % (S)" "Delay (H)" "Mean Delay (H)" "DCD % (H)" "Wirelength" "Wire Delay % (S)" "Wire Delay % (H)" "Path Cells"}}
+
+    # Tx ports are returned in the reverse order
+    set tx_in [lreverse [get_db ports clocks_TXCK*]]
+    set tx_out [lreverse [get_db ports TXCK*]]
+    set num_tx [llength $tx_in]
+    set num_red [expr [llength $tx_out] - [llength $tx_in]]
+    set late_views [list $::setup_view $::setup_view_shifted]
+    set early_views [list $::hold_view $::hold_view_shifted]
+    # Interleaved case analysis
+    for {set i 0} {$i < $num_tx} {incr i} {
+        set in [lindex $tx_in $i]
+        set out_clks [list [lindex $tx_out $i] [lindex $tx_out [expr $i + $num_red]]]
+        for {set j 0} {$j < 2} {incr j} {
+            set out [lindex $out_clks $j]
+            set setup_view [lindex $late_views $j]
+            set hold_view [lindex $early_views $j]
+            puts "$in -> $out"
+            # Reports
+            set setup_rpt_r [report_timing -from_rise $in -to $out -split_delay -retime path_slew_propagation -collection -late -view $setup_view]
+            set setup_rpt_f [report_timing -from_fall $in -to $out -split_delay -retime path_slew_propagation -collection -late -view $setup_view]
+            set hold_rpt_r [report_timing -from_rise $in -to $out -split_delay -retime path_slew_propagation -collection -early -view $hold_view]
+            set hold_rpt_f [report_timing -from_fall $in -to $out -split_delay -retime path_slew_propagation -collection -early -view $hold_view]
+            # Delay (rise/fall/OCV/mean)
+            set sdr [get_db $setup_rpt_r .path_delay]
+            set sdf [get_db $setup_rpt_f .path_delay]
+            set sdrm [get_db $setup_rpt_r .path_delay_mean]
+            set sdfm [get_db $setup_rpt_f .path_delay_mean]
+            set hdr [get_db $hold_rpt_r .path_delay]
+            set hdf [get_db $hold_rpt_f .path_delay]
+            set hdrm [get_db $hold_rpt_r .path_delay_mean]
+            set hdfm [get_db $hold_rpt_f .path_delay_mean]
+            # Duty cycle distortion
+            set sdcd [format "%.2f" [expr ($sdf - $sdr) / $::tper * 100]]
+            set hdcd [format "%.2f" [expr ($hdf - $hdr) / $::tper * 100]]
+            # Wirelength
+            set wl [get_db $setup_rpt_r .cumulative_manhattan_length]
+            set wd_pct_s [format "%.2f" [expr [get_db $setup_rpt_r .path_net_delay] / $sdr * 100]]
+            set wd_pct_h [format "%.2f" [expr [get_db $hold_rpt_r .path_net_delay] / $hdr * 100]]
+            # Cells
+            set cells [get_db $setup_rpt_r .nets.driver_pins.inst.ref_lib_cell_name]
+            # Line
+            lappend lines [list $in $out $sdr $sdrm $sdcd $hdr $hdrm $hdcd $wl $wd_pct_s $wd_pct_h $cells]
+        }
+    }
+
+    # Rx ports are returned in the reverse order
+    set rx_in [lreverse [get_db ports RXCK*]]
+    foreach in $rx_in {
+        # Interleaved case analysis
+        for {set i 0} {$i < 2} {incr i} {
+            set setup_view [lindex $late_views $i]
+            set hold_view [lindex $early_views $i]
+            # Reports
+            set setup_rpt_r [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -late -view $setup_view]
+            set out [get_db $setup_rpt_r .capturing_point]
+            # Skip if clock isn't propagated
+            if {[string first "RXCK" $out] < 0} { continue }
+            set setup_rpt_f [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -late -view $setup_view]
+            set hold_rpt_r [report_timing -from_fall $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $hold_view]
+            set hold_rpt_f [report_timing -from_rise $in -split_delay -retime path_slew_propagation -unconstrained -collection -early -view $hold_view]
+            puts "$in -> $out"
+            # Delay (rise/fall/OCV/mean)
+            set sdr [get_db $setup_rpt_r .path_delay]
+            set sdf [get_db $setup_rpt_f .path_delay]
+            set sdrm [get_db $setup_rpt_r .path_delay_mean]
+            set sdfm [get_db $setup_rpt_f .path_delay_mean]
+            set hdr [get_db $hold_rpt_r .path_delay]
+            set hdf [get_db $hold_rpt_f .path_delay]
+            set hdrm [get_db $hold_rpt_r .path_delay_mean]
+            set hdfm [get_db $hold_rpt_f .path_delay_mean]
+            # Duty cycle distortion
+            set sdcd [format "%.2f" [expr ($sdf - $sdr) / $::tper * 100]]
+            set hdcd [format "%.2f" [expr ($hdf - $hdr) / $::tper * 100]]
+            # Wirelength
+            set wl [get_db $setup_rpt_r .cumulative_manhattan_length]
+            set wd_pct_s [format "%.2f" [expr [get_db $setup_rpt_r .path_net_delay] / $sdr * 100]]
+            set wd_pct_h [format "%.2f" [expr [get_db $hold_rpt_r .path_net_delay] / $hdr * 100]]
+            # Cells
+            set cells [get_db $setup_rpt_r .nets.driver_pins.inst.ref_lib_cell_name]
+            # Line
+            lappend lines [list $in $out $sdr $sdrm $sdcd $hdr $hdrm $hdcd $wl $wd_pct_s $wd_pct_h $cells]
+        }
+    }
+
+    # Write
+    puts -nonewline $f [csv::joinlist $lines]
+    close $f
+    puts "Clock timing written to shifted_clocks.csv"
 }
 
 # Clock tree ID & skew
@@ -167,9 +259,20 @@ proc clock_tree_stats {} {
 }
 
 # Tx output delay
-proc tx_output_delay {} {
+proc tx_output_delay {{shifted 0}} {
+    if {$shifted} {
+        set csv_file tx_output_delay_shifted.csv
+        set sview $::setup_view_shifted
+        set hview $::hold_view_shifted
+        set tview $::typ_view_shifted
+    } else {
+        set csv_file tx_output_delay.csv
+        set sview $::setup_view
+        set hview $::hold_view
+        set tview $::typ_view
+    }
     # Open file
-    set f [open tx_output_delay.csv w]
+    set f [open $csv_file w]
     set lines {{"Port" "Clock" "Slack (S)" "Sigma (S)" "Dtx (S)" "Mean Dtx (S)" "Skew (S)" "Slack (H)" "Sigma (H)" "Dtx (H)" "Mean Dtx (H)" "Skew (H)" "Spread (UI)" "Mean Spread (UI)" "Pass?" "D-D Skew" "Data WL" "Data WD % (S)" "Data WD % (H)" "Clock WL" "Clock WD % (S)" "Clock WD % (H)" "Path Cells"}}
 
     # For min/max skew tracking
@@ -179,17 +282,21 @@ proc tx_output_delay {} {
     set dmax_h [dict create]
     set llskew [dict create]
 
-    foreach pin [get_db ports {TXDATA* TXRED*}] {
-        set setup_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_setup -nworst 1000 -collection]]]
-        set hold_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_hold -nworst 1000 -view $::hold_view -collection]]]
-        set typ_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_hold -nworst 1000 -view $::typ_view -collection]]]
-        set clks [unique_list [lmap rpt $setup_rpts {get_db $rpt .capturing_clock_pin.base_name}]]
+    foreach pin [lreverse [get_db ports {TXDATA* TXRED*}]] {
+        # Need to report large nworst to filter out lane-to-lane skew paths
+        set setup_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_setup -nworst 1000 -view $sview -collection]]]
+        # Continue if no paths (data-to-data check against clock)
+        set clks [unique_list [get_db $setup_rpts .capturing_clock_pin.base_name]]
+        if {[llength $clks] == 0} { continue }
+        set hold_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_hold -nworst 1000 -view $hview -collection]]]
+        set typ_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_hold -nworst 1000 -view $tview -collection]]]
         foreach clk $clks {
+            puts "$clk -> $pin"
             # Slack
-            set sslk [max {*}[get_db [filter_for_clock $clk $setup_rpts] .slack]]
+            set sslk [min {*}[get_db [filter_for_clock $clk $setup_rpts] .slack]]
             set sslk_sigma [max {*}[get_db [filter_for_clock $clk $setup_rpts] .slack_sigma]]
             set hslk [min {*}[get_db [filter_for_clock $clk $hold_rpts] .slack]]
-            set hslk_sigma [min {*}[get_db [filter_for_clock $clk $hold_rpts] .slack_sigma]]
+            set hslk_sigma [max {*}[get_db [filter_for_clock $clk $hold_rpts] .slack_sigma]]
             # Calculated Dtx
             set sdt [max {*}[lmap p $setup_rpts {expr [get_db $p .arrival] - [get_db $p .capturing_clock_latency]}]]
             set sdtm [max {*}[lmap p $setup_rpts {expr [get_db $p .arrival_mean] - [get_db $p .capturing_clock_latency_mean]}]]
@@ -230,11 +337,17 @@ proc tx_output_delay {} {
             set dwd_pct_s [format "%.2f" [expr [get_db [lindex $setup_rpts 0] .path_net_delay] / [get_db [lindex $setup_rpts 0] .path_delay] * 100]]
             set dwd_pct_h [format "%.2f" [expr [get_db [lindex $hold_rpts 0] .path_net_delay] / [get_db [lindex $hold_rpts 0] .path_delay] * 100]]
             set flop_pin [get_db [lindex $setup_rpts 0] .launching_point]
-            set clk_setup_rpt [report_timing -to $flop_pin -path_type full_clock -split_delay -retime path_slew_propagation -late -collection]
-            set clk_hold_rpt [report_timing -to $flop_pin -path_type full_clock -split_delay -retime path_slew_propagation -early -collection]
-            set cwl [get_db $clk_setup_rpt .cumulative_manhattan_length]
-            set cwd_pct_s [format "%.2f" [expr [get_db $clk_setup_rpt .path_net_delay] / [get_db $clk_setup_rpt .path_delay] * 100]]
-            set cwd_pct_h [format "%.2f" [expr [get_db $clk_hold_rpt .path_net_delay] / [get_db $clk_hold_rpt .path_delay] * 100]]
+            set ioclk_to_flop_setup_rpt [report_timing -to $flop_pin -path_type full_clock -split_delay -retime path_slew_propagation -late -collection]
+            set ioclk_to_flop_hold_rpt [report_timing -to $flop_pin -path_type full_clock -split_delay -retime path_slew_propagation -early -collection]
+            set clkport_to_ioclk_setup_rpt [report_timing -to [get_db $ioclk_to_flop_setup_rpt .launching_point] -path_type full_clock -split_delay -retime path_slew_propagation -late -collection]
+            set clkport_to_ioclk_hold_rpt [report_timing -to [get_db $ioclk_to_flop_hold_rpt .launching_point] -path_type full_clock -split_delay -retime path_slew_propagation -early -collection]
+            set cwl [expr [get_db $ioclk_to_flop_setup_rpt .cumulative_manhattan_length] + [get_db $clkport_to_ioclk_setup_rpt .cumulative_manhattan_length]]
+            set cpnd_s [expr [get_db $ioclk_to_flop_setup_rpt .path_net_delay] + [get_db $clkport_to_ioclk_setup_rpt .path_net_delay]]
+            set cpnd_h [expr [get_db $ioclk_to_flop_hold_rpt .path_net_delay] + [get_db $clkport_to_ioclk_hold_rpt .path_net_delay]]
+            set cpd_s [expr [get_db $ioclk_to_flop_setup_rpt .path_delay] + [get_db $clkport_to_ioclk_setup_rpt .path_delay]]
+            set cpd_h [expr [get_db $ioclk_to_flop_hold_rpt .path_delay] + [get_db $clkport_to_ioclk_hold_rpt .path_delay]]
+            set cwd_pct_s [format "%.2f" [expr $cpnd_s / $cpd_s * 100]]
+            set cwd_pct_h [format "%.2f" [expr $cpnd_h / $cpd_h * 100]]
             # Cells
             set cells [get_db [lindex $setup_rpts 0] .nets.driver_pins.inst.ref_lib_cell_name]
             set bufcnt [count_bufs $cells]
@@ -246,7 +359,7 @@ proc tx_output_delay {} {
     # Write
     puts -nonewline $f [csv::joinlist $lines]
     close $f
-    puts "Tx output delay written to tx_output_delay.csv"
+    puts "Tx output delay written to $csv_file"
     puts "Lane-to-lane skews:"
     foreach item [dict keys $llskew] {
         set val [dict get $llskew $item]
@@ -255,16 +368,29 @@ proc tx_output_delay {} {
 }
 
 # Tx input delay
-proc tx_input_delay {} {
+proc tx_input_delay {{shifted 0}} {
+    if {$shifted} {
+        set csv_file tx_input_delay_shifted.csv
+        set sview $::setup_view_shifted
+        set hview $::hold_view_shifted
+        set tview $::typ_view_shifted
+    } else {
+        set csv_file tx_input_delay.csv
+        set sview $::setup_view
+        set hview $::hold_view
+        set tview $::typ_view
+    }
     # Open file
-    set f [open tx_input_delay.csv w]
+    set f [open $csv_file w]
     set lines {{"Port" "Pin" "Clock" "Slack (S)" "Dmax" "Slack (H)" "Dmin" "Wirelength" "Path Cells"}}
 
     foreach pin [get_db pins iocells_*/txRetimed_reg/d] {
         # Reports
-        set setup_rpt [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -late]
-        set hold_rpt [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -early -view $::hold_view]
+        set setup_rpt [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -late -view $sview]
         set port [get_db $setup_rpt .launching_point.base_name]
+        # Skip if no launching point
+        if {[llength $port] == 0} { continue }
+        set hold_rpt [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -early -view $hview]
         set pin_name [get_db $pin .name]
         set clk [get_db $hold_rpt .capturing_clock.base_name]
         # Slacks
@@ -285,40 +411,41 @@ proc tx_input_delay {} {
     # Write
     puts -nonewline $f [csv::joinlist $lines]
     close $f
-    puts "Tx input delay written to tx_input_delay.csv"
+    puts "Tx input delay written to $csv_file"
 }
 
 # Rx input delay
+# Shifting doesn't matter (both cases have the same path)
 proc rx_input_delay {} {
     # Open file
     set f [open rx_input_delay.csv w]
     set lines {{"Port" "Clock" "Slack (S)" "Sigma (S)" "Drx (S)" "Pass?" "Slack (H)" "Sigma (H)" "Drx (H)" "Pass?" "Aperture (UI)" "Pass?" "Wirelength" "Wire Delay % (S)" "Wire Delay % (H)" "Path Cells"}}
 
-    foreach pin [get_db ports RXDATA*] {
+    foreach pin [get_db ports {RXDATA* RXRED*}] {
         # Reports
-        set setup_rpt [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -late]
-        set hold_rpt [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -early -view $::hold_view]
-        set port [get_db $setup_rpt .launching_point.base_name]
-        set clk [get_db $hold_rpt .capturing_clock.base_name]
+        set setup_rpts [col2list [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -nworst 2 -view $::setup_view]]
+        set hold_rpts [col2list [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -nworst 2 -view $::hold_view]]
+        set port [lindex [get_db $setup_rpts .launching_point.base_name] 0]
+        set clk [lindex [get_db $hold_rpts .capturing_clock.base_name] 0]
         # Slack
-        set sslk [get_db $setup_rpt .slack]
-        set sslk_sigma [get_db $setup_rpt .slack_sigma]
-        set hslk [get_db $hold_rpt .slack]
-        set hslk_sigma [get_db $hold_rpt .slack_sigma]
+        set sslk [min {*}[get_db $setup_rpts .slack]]
+        set sslk_sigma [max {*}[get_db $setup_rpts .slack_sigma]]
+        set hslk [min {*}[get_db $hold_rpts .slack]]
+        set hslk_sigma [max {*}[get_db $hold_rpts .slack_sigma]]
         # Calculated Drx
-        set sdt [expr [get_db $setup_rpt .capturing_clock_latency] - [get_db $setup_rpt .data_path]]
+        set sdt [max {*}[lmap p $setup_rpts {expr [get_db $p .capturing_clock_latency] - [get_db $p .data_path]}]]
         set sdt_pass [expr {$sdt <= $::dmax ? "Y" : "N"}]
-        set hdt [expr [get_db $hold_rpt .capturing_clock_latency] - [get_db $hold_rpt .data_path]]
+        set hdt [min {*}[lmap p $hold_rpts {expr [get_db $p .capturing_clock_latency] - [get_db $p .data_path]}]]
         set hdt_pass [expr {$hdt >= $::dmin ? "Y" : "N"}]
         # Sampling aperture
         set ap [expr ($sslk + $hslk) / $::tper]
         set ap_pass [expr {$ap >= $::aperture ? "Y" : "N"}]
         # Wirelength
-        set wl [get_db $setup_rpt .cumulative_manhattan_length]
-        set wd_pct_s [format "%.2f" [expr [get_db $setup_rpt .path_net_delay] / [get_db $setup_rpt .path_delay] * 100]]
-        set wd_pct_h [format "%.2f" [expr [get_db $hold_rpt .path_net_delay] / [get_db $hold_rpt .path_delay] * 100]]
+        set wl [lindex [get_db $setup_rpts .cumulative_manhattan_length] 0]
+        set wd_pct_s [format "%.2f" [expr [max {*}[get_db $setup_rpts .path_net_delay]] / [max {*}[get_db $setup_rpts .path_delay]] * 100]]
+        set wd_pct_h [format "%.2f" [expr [min {*}[get_db $hold_rpts .path_net_delay]] / [min {*}[get_db $hold_rpts .path_delay]] * 100]]
         # Cells
-        set cells [get_db $setup_rpt .nets.driver_pins.inst.ref_lib_cell_name]
+        set cells [get_db [lindex $setup_rpts 0] .nets.driver_pins.inst.ref_lib_cell_name]
         set bufcnt [count_bufs $cells]
         # Line
         lappend lines [list $port $clk $sslk $sslk_sigma $sdt $sdt_pass $hslk $hslk_sigma $hdt $hdt_pass $ap $ap_pass $wl $wd_pct_s $wd_pct_h $cells]
@@ -331,29 +458,42 @@ proc rx_input_delay {} {
 }
 
 # Rx output delay
-proc rx_output_delay {} {
+proc rx_output_delay {{shifted 0}} {
+    if {$shifted} {
+        set csv_file rx_output_delay_shifted.csv
+        set sview $::setup_view_shifted
+        set hview $::hold_view_shifted
+        set tview $::typ_view_shifted
+    } else {
+        set csv_file rx_output_delay.csv
+        set sview $::setup_view
+        set hview $::hold_view
+        set tview $::typ_view
+    }
     # Open file
-    set f [open rx_output_delay.csv w]
+    set f [open $csv_file w]
     set lines {{"Port" "Clock" "Slack (S)" "Delay (S)" "Slack (H)" "Delay (H)" "Wirelength" "Wire Delay % (S)" "Wire Delay % (H)" "Path Cells"}}
 
     foreach pin [get_db pins iocells*/io_rxData_REG_reg/clk] {
-        # Reports
-        set setup_rpt [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -late]
-        set hold_rpt [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -collection -early -view $::hold_view]
-        set port [get_db $setup_rpt .capturing_point.base_name]
-        set clk [get_db $setup_rpt .capturing_clock.base_name]
+        # Report output delay paths only with -check_type
+        set setup_rpts [col2list [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 2 -check_type setup -view $sview -collection]]
+        # Continue if no paths
+        if {[llength $setup_rpts] == 0} { continue }
+        set hold_rpts [col2list [report_timing -from $pin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 2 -check_type hold -view $hview -collection]]
+        set port [lindex [get_db $setup_rpts .capturing_point.base_name] 0]
+        set clk [lindex [get_db $setup_rpts .capturing_clock.base_name] 0]
         # Slacks
-        set sslk [get_db $setup_rpt .slack]
-        set hslk [get_db $hold_rpt .slack]
+        set sslk [min {*}[get_db $setup_rpts .slack]]
+        set hslk [min {*}[get_db $hold_rpts .slack]]
         # Delay
-        set sdt [get_db $setup_rpt .path_delay]
-        set hdt [get_db $hold_rpt .path_delay]
+        set sdt [max {*}[get_db $setup_rpts .path_delay]]
+        set hdt [min {*}[get_db $hold_rpts .path_delay]]
         # Wirelength
-        set wl [get_db $setup_rpt .cumulative_manhattan_length]
-        set wd_pct_s [format "%.2f" [expr [get_db $setup_rpt .path_net_delay] / [get_db $setup_rpt .path_delay] * 100]]
-        set wd_pct_h [format "%.2f" [expr [get_db $hold_rpt .path_net_delay] / [get_db $hold_rpt .path_delay] * 100]]
+        set wl [lindex [get_db $setup_rpts .cumulative_manhattan_length] 0]
+        set wd_pct_s [format "%.2f" [expr [max {*}[get_db $setup_rpts .path_net_delay]] / [max {*}[get_db $setup_rpts .path_delay]] * 100]]
+        set wd_pct_h [format "%.2f" [expr [min {*}[get_db $hold_rpts .path_net_delay]] / [min {*}[get_db $hold_rpts .path_delay]] * 100]]
         # Cells
-        set cells [get_db $setup_rpt .nets.driver_pins.inst.ref_lib_cell_name]
+        set cells [get_db [lindex $setup_rpts 0] .nets.driver_pins.inst.ref_lib_cell_name]
         set bufcnt [count_bufs $cells]
         # Line
         lappend lines [list $port $clk $sslk $sdt $hslk $hdt $wl $wd_pct_s $wd_pct_h $cells]
@@ -362,15 +502,19 @@ proc rx_output_delay {} {
     # Write
     puts -nonewline $f [csv::joinlist $lines]
     close $f
-    puts "Rx output delay written to rx_output_delay.csv"
+    puts "Rx output delay written to $csv_file"
 }
 
 # Static power
-proc report_static_power {} {
+proc report_static_power {{shifted 0}} {
     # Assume random data - likely worst case activity factor
     set_default_switching_activity -reset
     set_default_switching_activity -input_activity 0.5 -clip_activity_to_domain_freq true
     # Remove contribution of control clock domain
     set_switching_activity -clock clock -activity 0
-    report_power -view $::typ_view
+    if {$shifted} {
+        report_power -view $::typ_view_shifted
+    } else {
+        report_power -view $::typ_view
+    }
 }

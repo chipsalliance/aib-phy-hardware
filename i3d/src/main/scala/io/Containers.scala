@@ -159,17 +159,17 @@ case class RxSig(bumpNum: Int, clkIdx: Int, sig: Option[I3DCore]) extends I3DBum
     val sdc = ArrayBuffer(s"# Rx data constraints in clock domain ${relatedClk.get}")
     // Bump input delay
     sdc += f"set_input_delay ${p.drxMax}%.4f " +
-      s"-clock [get_clocks invert_${relatedClk.get}] " +
+      s"-clock [get_clocks ${relatedClk.get}] " +
       s"-max [get_ports $$bumps] -add_delay"  // setup
     sdc += f"set_input_delay ${p.drxMin}%.4f " +
-      s"-clock [get_clocks invert_${relatedClk.get}] " +
+      s"-clock [get_clocks ${relatedClk.get}] " +
       s"-min [get_ports $$bumps] -add_delay"  // hold
     if (p.redArch == RedundancyArch.Coding) {
       sdc += f"set_input_delay ${p.drxMax}%.4f " +
-        s"-clock [get_clocks invert_RXCKR${clkIdx}] " +
+        s"-clock [get_clocks RXCKR${clkIdx}] " +
         s"-max [get_ports $$bumps] -add_delay"  // setup
       sdc += f"set_input_delay ${p.drxMin}%.4f " +
-        s"-clock [get_clocks invert_RXCKR${clkIdx}] " +
+        s"-clock [get_clocks RXCKR${clkIdx}] " +
         s"-min [get_ports $$bumps] -add_delay"  // hold
     }
     // Input transition. Matches Tx output transition.
@@ -217,28 +217,29 @@ case class TxClk(modNum: Int, coded: Boolean, shifted: Boolean) extends I3DBump 
     // Create clocks (order matters!)
     val isShiftedClk = (shiftCase && !modCoord.isDirect) || (!shiftCase && modCoord.isRedundant)
     if (!coded) {
-      if (!shifted) {
+      if (!shifted) {  // Redundant modules have no input clocks
         // Core input clock
-        sdc += f"create_clock clocks_$bumpName -name $bumpName -period ${p.tPeriod}%.4f"
+        sdc += f"create_clock [get_ports clocks_$bumpName] -name $bumpName -period ${p.tPeriod}%.4f"
         sdc += f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]"
       }
       // Generated clock source depends on case analysis in shifting redundancy
+      // Note redundancy modules' generated clocks don't have a true source (tools will report 0 latency)
       val srcClk = if (isShiftedClk)
         bumpName.replace(modNum.toString, (modNum - p.redMods).toString)
         else bumpName
       sdc ++= Seq(
         // Clock to data IO cells
-        s"create_generated_clock -name io_$bumpName -source clocks_$srcClk " +
+        s"create_generated_clock -name io_$bumpName -source [get_ports clocks_$srcClk] " +
           s"-divide_by 1 [get_pins */clksToTx_$modNum]",
         f"set_clock_uncertainty ${p.tj}%.4f [get_clocks io_$bumpName]",
         // Direct clock to bump
-        s"create_generated_clock -name out_$bumpName -source clocks_$srcClk " +
+        s"create_generated_clock -name out_$bumpName -source [get_ports clocks_$srcClk] " +
           s"-divide_by 1 [get_ports $bumpName]",
         f"set_clock_uncertainty ${p.tj}%.4f [get_clocks out_$bumpName]"
       )
     } else {
       // Direct clock to bump (source is non-redundant input clock)
-      sdc += s"create_generated_clock -name out_$bumpName -source clocks_TXCKP${modNum} " +
+      sdc += s"create_generated_clock -name out_$bumpName -source [get_ports clocks_TXCKP${modNum}] " +
         s"-divide_by 1 [get_ports $bumpName]"
       sdc += f"set_clock_uncertainty ${p.tj}%.4f [get_clocks out_$bumpName]"
     }
@@ -291,33 +292,32 @@ case class RxClk(modNum: Int, coded: Boolean, shifted: Boolean) extends I3DBump 
     val isShiftedClk = shiftCase && !modCoord.isRedundant
     sdc ++= Seq(
       // Bump clock
-      f"create_clock $bumpName -name invert_$bumpName -period ${p.tPeriod}%.4f",
-      f"set_clock_uncertainty ${p.tj}%.4f [get_clocks invert_$bumpName]",
+      f"create_clock [get_ports $bumpName] -name $bumpName -period ${p.tPeriod}%.4f",
+      f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]",
       // Inverted IO cell output clock
-      s"create_generated_clock -name $bumpName -source $bumpName " +
-        s"-divide_by 1 -invert [get_pins *$ioCellPath/io_rxClk]",
-      f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]"
+      //s"create_generated_clock -name $bumpName -source [get_ports $bumpName] " +
+      //  s"-divide_by 1 -invert [get_pins *$ioCellPath/io_rxClk]",
+      //f"set_clock_uncertainty ${p.tj}%.4f [get_clocks $bumpName]"
     )
     if (!coded) {
+      // Clock to data IO cells
+      sdc += s"create_generated_clock -name io_$bumpName -source [get_ports $bumpName] " +
+        s"-divide_by 1 -invert [get_pins */clksToRx_$modNum]"
+      sdc += f"set_clock_uncertainty ${p.tj}%.4f [get_clocks io_$bumpName]"
       val srcClk = if (isShiftedClk)
         bumpName.replace(modNum.toString, (modNum + p.redMods).toString)
         else bumpName
-      // Clock to data IO cells
-      sdc += s"create_generated_clock -name io_$bumpName -source $srcClk " +
-        s"-divide_by 1 [get_pins */clksToRx_$modNum]"
-      sdc += f"set_clock_uncertainty ${p.tj}%.4f [get_clocks io_$bumpName]"
       if (!shifted) {
         // Direct clock to core
-        sdc += s"create_generated_clock -name out_$bumpName -source $srcClk " +
-          s"-divide_by 1 [get_ports clocks_$bumpName]"
+        sdc += s"create_generated_clock -name out_$bumpName -source [get_ports $srcClk] " +
+          s"-divide_by 1 -invert [get_ports clocks_$bumpName]"
         sdc += f"set_clock_uncertainty ${p.tj}%.4f [get_clocks out_$bumpName]"
       }
       // Set clock latency for synthesis
+      sdc += f"set_clock_latency -min ${p.modDelay * 0.9}%.4f [get_clocks io_$bumpName]"
+      sdc += f"set_clock_latency -max ${p.modDelay * 1.1}%.4f [get_clocks io_$bumpName]"
       // For shift redundancy, depends on case analysis
       // Add 2-module latency for shifted-to modules
-      val ioLat = p.modDelay + (if (isShiftedClk) 2 * p.modDelay else 0.0)
-      sdc += f"set_clock_latency -min ${ioLat * 0.9}%.4f [get_clocks io_$bumpName]"
-      sdc += f"set_clock_latency -max ${ioLat * 1.1}%.4f [get_clocks io_$bumpName]"
       val outLat = (p.pinSide match {
         case "N" => (p.modRowsWR - modCoord.y - 0.5) * p.modDelay
         case "S" => (modCoord.y + 0.5) * p.modDelay
