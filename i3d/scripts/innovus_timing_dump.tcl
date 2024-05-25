@@ -273,7 +273,7 @@ proc tx_output_delay {{shifted 0}} {
     }
     # Open file
     set f [open $csv_file w]
-    set lines {{"Port" "Clock" "Slack (S)" "Sigma (S)" "Dtx (S)" "Mean Dtx (S)" "Skew (S)" "Slack (H)" "Sigma (H)" "Dtx (H)" "Mean Dtx (H)" "Skew (H)" "Spread (UI)" "Mean Spread (UI)" "Pass?" "D-D Skew" "Data WL" "Data WD % (S)" "Data WD % (H)" "Clock WL" "Clock WD % (S)" "Clock WD % (H)" "Path Cells"}}
+    set lines {{"Port" "Clock" "Slack (S)" "Sigma (S)" "Dtx (S)" "Mean Dtx (S)" "Skew (S)" "Slack (H)" "Sigma (H)" "Dtx (H)" "Mean Dtx (H)" "Skew (H)" "Spread (UI)" "Mean Spread (UI)" "Pass?" "D-D Skew" "Latency" "Data WL" "Data WD % (S)" "Data WD % (H)" "Clock WL" "Clock WD % (S)" "Clock WD % (H)" "Path Cells"}}
 
     # For min/max skew tracking
     set dmin_s [dict create]
@@ -282,7 +282,7 @@ proc tx_output_delay {{shifted 0}} {
     set dmax_h [dict create]
     set llskew [dict create]
 
-    foreach pin [lreverse [get_db ports {TXDATA* TXRED*}]] {
+    foreach pin [lreverse [get_db [get_db ports {TXDATA* TXRED*}] .base_name]] {
         # Need to report large nworst to filter out lane-to-lane skew paths
         set setup_rpts [filter_for_clock TXCK* [col2list [report_timing -to $pin -path_type full_clock -split_delay -retime path_slew_propagation -check_type data_setup -nworst 1000 -view $sview -collection]]]
         # Continue if no paths (data-to-data check against clock)
@@ -352,7 +352,7 @@ proc tx_output_delay {{shifted 0}} {
             set cells [get_db [lindex $setup_rpts 0] .nets.driver_pins.inst.ref_lib_cell_name]
             set bufcnt [count_bufs $cells]
             # Line
-            lappend lines [list $pin $clk $sslk $sslk_sigma $sdt $sdtm $sskew $hslk $hslk_sigma $hdt $hdtm $hskew $spread $spread_mean $pass $tskew $dwl $dwd_pct_s $dwd_pct_h $cwl $cwd_pct_s $cwd_pct_h $cells]
+            lappend lines [list $pin $clk $sslk $sslk_sigma $sdt $sdtm $sskew $hslk $hslk_sigma $hdt $hdtm $hskew $spread $spread_mean $pass $tskew $dwl $dwd_pct_s $dwd_pct_h $cwl $cwd_pct_s $cwd_pct_h $cells][get_db
         }
     }
 
@@ -505,6 +505,63 @@ proc rx_output_delay {{shifted 0}} {
     puts "Rx output delay written to $csv_file"
 }
 
+# Path latencies
+proc path_latency {{shifted 0}} {
+    if {$shifted} {
+        set csv_file path_latency_shifted.csv
+        set sview $::setup_view_shifted
+        set hview $::hold_view_shifted
+        set tview $::typ_view_shifted
+    } else {
+        set csv_file path_latency.csv
+        set sview $::setup_view
+        set hview $::hold_view
+        set tview $::typ_view
+    }
+    # Open file
+    set f [open $csv_file w]
+    set lines {{"In Port" "Out Port" "Clock" "Max Latency" "Min Latency" "Wirelength" "WD % (S)" "WD % (H)" "Path Cells"}}
+
+    set txdpins [get_db pins iocells_*/txRetimed_reg/d]
+    set txcpins [get_db pins iocells_*/txRetimed_reg/clk]
+    set rxdpins [get_db pins iocells_*/io_rxData_REG_reg/d]
+    set rxcpins [get_db pins iocells_*/io_rxData_REG_reg/clk]
+
+    # Tx
+    foreach dpin $txdpins cpin $txcpins {
+        # Reports
+        set srpt_d [col2list [report_timing -to $dpin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 2 -collection -view $sview]]
+        set hrpt_d [col2list [report_timing -to $dpin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 2 -collection -view $hview]]
+        set srpt_c [filter_for_clock TXCK* [col2list [report_timing -from $cpin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 1000 -collection -view $sview]]]
+        set hrpt_c [filter_for_clock TXCK* [col2list [report_timing -from $cpin -path_type full_clock -split_delay -retime path_slew_propagation -nworst 1000 -collection -view $hview]]]
+        set in [get_db [lindex $srpt_d 0] .launching_point.base_name]
+        set out [get_db [lindex $srpt_c 0] .capturing_point.base_name]
+        set clk [get_db [lindex $srpt_c 0] .capturing_clock_pin.base_name]
+        puts "$in -> $out"
+        # Min latency = input path delay + setup + output path delay
+        # Unfortunately, cannot filter for data edge (only clock), so input and output edge may be different
+        # Hold reports don't report setup slack so this is optimistic
+        set sdt [expr [max {*}[lmap r $srpt_d {expr [get_db $r .path_delay] + [get_db $r .setup]}]] + [max {*}[get_db $srpt_c .path_delay]]]
+        set sndt [expr [max {*}[lmap r $srpt_d {expr [get_db $r .path_net_delay] + [get_db $r .setup]}]] + [max {*}[get_db $srpt_c .path_net_delay]]]
+        set hdt [expr [min {*}[get_db $hrpt_d .path_delay]] + [min {*}[get_db $hrpt_c .path_delay]]]
+        set hndt [expr [min {*}[get_db $hrpt_d .path_net_delay]] + [min {*}[get_db $hrpt_c .path_net_delay]]]
+        # Wirelength
+        set wl [expr [get_db [lindex $srpt_d 0] .cumulative_manhattan_length] + [get_db [lindex $srpt_c 0] .cumulative_manhattan_length]]
+        set wd_pct_s [format "%.2f" [expr $sndt / $sdt * 100]]
+        set wd_pct_h [format "%.2f" [expr $hndt / $hdt * 100]]
+        # Cells
+        set cells [list {*}[get_db [lindex $srpt_d 0] .nets.driver_pins.inst.ref_lib_cell_name] {*}[get_db [lindex $srpt_c 0] .nets.driver_pins.inst.ref_lib_cell_name]]
+        set bufcnt [count_bufs $cells]
+        # Line
+        lappend lines [list $in $out $clk $sdt $hdt $wl $wd_pct_s $wd_pct_h $cells]
+    }
+
+    # Write
+    puts -nonewline $f [csv::joinlist $lines]
+    close $f
+    puts "Path latencies written to $csv_file"
+}
+
 # Static power
 proc report_static_power {{shifted 0}} {
     # Assume random data - likely worst case activity factor
@@ -517,4 +574,43 @@ proc report_static_power {{shifted 0}} {
     } else {
         report_power -view $::typ_view
     }
+}
+
+# Density
+proc report_cell_density {} {
+    # Delete fillers
+    delete_filler -cells [ get_db -u [ get_db insts -if { .is_physical } ] .base_cell.name ]
+    # Report density
+    report_density_in_area -area [ get_db current_design .bbox ]
+    # Undo filler delete
+    gui_undo
+}
+
+# Routing resource usage
+proc report_routing_utilization {pitch} {
+    # # Layers
+    # set top_routing_layer [get_db design_top_routing_layer]
+    # set horiz_layers [get_db [get_db layers -if {.type == routing && .route_index > 0 && .route_index <= $top_routing_layer && .direction == horizontal}] .name]
+    # set vert_layers [get_db [get_db layers -if {.type == routing && .route_index > 0 && .route_index <= $top_routing_layer && .direction == vertical}] .name]
+
+    # # Select wires in area (based on pitch)
+    # lassign [lindex [get_db current_design .bbox] 0] llx lly urx ury
+    # set horiz_windows [list]
+    # set vert_windows [list]
+    # for {set i 0} {$i < urx} {incr i $pitch} {
+    #     lappend horiz_windows [list $i $lly [expr $i + $pitch] $ury]
+    # }
+    # for {set i 0} {$i < ury} {incr i $pitch} {
+    #     lappend vert_windows [list $llx $i $urx [expr $i + $pitch]]
+    # }
+
+    # # Get track utilization in each window
+    # foreach hl $horiz_layers {
+    #     foreach hw $horiz_windows {
+    #         report_route -track_utilization -include_regular_routes -ndr -shield -layer $hl -area $hw
+    #     }
+    # }
+
+    # All reports
+    report_route -track_utilization -include_regular_routes -ndr -shield
 }

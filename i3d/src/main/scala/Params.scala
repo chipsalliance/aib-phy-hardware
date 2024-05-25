@@ -268,6 +268,7 @@ case class I3DParams(
                          sigsPerCircle = sigsPerCluster,
                          sigsPerMod = sigsPerMod,
                          isWide = isWide)
+      println(s"Signal to P/G ratio: ${sCoords.length}:${pCoords.length + gCoords.length}")
 
       // Map to bump map and return
       // TODO: re-map Tx/Rx IO order based on data statistics for coding
@@ -320,6 +321,7 @@ case class I3DParams(
         (0 until colsPerMod).map(c => (c, r)))
         .filterNot((pCoords ++ gCoords ++ eCoords :+ clkCoord) contains _)
 
+      println(s"Signal to P/G ratio: ${sCoords.length}:${pCoords.length + gCoords.length + eCoords.length}")
       // Map to bump map and return
       Utils.bumpMapGen(tx = flatTx,
                        rx = flatRx,
