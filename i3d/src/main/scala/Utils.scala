@@ -555,24 +555,3 @@ object Utils {
     }
   }
 }
-
-// Simplified EICG wrapper
-class EICG_wrapper extends BlackBox with HasBlackBoxResource {
-  val io = IO(new Bundle {
-    val in = Input(Clock())
-    val test_en = Input(Bool())
-    val en = Input(Bool())
-    val out = Output(Clock())
-  })
-  addResource("/EICG_wrapper.v")
-}
-
-object EICG_wrapper {
-  def apply(in: Clock, en: Bool): Clock = {
-    val cg = Module(new EICG_wrapper)
-    cg.io.in := in
-    cg.io.test_en := false.B
-    cg.io.en := en
-    cg.io.out
-  }
-}

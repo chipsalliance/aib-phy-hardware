@@ -191,24 +191,8 @@ class Encoder(val modIdx: I3DCoordinates[Int])(implicit p: I3DParams) extends Ra
     DataMirror.checkTypeEquivalence(_, Clock())
   )
   clkOut := cClk
-  // Implement as clock gate
-  // bClks.head := EICG_wrapper(cClk, ~faultyClk)
-  // bClks.last := EICG_wrapper(cClk, faultyClk)
-  // Simple AND
   bClks.head := (cClk.asBool & ~faultyClk).asClock
   bClks.last := (cClk.asBool & faultyClk).asClock
-  /*
-  val pClkMux = Module(new ClockMux2)
-  pClkMux.io.sel := faultyClk
-  pClkMux.io.clocksIn(0) := cClk
-  pClkMux.io.clocksIn(1) := false.B.asClock
-  bClks.head := pClkMux.io.clockOut
-  val rClkMux = Module(new ClockMux2)
-  rClkMux.io.sel := faultyClk
-  rClkMux.io.clocksIn(0) := false.B.asClock
-  rClkMux.io.clocksIn(1) := cClk
-  bClks.last := rClkMux.io.clockOut
-  */
 }
 
 /** Module-level decoder */

@@ -23,9 +23,4 @@ object i3d-phy-hardware extends SbtModule { m =>
   override def scalacPluginIvyDeps = Agg(
     ivy"edu.berkeley.cs:::chisel3-plugin:3.5.1",
   )
-  object test extends Tests with ScalaTest {
-    override def ivyDeps = m.ivyDeps() ++ Agg(
-      ivy"edu.berkeley.cs::chiseltest:0.5.1"
-    )
-  }
 }

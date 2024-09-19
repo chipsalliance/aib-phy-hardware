@@ -11,7 +11,6 @@ import freechips.rocketchip.tilelink.HasTLControlRegMap
 import freechips.rocketchip.amba.axi4.HasAXI4ControlRegMap
 import freechips.rocketchip.util.{ResetCatchAndSync, ElaborationArtefacts}
 
-// import i3d.deskew._
 import i3d.io._
 import i3d.redundancy._
 import chisel3.util.log2Ceil
@@ -104,12 +103,6 @@ trait BasePatch {
         else  // Rx
           i.connectInternal(bd, relatedRxClk, ioCtrlWire)
     }
-    // Connect bumps side of muxes to iocells
-    //(iocells zip shifting.get.bumps.elements) foreach { case (i, (bs, bd)) =>
-    //  // Get related clock (all modules should have a clock)
-    //  val relatedClk = shifting.get.bumps.getRelatedClk(bs)
-    //  i.connectInternal(bd, relatedClk, ioCtrlWire)
-    //}
     // Connect redundancy control signals
     shifting.get.faultyTx := faultyTxWire.get
     shifting.get.faultyRx := faultyRxWire.get
@@ -121,19 +114,6 @@ trait BasePatch {
       i.connectInternal(cd, relatedClk, ioCtrlWire)
     }
   }
-
-  /*
-  // DLL
-  // implicit clock is received clock
-  // implicit reset is sync'd to its ref clk (?)
-  val deskewRst = ResetCatchAndSync(fs_fwd_clk, !ns_adapter_rstn, 2)
-  val dll = withClockAndReset(fs_fwd_clk, deskewRst)(Module(new DLL))
-  dll.clk_loop := dll.clk_out  // thru clock tree
-  adapter.m_fs_fwd_clk := dll.clk_out
-  m_fs_fwd_clk := dll.clk_out
-  // deskew <> adapter
-  dll.ctrl <> adapter.deskewCtrl
-  */
 
   // Documentation/collateral
   val collat = new GenCollateral(iocells)

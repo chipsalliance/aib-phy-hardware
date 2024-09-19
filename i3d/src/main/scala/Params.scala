@@ -22,7 +22,6 @@ import chisel3.util.is
   * @param pitchOvrdV overrides the bond pitch in the vertical dimension
   * @param maxNode is the largest/oldest tech node (in nm) in the 3D stack
   * (or expected to be compatible with)
-  * @param ubOrHb is microbump or hybrid bond
   * @param maxParticleSize is the maximum particle size to be repaired,
   * measured in span (diameter) of bond pitches
   * @param patternOvrd is the bump pattern override for the bump technology
