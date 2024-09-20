@@ -1,7 +1,7 @@
 i3d-phy-hardware
 ==================
 
-This is the [Chisel](https://www.chisel-lang.org) generator for the I3D PHY RTL. Technology-specific cells are not included in this generator; they must be added as a mixin.
+This is the [Chisel](https://www.chisel-lang.org) generator for the I3D (formerly AIB-3D) PHY RTL. Technology-specific cells are not included in this generator; they must be added as a mixin.
 
 ## Usage
 
